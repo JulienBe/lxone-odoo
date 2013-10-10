@@ -42,7 +42,6 @@ class ads_conn(object):
 		assert isinstance(data, ads_data), 'data parameter must extend ads_data class'
 		assert self.connected, 'Not connected to the FTP server'
 
-		data.validate_data_types()
 		xml = data.generate_xml()
 		print 'TODO: Create xml file and upload'
 
@@ -52,7 +51,10 @@ import re
 
 class ads_data(object):
 	"""
-	Store data to be uploaded to the ADS FTP server.
+	Interface between OpenERP dict data and ADS XML data. Instantiate with a dict
+	to set up with dict data. Instantiate with a string or unicode to parse into
+	a dict. Call generate_xml to parse dict into XML for uploading to the ADS server.
+
 	Inherit this class to represent different types of data.
 	Populate the fields dictionary with key = field name, value = data format:
 
@@ -67,15 +69,27 @@ class ads_data(object):
  	}
 
  	Create an instance of this class for each row of data for which you want an XML file.
- 	Then populate the data dictionary with key = field name, value = field value
+ 	Then populate the data dictionary with key = field name, value = field value.
 	"""
 
 	fields = {}
 	data = {}
 
 	def __init__(self, data={}):
+		""" 
+		@param data dict or string: If string, will be parsed and converted to dict
+		"""
 		super(ads_data, self).__init__()
-		self.data = data
+		if isinstance(data, dict):
+			self.data = data
+		elif isinstance(data, (str, unicode)):
+			self.data = self._parse_data(data)
+		else:
+			raise TypeError('data passed to ads_data __init__ should be either dict or string/unicode')
+
+	def _parse_data(self, data):
+		""" Convert XML data from ADS to dict format """
+		pass
 
 	def _is_number(self, s):
 		""" Returns True if string is castable to float """
@@ -89,7 +103,7 @@ class ads_data(object):
 		""" Returns True if s is alpha numberic """
 		return re.match('^[\w-_]+$', s)
 
-	def validate_data_types(self):
+	def _validate_data_types(self):
 		""" 
 		Validates that the data in self.data conforms to the self.field definitions
 		@Raises assertion exception if there is a format problem
