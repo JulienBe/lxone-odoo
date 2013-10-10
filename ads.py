@@ -2,7 +2,9 @@ from ftplib import FTP
 
 class ads_conn(object):
 	"""
-	Represents FTP connection to ADS server
+	Represents FTP connection to ADS server.
+	Call connect and disconnect to open and close.
+	Call upload_data with an ads_data object to write data to the server.
 	"""
 
 	host = None
@@ -11,6 +13,7 @@ class ads_conn(object):
 	password = None
 	timeout = None
 	conn = None
+	connected = False
 
 	def __init__(self, host, port=None, user=None, password=None, timeout=None):
 		super(ads_conn, self).__init__()
@@ -24,17 +27,24 @@ class ads_conn(object):
 		""" Sets up a connection to the ADS FTP server """
 		self.conn = FTP(self.host, self.user, self.password, self.timeout)
 		self.conn.login()
+		self.connected = True
 
 	def disconnect(self):
 		""" Closes a previously opened connection to the ADS FTP server """
 		self.conn.quit()
+		self.connected = False
 
-	def write_data(self, data):
+	def upload_data(self, data):
 		"""
 		Takes an ads_data object and creates an XML file then uploads it to FTP server
 		@param data ads_data: Contains data to be written to the file
 		"""
 		assert isinstance(data, ads_data), 'data parameter must extend ads_data class'
+		assert self.connected, 'Not connected to the FTP server'
+
+		data.validate_data_types()
+		xml = data.generate_xml()
+		print 'TODO: Create xml file and upload'
 
 
 from lxml import etree
@@ -51,8 +61,10 @@ class ads_data(object):
 
  	For example:
 
- 	fields = {'product_code', 'A15'} <-- this will allow a 15 character alpha numeric product code
- 	fields = {'product_number', 'N'} <-- this will allow a 12 character numeric product number
+ 	fields = {
+ 		'product_code', 'A15' <-- this will allow a 15 character alpha numeric product code
+ 		'product_number', 'N' <-- this will allow a 12 character numeric product number
+ 	}
 
  	Create an instance of this class for each row of data for which you want an XML file.
  	Then populate the data dictionary with key = field name, value = field value
@@ -65,11 +77,19 @@ class ads_data(object):
 		super(ads_data, self).__init__()
 		self.data = data
 
-	def _validate_alphanumeric(self, s):
+	def _is_number(self, s):
+		""" Returns True if string is castable to float """
+		try:
+			float(s)
+			return True
+		except ValueError:
+			return False
+
+	def _is_alphanumeric(self, s):
 		""" Returns True if s is alpha numberic """
 		return re.match('^[\w-_]+$', s)
 
-	def _validate_data_types(self):
+	def validate_data_types(self):
 		""" 
 		Validates that the data in self.data conforms to the self.field definitions
 		@Raises assertion exception if there is a format problem
@@ -87,14 +107,17 @@ class ads_data(object):
 				'Field definition "%s" does not conform to standards. See documentation' % field_name
 
 			if field_type == 'A':
-				assert _validate_alphanumeric(field_value), 'Data must be alphanumeric: %s' % field_value
-				assert len(field_value) <= field_length, 'Data must be equal to or less than %s. Actual length is %d' % (field_length, len(field_value))
+				assert self._is_alphanumeric(field_value), 'Data must be alphanumeric: %s' % field_value
+				assert len(field_value) <= field_length, \
+					'Data must be equal to or less than %s. Actual length is %d' % (field_length, len(field_value))
+
 			elif field_type == 'N':
+				assert self._is_number(field_value), 'Data must be a number: %s' % field_value
 				assert len(field_value <= 12)
 
 		print 'TODO: implement padding and alignment checks'
 	
 	def generate_xml(self):
-		""" Returns an XML file compliant with the format that ADS is expecting """
+		""" Returns string containing XML compliant with a format that ADS is expecting """
 		_validate_data_types()
 		pass
