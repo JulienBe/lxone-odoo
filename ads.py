@@ -7,32 +7,32 @@ class ads_conn(object):
 	Call upload_data with an ads_data object to write data to the server.
 	"""
 
-	host = None
-	port = None
-	user = None
-	password = None
-	timeout = None
-	conn = None
-	connected = False
+	_host = None
+	_port = None
+	_user = None
+	_password = None
+	_timeout = None
+	_conn = None
+	_connected = False
 
 	def __init__(self, host, port=None, user=None, password=None, timeout=None):
 		super(ads_conn, self).__init__()
-		self.host = host
-		self.port = port
-		self.user = user
-		self.timeout = timeout
-		self.password = password
+		self._host = host
+		self._port = port
+		self._user = user
+		self._timeout = timeout
+		self._password = password
 
 	def connect(self):
 		""" Sets up a connection to the ADS FTP server """
-		self.conn = FTP(self.host, self.user, self.password, self.timeout)
-		self.conn.login()
-		self.connected = True
+		self._conn = FTP(host=self._host, user=self._user, passwd=self._password)
+		self._conn.login(self._user, self._password)
+		self._connected = True
 
 	def disconnect(self):
 		""" Closes a previously opened connection to the ADS FTP server """
-		self.conn.quit()
-		self.connected = False
+		self._conn.quit()
+		self._connected = False
 
 	def upload_data(self, data):
 		"""
@@ -40,9 +40,10 @@ class ads_conn(object):
 		@param data ads_data: Contains data to be written to the file
 		"""
 		assert isinstance(data, ads_data), 'data parameter must extend ads_data class'
-		assert self.connected, 'Not connected to the FTP server'
+		assert self._connected, 'Not connected to the FTP server'
 
 		xml = data.generate_xml()
+		print xml
 		print 'TODO: Create xml file and upload'
 
 
@@ -101,7 +102,8 @@ class ads_data(object):
 
 	def _is_alphanumeric(self, s):
 		""" Returns True if s is alpha numberic """
-		return re.match('^[\w-_]+$', s)
+		from string import ascii_letters, digits
+		return all(c in ascii_letters + '-_' + digits for c in 'testthis1-_string2233')
 
 	def _validate_data_types(self):
 		""" 
@@ -109,8 +111,11 @@ class ads_data(object):
 		@Raises assertion exception if there is a format problem
 		"""
 		for field_name in self.data:
-			field_value = self.data(field_name)
-			field_format = self.fields(field_name)
+
+			assert field_name in self.fields, 'Field "%s" not found in fields definition' % field_name
+
+			field_value = self.data[field_name]
+			field_format = self.fields[field_name]
 
 			field_type = field_format[0:1]
 			field_length = field_format[1:] if len(field_format) > 1 else 0
@@ -122,7 +127,7 @@ class ads_data(object):
 
 			if field_type == 'A':
 				assert self._is_alphanumeric(field_value), 'Data must be alphanumeric: %s' % field_value
-				assert len(field_value) <= field_length, \
+				assert len(str(field_value)) <= field_length, \
 					'Data must be equal to or less than %s. Actual length is %d' % (field_length, len(field_value))
 
 			elif field_type == 'N':
@@ -133,5 +138,8 @@ class ads_data(object):
 	
 	def generate_xml(self):
 		""" Returns string containing XML compliant with a format that ADS is expecting """
-		_validate_data_types()
-		pass
+		self._validate_data_types()
+		return str(self.data)
+
+class ads_test(ads_data):
+	fields = {'1': 'A21', '2': 'A2'}
