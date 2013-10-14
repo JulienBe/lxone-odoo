@@ -14,3 +14,18 @@ class AutoVivification(dict):
 		except KeyError:
 			value = self[item] = type(self)()
 			return value
+	
+	def _to_dict_recursive(self, nested_autoviv):
+		nested_dict = {}
+		for key in nested_autoviv:
+			val = nested_autoviv[key]
+			
+			if type(val) == AutoVivification:
+				nested_dict[key] = self._to_dict_recursive(dict(val))
+			else:
+				nested_dict[key] = val
+		return nested_dict
+	
+	def to_dict(self):
+		""" Converts a nested AutoVivification object to a nested dict """
+		return self._to_dict_recursive(self)

@@ -21,11 +21,22 @@ class ads_data(object):
 
 	Alternatively, parse an XML file from ADS into the self.data object by calling parse_xml.
 	"""
+	
+	def __init__(self, xml=None):
+		super(ads_data, self).__init__()
+		if xml:
+			assert isinstance(xml, (str, unicode)), 'XML must be string or unicode'
+			print 'TODO: parse XML'
 
 	data = AutoVivification()
 
 	def insert_data(self, insert_target, params):
-		"""  """
+		""" 
+		Insert keys and values from params into self.data at insert_target 
+		@param params dict: keys and values to insert into self.data
+		@param insert_target str: dot separated values for insert target. For example
+								  'order.customer' inserts to self.data['order']['customer']
+		"""
 		target = self.data
 		for target_key in insert_target.split('.'):
 			target = target[target_key]
@@ -36,21 +47,11 @@ class ads_data(object):
 			if not param_name == 'self':
 				target[param_name] = param_value
 
-	def _parse_xml(self, xml):
-		""" Convert XML data from ADS to dict format """
-		print 'TODO: parse_xml'
-		return {}
-	
 	def generate_xml(self):
-		""" Returns string containing XML compliant with a format that ADS is expecting """
-
-		log = StringIO.StringIO()
-		xd = XMLDumper(log)
-
-		xd.XMLDumpKeyValue('first', self.data)
-		log_val = log.getvalue()
-
-		print log_val
-		log.close()
-
-		return str(self.data)
+		""" Returns string containing XML representation of self.data nested dict """
+		output = StringIO.StringIO()
+		xd = XMLDumper(output)
+		xd.XMLDumpKeyValue('first', self.data.to_dict())
+		xml = output.getvalue()
+		output.close()
+		return xml

@@ -10,32 +10,47 @@ class ads_conn(object):
 	Call upload_data with an ads_data object to write data to the server.
 	"""
 
-	_host = None
-	_port = None
-	_user = None
-	_password = None
-	_timeout = None
-	_conn = None
-	_connected = False
-
-	def __init__(self, host, port=None, user=None, password=None, timeout=None):
+	def __init__(self, host, port=None, user=None, password=None, timeout=None, mode='test', passive=True):
 		super(ads_conn, self).__init__()
+		assert mode in ['prod', 'test'], 'Mode must be either "prod" or "test"'
+		
 		self._host = host
 		self._port = port
 		self._user = user
-		self._timeout = timeout
 		self._password = password
+		self._timeout = timeout
+		self._mode = mode
+		self._passive = passive
+		
+		self._conn = None
+		self._connected = False
 
 	def connect(self):
 		""" Sets up a connection to the ADS FTP server """
 		self._conn = FTP(host=self._host, user=self._user, passwd=self._password)
-		self._conn.login(self._user, self._password)
+		
+		# passive on by default in python > 2.1 
+		if not self._passive:
+			self._conn.set_pasv(self._passive)
+		
+		self.cd(self._mode)
 		self._connected = True
 
 	def disconnect(self):
 		""" Closes a previously opened connection to the ADS FTP server """
-		self._conn.quit()
-		self._connected = False
+		if self._connected:
+			self._conn.quit()
+			self._connected = False
+	
+	# ftp convenience methods
+	def ls(self):
+		if hasattr(self._conn, 'mlst'):
+			return self._conn.mlsd()
+		else:
+			return self._conn.nlst()
+		
+	def cd(self, dirname):
+		self._conn.cwd(dirname)
 
 	def upload_data(self, data):
 		"""
