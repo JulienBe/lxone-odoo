@@ -7,6 +7,7 @@ import re
 from datetime import datetime
 
 from picklingtools.xmldumper import *
+from picklingtools import xml2dict
 from auto_vivification import AutoVivification
 import ads_validation
 
@@ -28,8 +29,8 @@ class ads_data(object):
 		super(ads_data, self).__init__()
 		if xml:
 			assert isinstance(xml, (str, unicode)), 'XML must be string or unicode'
-			print 'TODO: parse XML'
-
+			self.data = xml2dict.ConvertFromXML(xml)
+			self.data = AutoVivification.dict_to_auto_vivification(self.data)
 	
 	type = None
 	data = AutoVivification()
@@ -59,7 +60,7 @@ class ads_data(object):
 	def generate_xml(self):
 		""" Returns a StringIO containing an XML representation of self.data nested dict """
 		output = StringIO.StringIO()
-		xd = XMLDumper(output)
+		xd = XMLDumper(output, XML_DUMP_PRETTY | XML_STRICT_HDR)
 		xd.XMLDumpKeyValue('first', self.data.to_dict())
 		output.seek(0)
 		return output

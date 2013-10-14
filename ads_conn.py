@@ -2,6 +2,7 @@
 
 from ftplib import FTP
 from ads_data import ads_data
+import StringIO
 
 class ads_conn(object):
 	"""
@@ -75,4 +76,28 @@ class ads_conn(object):
 		xml_buffer = data.generate_xml()
 		self.cd(self._vers_ads)
 		self._conn.storlines('STOR %s' % data.name(), xml_buffer)
+		self.cd('..')
+
+	def poll(self):
+		"""	Poll the FTP server to parse and then delete any data files	"""
+		assert self._connected, 'Not connected to the FTP server'
+
+		# get file list from VersADS
+		self.cd(self._vers_client)
+		files = self.ls()
+		
+		if files:
+			for file_name in files:
+				# get type prefix from file name, then find ads_data subclass with matching
+				# type. Instantiate said class with XML as parameter to parse into dict 
+				type = file_name.split('-', 1)[0]
+				matches = [cls for cls in ads_data.__subclasses__() if cls.type == type]
+				if matches:
+					file_data = StringIO.StringIO()
+					self._conn.retrbinary('RETR %s' % file_name, file_data.write)
+					data = matches[0](file_data.getvalue())
+					print 'TODO: do something with parsed file then COMMIT cursor before continuing'
+				else:
+					raise TypeError('Could not find subclass of ads_data with type %s' % type)
+
 		self.cd('..')

@@ -29,3 +29,20 @@ class AutoVivification(dict):
 	def to_dict(self):
 		""" Converts a nested AutoVivification object to a nested dict """
 		return self._to_dict_recursive(self)
+
+	@staticmethod
+	def _dict_to_auto_viv_recursive(nested_dict):
+		nested_autoviv = AutoVivification()
+		for key in nested_dict:
+			val = nested_dict[key]
+			
+			if type(val) == dict:
+				nested_autoviv[key] = AutoVivification._dict_to_auto_viv_recursive(AutoVivification(val))
+			else:
+				nested_autoviv[key] = val
+		return nested_autoviv
+	
+	@staticmethod
+	def dict_to_auto_vivification(dictionary):
+		""" Converts a nested dictionary object to a nested AutoVivification """
+		return AutoVivification._dict_to_auto_viv_recursive(dictionary)
