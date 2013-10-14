@@ -4,6 +4,7 @@ import sys
 import StringIO
 from lxml import etree
 import re
+from datetime import datetime
 
 from picklingtools.xmldumper import *
 from auto_vivification import AutoVivification
@@ -14,6 +15,7 @@ class ads_data(object):
 	Interface between OpenERP dict data and ADS XML data. Designed to be inherited
 	so you can implement your own data input and output functions that build
 	the self.data AutoVivification object (See ads_order class for an example).
+	Don't forget to set the type variable to define the file name prefix.
 
 	After building the self.data dict, you can call generate_xml to parse dict into 
 	XML for uploading to the ADS server, or hand this object to the upload_data 
@@ -28,6 +30,8 @@ class ads_data(object):
 			assert isinstance(xml, (str, unicode)), 'XML must be string or unicode'
 			print 'TODO: parse XML'
 
+	
+	type = None
 	data = AutoVivification()
 
 	def insert_data(self, insert_target, params):
@@ -46,12 +50,16 @@ class ads_data(object):
 
 			if not param_name == 'self':
 				target[param_name] = param_value
+				
+	def name(self):
+		""" Generate a name for the uploaded xml file """
+		assert self.type, 'The self.type variable must be set in your inheriting class'
+		return '%s-%s.xml' % (self.type, datetime.today().strftime('%Y%m%d-%H%M%S'))
 
 	def generate_xml(self):
-		""" Returns string containing XML representation of self.data nested dict """
+		""" Returns a StringIO containing an XML representation of self.data nested dict """
 		output = StringIO.StringIO()
 		xd = XMLDumper(output)
 		xd.XMLDumpKeyValue('first', self.data.to_dict())
-		xml = output.getvalue()
-		output.close()
-		return xml
+		output.seek(0)
+		return output
