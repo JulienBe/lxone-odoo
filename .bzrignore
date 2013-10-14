@@ -1,0 +1,5 @@
+.project
+.pydevproject
+addons/
+server/
+web/
