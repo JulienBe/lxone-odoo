@@ -45,7 +45,7 @@ class ads_conn(object):
 			self._vers_client = 'Vers%s' % self._user
 		else:
 			raise IOError('Could not find appropriate directories in %s folder.'\
-						+ 'Normally there are VersADS and Vers*ClientName* dirs' % self._mode)
+						+ 'Normally there are VersADS and Vers*ClientName* directories' % self._mode)
 
 		self._connected = True
 
@@ -64,6 +64,9 @@ class ads_conn(object):
 		
 	def cd(self, dirname):
 		self._conn.cwd(dirname)
+		
+	def delete(self, filename):
+		self._conn.delete(filename)
 
 	def upload_data(self, data):
 		"""
@@ -78,7 +81,7 @@ class ads_conn(object):
 		self._conn.storlines('STOR %s' % data.name(), xml_buffer)
 		self.cd('..')
 
-	def poll(self):
+	def poll(self, pool, cr, uid):
 		"""	Poll the FTP server to parse and then delete any data files	"""
 		assert self._connected, 'Not connected to the FTP server'
 
@@ -90,14 +93,17 @@ class ads_conn(object):
 			for file_name in files:
 				# get type prefix from file name, then find ads_data subclass with matching
 				# type. Instantiate said class with XML as parameter to parse into dict 
-				type = file_name.split('-', 1)[0]
-				matches = [cls for cls in ads_data.__subclasses__() if cls.type == type]
-				if matches:
+				data_type = file_name.split('-', 1)[0]
+				class_for_type = [cls for cls in ads_data.__subclasses__() if cls.data_type == data_type]
+				if class_for_type:
 					file_data = StringIO.StringIO()
 					self._conn.retrbinary('RETR %s' % file_name, file_data.write)
-					data = matches[0](file_data.getvalue())
-					print 'TODO: do something with parsed file then COMMIT cursor before continuing'
+					data = class_for_type[0](file_data.getvalue())
+					res = data.process(cr, uid)
+					if res:
+						self.delete(file_name)
+					cr and cr.commit()
 				else:
-					raise TypeError('Could not find subclass of ads_data with type %s' % type)
+					raise TypeError('Could not find subclass of ads_data with data_type %s' % data_type)
 
 		self.cd('..')

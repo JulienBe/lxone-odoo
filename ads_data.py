@@ -16,13 +16,14 @@ class ads_data(object):
 	Interface between OpenERP dict data and ADS XML data. Designed to be inherited
 	so you can implement your own data input and output functions that build
 	the self.data AutoVivification object (See ads_order class for an example).
-	Don't forget to set the type variable to define the file name prefix.
+	Don't forget to set the data_type variable to define the file name prefix.
 
-	After building the self.data dict, you can call generate_xml to parse dict into 
-	XML for uploading to the ADS server, or hand this object to the upload_data 
-	function of ads_conn.
+	After building the self.data dict, parse this object to the upload_data function
+	of the ads_conn object. It will call the generate_xml to convert the self.data dict
+	into an xml file, then upload it to the server.
 
-	Alternatively, parse an XML file from ADS into the self.data object by calling parse_xml.
+	Alternatively, convert an ADS xml file into an ads_data dict by passing the XML 
+	into the constructor.
 	"""
 	
 	def __init__(self, xml=None):
@@ -32,7 +33,7 @@ class ads_data(object):
 			self.data = xml2dict.ConvertFromXML(xml)
 			self.data = AutoVivification.dict_to_auto_vivification(self.data)
 	
-	type = None
+	data_type = None
 	data = AutoVivification()
 
 	def insert_data(self, insert_target, params):
@@ -54,8 +55,8 @@ class ads_data(object):
 				
 	def name(self):
 		""" Generate a name for the uploaded xml file """
-		assert self.type, 'The self.type variable must be set in your inheriting class'
-		return '%s-%s.xml' % (self.type, datetime.today().strftime('%Y%m%d-%H%M%S'))
+		assert self.data_type, 'The self.data_type variable must be set in your inheriting class'
+		return '%s-%s.xml' % (self.data_type, datetime.today().strftime('%Y%m%d-%H%M%S'))
 
 	def generate_xml(self):
 		""" Returns a StringIO containing an XML representation of self.data nested dict """
@@ -64,3 +65,13 @@ class ads_data(object):
 		xd.XMLDumpKeyValue('first', self.data.to_dict())
 		output.seek(0)
 		return output
+
+	def process(self, pool, cr):
+		""" 
+		Called when an XML file is downloaded from the ADS server. Override this method to
+		do something with self.data in OpenERP.
+		@param pool: OpenERP object pool 
+		@param cr: OpenERP database cursor
+		@returns True if successful. If True, the xml file on the FTP server will be deleted.
+		"""
+		raise NotImplementedError('This method must be implemented in a subclass')
