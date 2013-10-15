@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record model="ir.values" id="ir_values_ad_host">
+            <field name="name">ads_host</field>
+            <field name="value_unpickle" eval="'ftp.alpha-d-s.com'" />
+        	<field name="key">default</field>
+            <field name="model">ads.connection</field>
+        </record>
+
+        <record model="ir.values" id="ir_values_ad_port">
+            <field name="name">ads_port</field>
+            <field name="value_unpickle" eval="'21'" />
+        	<field name="key">default</field>
+            <field name="model">ads.connection</field>
+        </record>
+
+        <record model="ir.values" id="ir_values_ad_user">
+            <field name="name">ads_user</field>
+            <field name="model">ads.connection</field>
+        	<field name="key">default</field>
+        </record>
+
+        <record model="ir.values" id="ir_values_ad_password">
+            <field name="name">ads_password</field>
+            <field name="model">ads.connection</field>
+        	<field name="key">default</field>
+        </record>
+
+        <record model="ir.values" id="ir_values_ad_timeout">
+            <field name="name">ads_timeout</field>
+            <field name="value_unpickle" eval="'10'" />
+        	<field name="key">default</field>
+            <field name="model">ads.connection</field>
+        </record>
+
+        <record model="ir.values" id="ir_values_ad_mode">
+            <field name="name">ads_mode</field>
+            <field name="value_unpickle" eval="'test'" />
+        	<field name="key">default</field>
+            <field name="model">ads.connection</field>
+        </record>
+
+        <record model="ir.values" id="ir_values_ad_passive">
+            <field name="name">ads_passive</field>
+            <field name="value_unpickle" eval="'True'" />
+        	<field name="key">default</field>
+            <field name="model">ads.connection</field>
+        </record>
+
+    </data>
+</openerp>

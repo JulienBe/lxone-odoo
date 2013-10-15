@@ -1,35 +1,60 @@
 #!/usr/bin/python
 
+from openerp.osv import osv, fields
+
 from ftplib import FTP
-from ads_data import ads_data
 import StringIO
 
-class ads_conn(object):
+from ads_data import ads_data
+from ads_order import ads_order
+from ads_return import ads_return
+
+class ads_conn(osv.osv):
 	"""
 	Represents FTP connection to ADS server.
 	Call connect and disconnect to open and close.
 	Call upload_data with an ads_data object to write data to the server.
+	Call poll to download and import data from ADS to OpenERP
 	"""
 
-	def __init__(self, host, port=None, user=None, password=None, timeout=None, mode='test', passive=True):
-		super(ads_conn, self).__init__()
-		assert mode in ['prod', 'test'], 'Mode must be either "prod" or "test"'
-		
-		self._host = host
-		self._port = port
-		self._user = user
-		self._password = password
-		self._timeout = timeout
-		self._mode = mode
-		self._passive = passive
-		
-		self._conn = None
-		self._connected = False
-		self._vers_ads = 'VersADS'
-		self._vers_client = None
+	_columns = {}
+	_name = 'ads.connection'
+	_auto = False
 
-	def connect(self):
+	_conn = None
+	_connected = False
+	_vers_ads = 'VersADS'
+	_vers_client = None
+
+	def _get_config(self, cr, config_name, value_type=str):
+		""" 
+		Get a configuration value from ir.values by config_name (For this model) 
+		@param config_name string: The name of the ir.values record to get
+		@param value_type object: Used to cast the value to an appropriate return type.
+		"""
+		values_obj = self.pool.get('ir.values')
+		value_ids = values_obj.search(cr, 1, [('model','=','ads.connection'), ('name','=',config_name)])
+		if value_ids:
+			value = values_obj.browse(cr, 1, value_ids[0]).value_unpickle
+			return value_type(value)
+		else:
+			return None
+
+	def _get_ftp_config(self, cr):
+		""" Save FTP connection parameters from ir.values to self """
+		self._host = self._get_config(cr, 'ads_host') or 'ftp.alpha-d-s.com'
+		self._port = self._get_config(cr, 'ads_port', int) or 21
+		self._user = self._get_config(cr, 'ads_user')
+		self._password = self._get_config(cr, 'ads_password')
+		self._timeout = self._get_config(cr, 'ads_timeout', int) or 10
+		self._mode = self._get_config(cr, 'ads_mode') or 'test'
+		self._passive = self._get_config(cr, 'ads_passive', bool) or True
+
+		assert self._mode in ['prod', 'test'], 'Mode must be either "prod" or "test"'
+
+	def connect(self, cr):
 		""" Sets up a connection to the ADS FTP server """
+		self._get_ftp_config(cr)
 		self._conn = FTP(host=self._host, user=self._user, passwd=self._password)
 		
 		# passive on by default in python > 2.1 
@@ -81,9 +106,11 @@ class ads_conn(object):
 		self._conn.storlines('STOR %s' % data.name(), xml_buffer)
 		self.cd('..')
 
-	def poll(self, pool, cr, uid):
+	def poll(self, cr, uid):
 		"""	Poll the FTP server to parse and then delete any data files	"""
-		assert self._connected, 'Not connected to the FTP server'
+		print 'Polling'
+		if not self._connected:
+			self.connect(cr)
 
 		# get file list from VersADS
 		self.cd(self._vers_client)

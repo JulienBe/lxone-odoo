@@ -37,6 +37,7 @@ their stock pickings (IN's and OUT's) are
 validated from ADS.
     """,
     'data': [
+        'data/values.xml',
         'data/cron.xml',
     ],
     'installable': True,

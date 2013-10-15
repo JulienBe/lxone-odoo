@@ -19,4 +19,4 @@ class ads_order(ads_data):
 		@returns True if successful. If True, the xml file on the FTP server will be deleted.
 		"""
 		print 'TODO: do something with self.data ;)'
-		return True
+		return False
