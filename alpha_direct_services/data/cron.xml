@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="ir_cron_ads_poll" model="ir.cron">
+            <field name="name">Poll Alpha Direct Service Server</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field eval="False" name="doall"/>
+            <field eval="'ads.connection'" name="model"/>
+            <field eval="'poll'" name="function"/>
+            <field eval="'()'" name="args"/>
+        </record>
+
+    </data>
+</openerp>
