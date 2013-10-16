@@ -20,8 +20,13 @@ class AutoVivification(dict):
 		for key in nested_autoviv:
 			val = nested_autoviv[key]
 			
-			if type(val) == AutoVivification:
+			if isinstance(val, AutoVivification):
 				nested_dict[key] = self._to_dict_recursive(dict(val))
+			elif isinstance(val, (list, tuple)):
+				new_list = []
+				for element in val:
+					new_list.append(self._to_dict_recursive(element))
+				nested_dict[key] = new_list
 			else:
 				nested_dict[key] = val
 		return nested_dict

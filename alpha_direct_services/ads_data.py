@@ -39,20 +39,47 @@ class ads_data(object):
 
 	def insert_data(self, insert_target, params):
 		""" 
-		Insert keys and values from params into self.data at insert_target 
+		Insert keys and values from params into self.data at insert_target.
+		Calling this method twice on the same key will convert the key from a dict
+		to a list of dicts. In this way it can handle multiple xml nodes with
+		the same name.
+		 
 		@param params dict: keys and values to insert into self.data
 		@param insert_target str: dot separated values for insert target. For example
 								  'order.customer' inserts to self.data['order']['customer']
 		"""
+		# save reference to the target key inside the nested dictionary self.data
 		target = self.data
 		for target_key in insert_target.split('.'):
+			parent = target
 			target = target[target_key]
-
-		for param_name in params:
-			param_value = params[param_name]
-
-			if not param_name == 'self':
-				target[param_name] = param_value
+		
+		# have we already saved data to this key? If yes, convert it to a list
+		# of dictionaries and add a second one 
+		if isinstance(target, AutoVivification) and len(target) != 0:
+			autoviv = True
+			parent[target_key] = [target]
+			target = parent[target_key]
+		else:
+			autoviv = False
+		
+		if not autoviv:
+			# add data to the empty dict like normal
+			for param_name in params:
+				param_value = params[param_name]
+	
+				if not param_name == 'self':
+					target[param_name] = param_value
+		else:
+			# create new dict to be added to the list of dicts
+			val = AutoVivification()
+			for param_name in params:
+				param_value = params[param_name]
+				
+				if not param_name == 'self':
+					val[param_name] = param_value
+					
+			target.append(val)
 				
 	def name(self):
 		""" Generate a name for the uploaded xml file """
