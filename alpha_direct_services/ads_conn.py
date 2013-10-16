@@ -6,7 +6,8 @@ from ftplib import FTP
 import StringIO
 
 from ads_data import ads_data
-from ads_order import ads_order
+from ads_purchase_order import ads_purchase_order
+from ads_sales_order import ads_sales_order
 from ads_return import ads_return
 
 class ads_conn(osv.osv):
@@ -22,9 +23,16 @@ class ads_conn(osv.osv):
 	_auto = False
 
 	_conn = None
-	_connected = False
 	_vers_ads = 'VersADS'
 	_vers_client = None
+	
+	@property
+	def _connected(self):
+		try:
+			self._conn.voidcmd("NOOP")
+			return True
+		except:
+			return False
 
 	def _get_config(self, cr, config_name, value_type=str):
 		""" 
@@ -54,6 +62,9 @@ class ads_conn(osv.osv):
 
 	def connect(self, cr):
 		""" Sets up a connection to the ADS FTP server """
+		if self._connected:
+			return self
+		
 		self._get_ftp_config(cr)
 		self._conn = FTP(host=self._host, user=self._user, passwd=self._password)
 		
@@ -71,14 +82,13 @@ class ads_conn(osv.osv):
 		else:
 			raise IOError('Could not find appropriate directories in %s folder.'\
 						+ 'Normally there are VersADS and Vers*ClientName* directories' % self._mode)
-
-		self._connected = True
+		
+		return self
 
 	def disconnect(self):
 		""" Closes a previously opened connection to the ADS FTP server """
 		if self._connected:
 			self._conn.quit()
-			self._connected = False
 	
 	# ftp convenience methods
 	def ls(self):

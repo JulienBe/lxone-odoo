@@ -35,6 +35,9 @@ This module slightly modifies the processes
 for sales orders and purchase orders so that
 their stock pickings (IN's and OUT's) are
 validated from ADS.
+
+This module uses the PicklingTools library:
+http://www.picklingtools.com/
     """,
     'data': [
         'data/values.xml',

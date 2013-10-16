@@ -9,14 +9,14 @@ from datetime import datetime
 from picklingtools.xmldumper import *
 from picklingtools import xml2dict
 from auto_vivification import AutoVivification
-import ads_validation
 
 class ads_data(object):
 	"""
 	Interface between OpenERP dict data and ADS XML data. Designed to be inherited
 	so you can implement your own data input and output functions that build
 	the self.data AutoVivification object (See ads_order class for an example).
-	Don't forget to set the data_type variable to define the file name prefix.
+	Don't forget to set the data_type and xml_root variables to define the file name 
+	prefix and xml file root element name.
 
 	After building the self.data dict, parse this object to the upload_data function
 	of the ads_conn object. It will call the generate_xml to convert the self.data dict
@@ -34,6 +34,7 @@ class ads_data(object):
 			self.data = AutoVivification.dict_to_auto_vivification(self.data)
 	
 	data_type = None
+	xml_root = None
 	data = AutoVivification()
 
 	def insert_data(self, insert_target, params):
@@ -60,9 +61,10 @@ class ads_data(object):
 
 	def generate_xml(self):
 		""" Returns a StringIO containing an XML representation of self.data nested dict """
+		assert self.xml_root != None, 'The self.xml_root variable must be set in your inheriting class'
 		output = StringIO.StringIO()
 		xd = XMLDumper(output, XML_DUMP_PRETTY | XML_STRICT_HDR)
-		xd.XMLDumpKeyValue('first', self.data.to_dict())
+		xd.XMLDumpKeyValue(self.xml_root, self.data.to_dict())
 		output.seek(0)
 		return output
 

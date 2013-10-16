@@ -1,14 +1,22 @@
 #!/usr/bin/python
 
 from ads_data import ads_data
+from datetime import datetime
+from ads_tools import convert_date
 
-class ads_order(ads_data):
+class ads_sales_order(ads_data):
 
 	data_type = 'ORDER'
-
-	def set_shipping(self, civility=None, firstname=None, name=None, corp_name=None, adr1=None, \
-		adr2=None, adr3=None, adr4=None, country=None, zip=None, city=None, phone=None, email=None):
-		self.insert_data('order.header.customer.shipping_address', locals())
+	xml_root = 'orders'
+	
+	def extract_picking_out(self, picking):
+		"""
+		Takes a stock.picking.out browse_record and extracts the 
+		appropriate data into self.data
+		
+		@param picking: browse_record(stock.picking.in)
+		"""
+		pass
 
 	def process(self, pool, cr):
 		""" 
