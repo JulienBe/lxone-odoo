@@ -3,7 +3,6 @@
 from copy import copy
 
 from ads_data import ads_data
-from datetime import datetime
 from ads_tools import convert_date
 
 class ads_purchase_order(ads_data):
@@ -16,7 +15,7 @@ class ads_purchase_order(ads_data):
 		Takes a stock.picking.in browse_record and extracts the
 		appropriate data into self.data
 
-		@param picking: browse_record(stock.picking.in)
+		@param browse_record(stock.picking.in) picking: the stock picking browse record object
 		"""
 
 		template = {

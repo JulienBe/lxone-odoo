@@ -45,8 +45,8 @@ class ads_data(object):
 		to a list of dicts. In this way it can handle multiple xml nodes with
 		the same name.
 		 
-		@param params dict: keys and values to insert into self.data
-		@param insert_target str: dot separated values for insert target. For example
+		@param dict params: keys and values to insert into self.data
+		@param str insert_target: dot separated values for insert target. For example
 								  'order.customer' inserts to self.data['order']['customer']
 		"""
 		# save reference to the target key inside the nested dictionary self.data

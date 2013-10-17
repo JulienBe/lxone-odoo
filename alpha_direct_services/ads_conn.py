@@ -37,8 +37,8 @@ class ads_conn(osv.osv):
 	def _get_config(self, cr, config_name, value_type=str):
 		"""
 		Get a configuration value from ir.values by config_name (For this model)
-		@param config_name string: The name of the ir.values record to get
-		@param value_type object: Used to cast the value to an appropriate return type.
+		@param str config_name: The name of the ir.values record to get
+		@param object value_type: Used to cast the value to an appropriate return type.
 		"""
 		values_obj = self.pool.get('ir.values')
 		value_ids = values_obj.search(cr, 1, [('model','=','ads.connection'), ('name','=',config_name)])
@@ -106,7 +106,7 @@ class ads_conn(osv.osv):
 	def upload_data(self, data):
 		"""
 		Takes an ads_data object and creates an XML file then uploads it to FTP server
-		@param data ads_data: Contains data to be written to the file
+		@param ads_data data: Contains data to be written to the file
 		"""
 		assert isinstance(data, ads_data), 'data parameter must extend ads_data class'
 		assert self._connected, 'Not connected to the FTP server'

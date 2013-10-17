@@ -13,6 +13,7 @@ class stock_picking(osv.osv):
     }
 
 class stock_picking_in(osv.osv):
+    """ Inherit the stock.picking.in object to and add ads_sent and ads_result fields """
 
     _inherit = 'stock.picking.in'
     _columns = {
