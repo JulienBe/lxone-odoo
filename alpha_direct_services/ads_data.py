@@ -28,6 +28,8 @@ class ads_data(object):
 	
 	def __init__(self, xml=None):
 		super(ads_data, self).__init__()
+		self.data = AutoVivification()
+		
 		if xml:
 			assert isinstance(xml, (str, unicode)), 'XML must be string or unicode'
 			self.data = xml2dict.ConvertFromXML(xml)
@@ -35,7 +37,6 @@ class ads_data(object):
 	
 	data_type = None
 	xml_root = None
-	data = AutoVivification()
 
 	def insert_data(self, insert_target, params):
 		""" 

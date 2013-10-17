@@ -8,23 +8,22 @@ class ads_sales_order(ads_data):
 
 	data_type = 'ORDER'
 	xml_root = 'orders'
-	
+
 	def extract_picking_out(self, picking):
 		"""
-		Takes a stock.picking.out browse_record and extracts the 
+		Takes a stock.picking.out browse_record and extracts the
 		appropriate data into self.data
-		
+
 		@param picking: browse_record(stock.picking.in)
 		"""
 		pass
 
 	def process(self, pool, cr):
-		""" 
+		"""
 		Called when an XML file is downloaded from the ADS server. Override this method to
 		do something with self.data in OpenERP.
-		@param pool: OpenERP object pool 
+		@param pool: OpenERP object pool
 		@param cr: OpenERP database cursor
 		@returns True if successful. If True, the xml file on the FTP server will be deleted.
 		"""
-		print 'TODO: do something with self.data ;)'
 		return False

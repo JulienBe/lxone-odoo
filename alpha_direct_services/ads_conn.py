@@ -25,7 +25,7 @@ class ads_conn(osv.osv):
 	_conn = None
 	_vers_ads = 'VersADS'
 	_vers_client = None
-	
+
 	@property
 	def _connected(self):
 		try:
@@ -35,8 +35,8 @@ class ads_conn(osv.osv):
 			return False
 
 	def _get_config(self, cr, config_name, value_type=str):
-		""" 
-		Get a configuration value from ir.values by config_name (For this model) 
+		"""
+		Get a configuration value from ir.values by config_name (For this model)
 		@param config_name string: The name of the ir.values record to get
 		@param value_type object: Used to cast the value to an appropriate return type.
 		"""
@@ -64,14 +64,14 @@ class ads_conn(osv.osv):
 		""" Sets up a connection to the ADS FTP server """
 		if self._connected:
 			return self
-		
+
 		self._get_ftp_config(cr)
 		self._conn = FTP(host=self._host, user=self._user, passwd=self._password)
-		
-		# passive on by default in python > 2.1 
+
+		# passive on by default in python > 2.1
 		if not self._passive:
 			self._conn.set_pasv(self._passive)
-		
+
 		# change directory to self._mode, then save "VersClient" dir name
 		self.cd(self._mode)
 		directories = self.ls()
@@ -82,24 +82,24 @@ class ads_conn(osv.osv):
 		else:
 			raise IOError('Could not find appropriate directories in %s folder.'\
 						+ 'Normally there are VersADS and Vers*ClientName* directories' % self._mode)
-		
+
 		return self
 
 	def disconnect(self):
 		""" Closes a previously opened connection to the ADS FTP server """
 		if self._connected:
 			self._conn.quit()
-	
+
 	# ftp convenience methods
 	def ls(self):
 		if hasattr(self._conn, 'mlst'):
 			return self._conn.mlsd()
 		else:
 			return self._conn.nlst()
-		
+
 	def cd(self, dirname):
 		self._conn.cwd(dirname)
-		
+
 	def delete(self, filename):
 		self._conn.delete(filename)
 
@@ -118,18 +118,17 @@ class ads_conn(osv.osv):
 
 	def poll(self, cr, uid):
 		"""	Poll the FTP server to parse and then delete any data files	"""
-		print 'Polling'
 		if not self._connected:
 			self.connect(cr)
 
 		# get file list from VersADS
 		self.cd(self._vers_client)
 		files = self.ls()
-		
+
 		if files:
 			for file_name in files:
 				# get type prefix from file name, then find ads_data subclass with matching
-				# type. Instantiate said class with XML as parameter to parse into dict 
+				# type. Instantiate said class with XML as parameter to parse into dict
 				data_type = file_name.split('-', 1)[0]
 				class_for_type = [cls for cls in ads_data.__subclasses__() if cls.data_type == data_type]
 				if class_for_type:
