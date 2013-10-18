@@ -40,10 +40,10 @@ class ads_conn(osv.osv):
 		@param str config_name: The name of the ir.values record to get
 		@param object value_type: Used to cast the value to an appropriate return type.
 		"""
-		values_obj = self.pool.get('ir.values')
-		value_ids = values_obj.search(cr, 1, [('model','=','ads.connection'), ('name','=',config_name)])
+		values_obj = self.pool.get('ir.config_parameter')
+		value_ids = values_obj.search(cr, 1, [('key','=',config_name)])
 		if value_ids:
-			value = values_obj.browse(cr, 1, value_ids[0]).value_unpickle
+			value = values_obj.browse(cr, 1, value_ids[0]).value
 			return value_type(value)
 		else:
 			return None
@@ -52,8 +52,8 @@ class ads_conn(osv.osv):
 		""" Save FTP connection parameters from ir.values to self """
 		self._host = self._get_config(cr, 'ads_host') or 'ftp.alpha-d-s.com'
 		self._port = self._get_config(cr, 'ads_port', int) or 21
-		self._user = self._get_config(cr, 'ads_user')
-		self._password = self._get_config(cr, 'ads_password')
+		self._user = self._get_config(cr, 'ads_user') or ''
+		self._password = self._get_config(cr, 'ads_password') or ''
 		self._timeout = self._get_config(cr, 'ads_timeout', int) or 10
 		self._mode = self._get_config(cr, 'ads_mode') or 'test'
 		self._passive = self._get_config(cr, 'ads_passive', bool) or True

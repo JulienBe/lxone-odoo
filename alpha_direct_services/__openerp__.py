@@ -40,7 +40,7 @@ This module uses the PicklingTools library:
 http://www.picklingtools.com/
     """,
     'data': [
-        'data/values.xml',
+        'data/config.xml',
         'data/cron.xml',
     ],
     'installable': True,

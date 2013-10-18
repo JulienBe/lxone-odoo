@@ -20,7 +20,7 @@ class ads_purchase_order(ads_data):
 
 		template = {
 			'NUM_BL': picking.name,
-			'DATE_PREVUE': convert_date(picking.date),
+			'DATE_PREVUE': convert_date(picking.purchase_id.minimum_planned_date),
 			'LIBELLE_FOURN': picking.partner_id.name,
 		}
 
@@ -31,9 +31,9 @@ class ads_purchase_order(ads_data):
 				code_art_fourn = None
 
 			data = copy(template)
-			data['CODE_ART'] = move.product_id.default_code or move.product_id.code or move.product_id.name
+			data['CODE_ART'] = move.product_id.x_new_ref
 			data['CODE_ART_FOURN'] = code_art_fourn
-			data['QTE_ATTENDUE'] = move.product_uos_qty
+			data['QTE_ATTENDUE'] = move.product_qty
 			self.insert_data('COMMANDEFOURNISSEUR', data)
 
 	def process(self, pool, cr):

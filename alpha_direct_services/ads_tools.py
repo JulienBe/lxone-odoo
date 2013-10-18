@@ -1,5 +1,7 @@
 from datetime import datetime
 
+ads_date_format = '%Y%m%d'
+
 def is_number(s):
 	""" Returns True if string is castable to float """
 	try:
@@ -14,4 +16,7 @@ def is_alphanumeric(s):
 	return all(c in ascii_letters + '-_' + digits for c in 'testthis1-_string2233')
 
 def convert_date(d):
-	return datetime.strptime(d, '%Y-%m-%d %H:%M:%S').strftime('%Y%m%d')
+	if len(d) == 10:
+		return datetime.strptime(d, '%Y-%m-%d').strftime(ads_date_format)
+	else:
+		return datetime.strptime(d, '%Y-%m-%d %H:%M:%S').strftime(ads_date_format)
