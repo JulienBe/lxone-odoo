@@ -6,7 +6,9 @@ from ads_purchase_order import ads_purchase_order
 
 def upload_po_picking(pool, cr, uid, picking_id, context=None):
     """
-    Extract a picking into an ads_purchase_order then upload to server.
+    Extract and upload products from a pickings move_lines, then
+    extract and upload the picking to the server.
+
     Any exceptions will be raised to the level above. If no exceptions, it
     can be assumed that the process was successful. If the picking
     is already marked as ads_sent it will be ignored and this method will
@@ -15,10 +17,13 @@ def upload_po_picking(pool, cr, uid, picking_id, context=None):
     picking = pool.get('stock.picking').browse(cr, uid, picking_id, context=context)
     if picking.ads_sent:
         return
+
+    # upload products first
+    for move in picking.move_lines:
+        pool.get('product.product').ads_upload(cr, uid, move.product_id.id, context=context)
     
-    data = ads_purchase_order()
-    data.extract_picking_in(picking)
-    pool.get('ads.connection').connect(cr).upload_data(data)
+    data = ads_purchase_order(picking)
+    data.upload(cr, pool.get('ads.connection'))
 
 class stock_picking(osv.osv):
     """
@@ -43,9 +48,10 @@ class stock_picking(osv.osv):
             if 'state' in values and values['state'] == 'assigned':
                 vals = {}
                 try:
-                    self._ads_process(cr, uid, picking_id, context)
+                    upload_po_picking(self.pool, cr, uid, picking_id, context)
                     vals['ads_sent'] = True
-                except Exception, e:
+                    vals['ads_result'] = ''
+                except self.pool.get('ads.connection').connect_exceptions as e:
                     vals['ads_sent'] = False
                     vals['ads_result'] = str(e)
                 super(stock_picking, self).write(cr, uid, picking_id, vals, context=context)
@@ -70,7 +76,8 @@ class stock_picking(osv.osv):
                 try:
                     upload_po_picking(self.pool, cr, uid, picking_id, context=context)
                     vals['ads_sent'] = True
-                except Exception, e:
+                    vals['ads_result'] = ''
+                except self.pool.get('ads.connection').connect_exceptions as e:
                     vals['ads_sent'] = False
                     vals['ads_result'] = str(e)
                 super(stock_picking, self).write(cr, uid, picking_id, vals, context=context)

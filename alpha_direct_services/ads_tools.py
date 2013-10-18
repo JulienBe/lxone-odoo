@@ -20,3 +20,6 @@ def convert_date(d):
 		return datetime.strptime(d, '%Y-%m-%d').strftime(ads_date_format)
 	else:
 		return datetime.strptime(d, '%Y-%m-%d %H:%M:%S').strftime(ads_date_format)
+
+def parse_date(d):
+	return datetime.strptime(d, '%Y-%m-%d %H:%M:%S')

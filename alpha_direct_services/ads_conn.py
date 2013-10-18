@@ -1,13 +1,19 @@
 #!/usr/bin/python
 
 from openerp.osv import osv, fields
+from openerp.tools.translate import _
 
 from ftplib import FTP
+from ftplib import error_reply, error_temp, error_perm, error_proto
+import socket
 import StringIO
+import time
 
 from ads_data import ads_data
 from ads_purchase_order import ads_purchase_order
 from ads_sales_order import ads_sales_order
+from ads_stock_move import ads_stock_move
+from ads_product import ads_product
 from ads_return import ads_return
 
 class ads_conn(osv.osv):
@@ -25,6 +31,8 @@ class ads_conn(osv.osv):
 	_conn = None
 	_vers_ads = 'VersADS'
 	_vers_client = None
+	
+	connect_exceptions = (socket.error, IOError, error_reply, error_temp, error_perm, error_proto)
 
 	@property
 	def _connected(self):
@@ -57,8 +65,17 @@ class ads_conn(osv.osv):
 		self._timeout = self._get_config(cr, 'ads_timeout', int) or 10
 		self._mode = self._get_config(cr, 'ads_mode') or 'test'
 		self._passive = self._get_config(cr, 'ads_passive', bool) or True
+		
+		message = _("Please check your ADS configuration settings in Settings -> Parameters -> System Parameters for the field '%s'")
 
-		assert self._mode in ['prod', 'test'], 'Mode must be either "prod" or "test"'
+		if not self._mode in ['prod', 'test']:
+			raise osv.except_osv(_('Config Error'), _('Please check your ADS configuration settings in Settings -> Parameters -> System Parameters. Mode must be either "prod" or "test".'))
+		if not self._host:
+			raise osv.except_osv(_('Config Error'), message % 'host')
+		if not self._user:
+			raise osv.except_osv(_('Config Error'), message % 'user')
+		if not self._password:
+			raise osv.except_osv(_('Config Error'), message % 'password')
 
 	def connect(self, cr):
 		""" Sets up a connection to the ADS FTP server """
@@ -98,6 +115,8 @@ class ads_conn(osv.osv):
 			return self._conn.nlst()
 
 	def cd(self, dirname):
+		if not dirname:
+			return False
 		self._conn.cwd(dirname)
 
 	def delete(self, filename):
@@ -105,7 +124,8 @@ class ads_conn(osv.osv):
 
 	def upload_data(self, data):
 		"""
-		Takes an ads_data object and creates an XML file then uploads it to FTP server
+		Takes an ads_data object and creates an XML file then uploads it to FTP server.
+		If a file with the generated name() already exists, pause 1 second and try again.
 		@param ads_data data: Contains data to be written to the file
 		"""
 		assert isinstance(data, ads_data), 'data parameter must extend ads_data class'
@@ -113,7 +133,12 @@ class ads_conn(osv.osv):
 
 		xml_buffer = data.generate_xml()
 		self.cd(self._vers_ads)
-		self._conn.storlines('STOR %s' % data.name(), xml_buffer)
+		while True:
+			if data.name() not in self.ls():
+				self._conn.storlines('STOR %s' % data.name(), xml_buffer)
+				break
+			else:
+				time.sleep(1)
 		self.cd('..')
 
 	def poll(self, cr, uid):
@@ -140,6 +165,7 @@ class ads_conn(osv.osv):
 						self.delete(file_name)
 					cr and cr.commit()
 				else:
+					self.cd('..')
 					raise TypeError('Could not find subclass of ads_data with data_type %s' % data_type)
 
 		self.cd('..')

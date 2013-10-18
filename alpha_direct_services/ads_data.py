@@ -6,13 +6,15 @@ from lxml import etree
 import re
 from datetime import datetime
 
+from openerp.osv.orm import browse_record
+
 from picklingtools.xmldumper import *
 from picklingtools import xml2dict
 from auto_vivification import AutoVivification
 
 class ads_data(object):
 	"""
-	Interface between OpenERP dict data and ADS XML data. Designed to be inherited
+	Serialization interface between python dicts and ADS XML. Designed to be inherited
 	so you can implement your own data input and output functions that build
 	the self.data AutoVivification object (See ads_order class for an example).
 	Don't forget to set the data_type and xml_root variables to define the file name 
@@ -26,14 +28,17 @@ class ads_data(object):
 	into the constructor.
 	"""
 	
-	def __init__(self, xml=None):
+	def __init__(self, data=None):
 		super(ads_data, self).__init__()
 		self.data = AutoVivification()
 		
-		if xml:
-			assert isinstance(xml, (str, unicode)), 'XML must be string or unicode'
-			self.data = xml2dict.ConvertFromXML(xml)
+		if data and isinstance(data, (str, unicode)):
+			self.data = xml2dict.ConvertFromXML(data)
 			self.data = AutoVivification.dict_to_auto_vivification(self.data)
+		elif data and isinstance(data, browse_record):
+			self.extract(data)
+		elif data:
+			raise TypeError('XML must be a string, unicode or AutoVivification object')
 	
 	data_type = None
 	xml_root = None
@@ -58,13 +63,15 @@ class ads_data(object):
 		# have we already saved data to this key? If yes, convert it to a list
 		# of dictionaries and add a second one 
 		if isinstance(target, AutoVivification) and len(target) != 0:
-			autoviv = True
+			autoviv = False
 			parent[target_key] = [target]
 			target = parent[target_key]
-		else:
+		elif isinstance(target, list):
 			autoviv = False
+		else:
+			autoviv = True
 		
-		if not autoviv:
+		if autoviv:
 			# add data to the empty dict like normal
 			for param_name in params:
 				param_value = params[param_name]
@@ -96,6 +103,24 @@ class ads_data(object):
 		output.seek(0)
 		return output
 
+	def upload(self, cr, ads_conn):
+		"""
+		Upload this object to ADS
+		@param ads_conn ads_conn: the ads.connection object from the OpenERP pool
+		"""
+		ads_conn.connect(cr).upload_data(self)
+
+	def extract(self, record):
+		"""
+		Called by the constructor when given a browse_record. This method should
+		extract the browse_record's data into the self.data object.
+
+		This method is a stub that you have to implement in an inheriting model.
+		@record browse_record record: browse_record from which to extract data
+		@return self: allow for chaining
+		"""
+		raise NotImplemented('Please implement this method in your inherited model')
+
 	def process(self, pool, cr):
 		""" 
 		Called when an XML file is downloaded from the ADS server. Override this method to
@@ -104,4 +129,4 @@ class ads_data(object):
 		@param cr: OpenERP database cursor
 		@returns True if successful. If True, the xml file on the FTP server will be deleted.
 		"""
-		raise NotImplementedError('This method must be implemented in a subclass')
+		raise NotImplemented('Please implement this method in your inherited model')

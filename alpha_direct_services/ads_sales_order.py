@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 from ads_data import ads_data
 from datetime import datetime
 from ads_tools import convert_date
@@ -9,14 +8,14 @@ class ads_sales_order(ads_data):
 	data_type = 'ORDER'
 	xml_root = 'orders'
 
-	def extract_picking_out(self, picking):
+	def extract(self, picking):
 		"""
 		Takes a stock.picking.out browse_record and extracts the
 		appropriate data into self.data
 
 		@param picking: browse_record(stock.picking.in)
 		"""
-		pass
+		return self
 
 	def process(self, pool, cr):
 		"""

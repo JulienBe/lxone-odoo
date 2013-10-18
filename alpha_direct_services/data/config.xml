@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data>
+    <data noupdate="1">
 
         <record model="ir.config_parameter" id="ir_config_parameter_ad_host">
             <field name="key">ads_host</field>

@@ -17,7 +17,7 @@ def upload_so_picking(pool, cr, uid, picking_id, context=None):
         return
     
     data = ads_sales_order()
-    data.extract_picking_in(picking)
+    data.extract(picking)
     pool.get('ads.connection').connect(cr).upload_data(data)
 
 class stock_picking(osv.osv):

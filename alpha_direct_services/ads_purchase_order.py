@@ -10,7 +10,7 @@ class ads_purchase_order(ads_data):
 	data_type = 'FOUR'
 	xml_root = 'COMMANDEFOURNISSEURS'
 
-	def extract_picking_in(self, picking):
+	def extract(self, picking):
 		"""
 		Takes a stock.picking.in browse_record and extracts the
 		appropriate data into self.data
@@ -35,6 +35,8 @@ class ads_purchase_order(ads_data):
 			data['CODE_ART_FOURN'] = code_art_fourn
 			data['QTE_ATTENDUE'] = move.product_qty
 			self.insert_data('COMMANDEFOURNISSEUR', data)
+
+		return self
 
 	def process(self, pool, cr):
 		"""
