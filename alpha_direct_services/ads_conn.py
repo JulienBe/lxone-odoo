@@ -160,12 +160,15 @@ class ads_conn(osv.osv):
 					file_data = StringIO.StringIO()
 					self._conn.retrbinary('RETR %s' % file_name, file_data.write)
 					data = class_for_type[0](file_data.getvalue())
-					res = data.process(cr, uid)
+					res = data.process(self.pool, cr)
 					if res:
 						self.delete(file_name)
 					cr and cr.commit()
 				else:
 					self.cd('..')
 					raise TypeError('Could not find subclass of ads_data with data_type %s' % data_type)
-
-		self.cd('..')
+		
+		if self._connected:
+			self.cd('..')
+		else:
+			self.connect(cr)

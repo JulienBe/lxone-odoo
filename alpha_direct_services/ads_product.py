@@ -32,13 +32,3 @@ class ads_product(ads_data):
 		}
 
 		self.insert_data('PRODUCT', product_node)
-
-	def process(self, pool, cr):
-		"""
-		Called when an XML file is downloaded from the ADS server. Override this method to
-		do something with self.data in OpenERP.
-		@param pool: OpenERP object pool
-		@param cr: OpenERP database cursor
-		@returns True if successful. If True, the xml file on the FTP server will be deleted.
-		"""
-		return False
