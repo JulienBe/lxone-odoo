@@ -16,6 +16,8 @@ def is_alphanumeric(s):
 	return all(c in ascii_letters + '-_' + digits for c in 'testthis1-_string2233')
 
 def convert_date(d):
+	if not d:
+		return None
 	if len(d) == 10:
 		return datetime.strptime(d, '%Y-%m-%d').strftime(ads_date_format)
 	else:

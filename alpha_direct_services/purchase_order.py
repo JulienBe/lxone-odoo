@@ -21,20 +21,20 @@ def upload_po_picking(pool, cr, uid, picking_id, context=None):
     # upload products first
     for move in picking.move_lines:
         pool.get('product.product').ads_upload(cr, uid, move.product_id.id, context=context)
-    
+
     data = ads_purchase_order(picking)
     data.upload(cr, pool.get('ads.connection'))
 
 class stock_picking(osv.osv):
     """
-    Inherit the stock.picking object to trigger upload of PO pickings 
+    Inherit the stock.picking object to trigger upload of PO pickings
     """
     _inherit = 'stock.picking'
 
     def create(self, cr, uid, values, context=None):
         """
         Process PO picking to upload to ADS and mark as successful or not.
-        
+
         If picking created with state 'assigned', upload to ADS. If successful,
         set ads_sent to True. Otherwise False, and save exception string in ads_result
         """
@@ -43,7 +43,7 @@ class stock_picking(osv.osv):
         # is this a picking for the PO?
         if 'origin' in values and values['origin'][0:2] == 'PO' \
             and 'name' in values and values['name'][0:2] == 'IN':
-            
+
             # if state is assigned, upload to ADS and set ads_sent and ads_result as appropriate
             if 'state' in values and values['state'] == 'assigned':
                 vals = {}
@@ -69,8 +69,26 @@ class stock_picking(osv.osv):
         If the upload is successful, set ads_sent to true. Otherwise
         set it to false and save the exception message in ads_result.
         """
-        # if state is assigned, for each target picking, upload and set results
-        if 'state' in values and values['state'] == 'assigned':
+
+        def check_state(values):
+            """ Make sure we are changing the state to assigned """
+            if 'state' in values and values['state'] == 'assigned':
+                return True
+            else:
+                return False
+
+        def check_origin(obj, cr, ids):
+            """ Make sure all pickings in the write have origin SO* """
+            pickings = obj.browse(cr, 1, ids, context=context)
+            if len([picking for picking in pickings if picking.origin[0:2] != 'PO']):
+                return False
+            else:
+                return True
+
+        # if state is assigned and origin is SO
+        if check_state(values) and check_origin(self, cr, ids):
+
+            # for each target picking, upload and set results
             for picking_id in ids:
                 vals = copy(values)
                 try:
@@ -89,7 +107,7 @@ class stock_picking(osv.osv):
 class stock_picking_in(osv.osv):
 
     _inherit = 'stock.picking.in'
-    
+
     def create(self, cr, uid, values, context=None):
         return super(stock_picking_in, self).create(cr, uid, values, context=context)
 

@@ -11,9 +11,9 @@ class product_product(osv.osv):
     _inherit = 'product.product'
     _columns = {
         'ads_sent': fields.boolean('Sent to ADS?'),
-        'ads_sent_date': fields.date('ADS Sent Date', help="The date at which this product was sent to ADS. If blank it has never been sent"),
+        'ads_sent_date': fields.datetime('ADS Sent Date', help="The date at which this product was sent to ADS. If blank it has never been sent"),
         'ads_result': fields.text('Results of send to ADS'),
-        'ads_last_modified': fields.date('The date this object was last modified'),
+        'ads_last_modified': fields.datetime('The date this object was last modified'),
     }
 
     def write(self, cr, uid, ids, values, context=None):
