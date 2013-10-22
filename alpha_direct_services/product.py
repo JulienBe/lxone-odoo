@@ -18,7 +18,8 @@ class product_product(osv.osv):
 
     def write(self, cr, uid, ids, values, context=None):
         """ Keep track of when products are modified so they can be re-uploaded """
-        values['ads_last_modified'] = datetime.now()
+        if not [field for field in ['ads_result', 'ads_sent', 'ads_sent_date'] if field in values]:
+            values['ads_last_modified'] = datetime.now()
         return super(product_product, self).write(cr, uid, ids, values, context=context)
 
     def ads_upload(self, cr, uid, ids, context=None):
@@ -28,7 +29,7 @@ class product_product(osv.osv):
         
         for product_id in ids:
             product = self.browse(cr, uid, product_id, context=context)
-            if not product.ads_sent or parse_date(product.ads_sent_date) < datetime.now():
+            if not product.ads_sent or parse_date(product.ads_sent_date) < parse_date(product.ads_last_modified):
                 try:
                     data = ads_product(product)
                     data.upload(cr, self.pool.get('ads.connection'))

@@ -3,21 +3,27 @@ from copy import copy
 from openerp.osv import osv, fields
 from ads_sales_order import ads_sales_order
 
-def upload_so_picking(pool, cr, uid, picking_id, context=None):
+def upload_so_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=None):
     """
     Extract a picking into an ads_sales_order then upload to server.
-    Any exceptions will be raised to the level above. If no exceptions, it
-    can be assumed that the process was successful. If the picking
-    is already marked as ads_sent it will be ignored and this method will
-    return None.
+    If there is an exception, it will be written to the ads_result field. Otherwise
+    ads_sent will be marked as True.
     """
-    picking = pool.get('stock.picking').browse(cr, uid, picking_id, context=context)
-    if picking.ads_sent:
-        return
-    
-    data = ads_sales_order()
-    data.extract(picking)
-    pool.get('ads.connection').connect(cr).upload_data(data)
+    try:
+        picking = stock_picking_obj.pool.get('stock.picking').browse(cr, uid, picking_id, context=context)
+        if picking.ads_sent:
+            return
+        
+        data = ads_sales_order()
+        data.extract(picking)
+        stock_picking_obj.pool.get('ads.connection').connect(cr).upload_data(data)
+        
+        vals['ads_sent'] = True
+        vals['ads_result'] = ''
+    except stock_picking_obj.pool.get('ads.connection').connect_exceptions as e:
+        vals['ads_sent'] = False
+        vals['ads_result'] = str(e)
+    super(stock_picking, stock_picking_obj).write(cr, uid, picking_id, vals, context=context)
 
 class stock_picking(osv.osv):
     """
@@ -36,15 +42,7 @@ class stock_picking(osv.osv):
 
             # if state is assigned, upload to ADS and set ads_sent and ads_result as appropriate
             if 'state' in values and values['state'] == 'assigned':
-                vals = {}
-                try:
-                    upload_so_picking(self.pool, cr, uid, picking_id, context)
-                    vals['ads_sent'] = True
-                    vals['ads_result'] = ''
-                except self.pool.get('ads.connection').connect_exceptions as e:
-                    vals['ads_sent'] = False
-                    vals['ads_result'] = str(e)
-                super(stock_picking, self).write(cr, uid, picking_id, vals, context=context)
+                upload_so_picking(self, cr, uid, picking_id, context=context)
                 return picking_id
             else:
                 # otherwise return id like normal
@@ -59,6 +57,10 @@ class stock_picking(osv.osv):
         If the upload is successful, set ads_sent to true. Otherwise
         set it to false and save the exception message in ads_result.
         """
+        
+        if not hasattr(ids, '__iter__'):
+            ids = [ids]
+        
         def check_state(values):
             """ Make sure we are changing the state to assigned """
             if 'state' in values and values['state'] == 'assigned':
@@ -76,15 +78,7 @@ class stock_picking(osv.osv):
 
             # for each target picking, upload and set results
             for picking_id in ids:
-                vals = copy(values)
-                try:
-                    upload_so_picking(self.pool, cr, uid, picking_id, context=context)
-                    vals['ads_sent'] = True
-                    vals['ads_result'] = ''
-                except self.pool.get('ads.connection').connect_exceptions as e:
-                    vals['ads_sent'] = False
-                    vals['ads_result'] = str(e)
-                super(stock_picking, self).write(cr, uid, picking_id, vals, context=context)
+                upload_so_picking(self, cr, uid, picking_id, copy(values), context=context)
             return True
         else:
             # otherwise return from write like normal
