@@ -14,6 +14,10 @@ def upload_so_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=N
         if picking.ads_sent:
             return
         
+        # upload products first
+        for move in picking.move_lines:
+            stock_picking_obj.pool.get('product.product').ads_upload(cr, uid, move.product_id.id, context=context)
+        
         data = ads_sales_order()
         data.extract(picking)
         stock_picking_obj.pool.get('ads.connection').connect(cr).upload_data(data)
