@@ -77,16 +77,13 @@ class stock_picking(osv.osv):
             else:
                 return False
 
-        def check_origin(obj, cr, ids):
+        def check_type(obj, cr, ids):
             """ Make sure all pickings in the write have origin SO* """
             pickings = obj.browse(cr, 1, ids, context=context)
-            if len([picking for picking in pickings if picking.origin[0:2] != 'PO']):
-                return False
-            else:
-                return True
+            return bool([picking for picking in pickings if picking.type.lower() == 'in'])
 
         # if state is assigned and origin is SO
-        if check_state(values) and check_origin(self, cr, ids):
+        if check_state(values) and check_type(self, cr, ids):
 
             # for each target picking, upload and set results
             for picking_id in ids:
