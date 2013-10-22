@@ -15,7 +15,7 @@ class ads_product(ads_data):
 
 		@param browse_record(product.product) product: the stock product browse record object
 		"""
-		
+
 		product_node = {
 			'CODE_ART': product.x_new_ref,
 			'LIB_LONG': product.name or '',
