@@ -24,7 +24,11 @@ def convert_date(d):
 		return datetime.strptime(d, '%Y-%m-%d %H:%M:%S').strftime(ads_date_format)
 
 def parse_date(d):
+	if not d:
+		return None
 	if len(d) > 19:
 		return datetime.strptime(d, '%Y-%m-%d %H:%M:%S.%f')
-	else:
+	elif len(d) > 8:
 		return datetime.strptime(d, '%Y-%m-%d %H:%M:%S')
+	else:
+		return datetime.strptime(d, '%Y%m%d')
