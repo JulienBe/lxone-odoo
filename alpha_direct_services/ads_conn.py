@@ -153,10 +153,10 @@ class ads_conn(osv.osv):
 		try:
 			for file_name in files:
 				# get type from file name
-				data_type = file_name.split('-', 1)[0]
+				file_prefix = file_name.split('-', 1)[0]
 				
 				# find ads_data subclass with matching type
-				class_for_type = [cls for cls in ads_data.__subclasses__() if cls.data_type == data_type]
+				class_for_type = [cls for cls in ads_data.__subclasses__() if file_prefix in cls.file_name_prefix]
 				
 				if class_for_type:
 					# download the XML contents of the file
@@ -174,7 +174,7 @@ class ads_conn(osv.osv):
 						self.delete(file_name)
 					cr and cr.commit()
 				else:
-					raise TypeError('Could not find subclass of ads_data with data_type %s' % data_type)
+					raise TypeError('Could not find subclass of ads_data with file_name_prefix %s' % file_prefix)
 		finally:
 			if self._connected:
 				self.cd('..')

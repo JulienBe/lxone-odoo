@@ -10,7 +10,7 @@ from ads_data import ads_data
 from ads_tools import ads_date_format
 
 class ads_stock_move(ads_data):
-    data_type = 'MVTS'
+    file_name_prefix = ['MVTS']
     xml_root = 'adsxml'
 
     def _extract_data(self):

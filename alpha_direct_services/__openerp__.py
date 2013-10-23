@@ -26,7 +26,7 @@
     'author' : 'OpenERP SA',
     'website' : 'http://www.openerp.com',
     'category' : 'Tools',
-    'depends' : ['base', 'product', 'stock', 'sale', 'purchase'],
+    'depends' : ['base', 'product', 'stock', 'sale', 'purchase', 'delivery'],
     'description': """
 Connect OpenERP with Alpha Direct Services API
 ==============================================

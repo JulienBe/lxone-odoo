@@ -26,10 +26,26 @@ class product_product(osv.osv):
         """ Upload product if ads_sent is false, or ads_sent_date < datetime.now() """
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
+            
+        def need_to_upload(product):
+            """ 
+            Returns True if we need to upload the product because it has not yet
+            been uploaded or has been modified since the last upload 
+            """
+            if product.ads_sent:
+                if product.ads_sent_date and product.ads_last_modified:
+                    if parse_date(product.ads_sent_date) < parse_date(product.ads_last_modified):
+                        return True
+                    else:
+                        return False
+                else:
+                    return False
+            else:
+                return True
         
         for product_id in ids:
             product = self.browse(cr, uid, product_id, context=context)
-            if not product.ads_sent or parse_date(product.ads_sent_date) < parse_date(product.ads_last_modified):
+            if need_to_upload(product):
                 try:
                     data = ads_product(product)
                     data.upload(cr, self.pool.get('ads.connection'))

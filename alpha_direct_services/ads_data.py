@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import sys
 import StringIO
 from lxml import etree
@@ -17,7 +15,7 @@ class ads_data(object):
 	Serialization interface between python dicts and ADS XML. Designed to be inherited
 	so you can implement your own data input and output functions that build
 	the self.data AutoVivification object (See ads_order class for an example).
-	Don't forget to set the data_type and xml_root variables to define the file name
+	Don't forget to set the file_name_prefix and xml_root variables to define the file name
 	prefix and xml file root element name.
 
 	After building the self.data dict, parse this object to the upload_data function
@@ -40,7 +38,7 @@ class ads_data(object):
 		elif data:
 			raise TypeError('XML must be a string, unicode or AutoVivification object')
 
-	data_type = None
+	file_name_prefix = []
 	xml_root = None
 
 	def insert_data(self, insert_target, params):
@@ -91,8 +89,8 @@ class ads_data(object):
 
 	def name(self):
 		""" Generate a name for the uploaded xml file """
-		assert self.data_type, 'The self.data_type variable must be set in your inheriting class'
-		return '%s-%s.xml' % (self.data_type, datetime.today().strftime('%Y%m%d-%H%M%S'))
+		assert self.file_name_prefix, 'The self.file_name_prefix variable must be set in your inheriting class'
+		return '%s-%s.xml' % (self.file_name_prefix[0], datetime.today().strftime('%Y%m%d-%H%M%S'))
 
 	def generate_xml(self):
 		""" Returns a StringIO containing an XML representation of self.data nested dict """

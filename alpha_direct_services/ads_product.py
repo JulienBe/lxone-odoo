@@ -5,7 +5,7 @@ from ads_data import ads_data
 
 class ads_product(ads_data):
 
-	data_type = 'ARTI'
+	file_name_prefix = ['ARTI']
 	xml_root = 'flux_art'
 
 	def extract(self, product):

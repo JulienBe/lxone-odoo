@@ -1,12 +1,25 @@
 from copy import copy
 
+import logging
+_logger = logging.getLogger(__name__)
+
 from ads_data import ads_data
 from ads_tools import convert_date
 
 class ads_sales_order(ads_data):
 
-	data_type = 'CMDE'
+	file_name_prefix = ['CMDE', 'CREX']
 	xml_root = 'orders'
+	
+	carrier_mapping = {
+		'Lettre Max': '1',
+		'Mondial Relay': '2',
+		'Colissimo access - expert - international': '3',
+		'Chronopost': '4',
+		'EXAPAQ': '5',
+		'GEODIS CALBERSON': '6',
+		'DHL': '7'
+	}
 
 	def extract(self, picking):
 		"""
@@ -17,6 +30,11 @@ class ads_sales_order(ads_data):
 		"""
 		shipping_partner = picking.sale_id.partner_shipping_id
 		invoice_partner = picking.sale_id.partner_invoice_id
+		carrier_name = picking.sale_id.carrier_id and picking.sale_id.carrier_id.name
+		carrier_name = carrier_name and carrier_name in self.carrier_mapping and self.carrier_mapping[carrier_name] or ''
+		
+		if not carrier_name:
+			_logger.warn('Could not map carrier %s to a valid value' % picking.sale_id.carrier_id.name)
 		
 		self.insert_data('order', {
 			# general
@@ -25,6 +43,7 @@ class ads_sales_order(ads_data):
 			'DATE_EDITION': convert_date(picking.date),
 			'MONTANT_TOTAL_TTC': picking.sale_id.amount_total,
 			'DATE_ECHEANCE': convert_date(picking.min_date),
+			'TYPE_ENVOI': carrier_name, 
 
 			# invoice_partner address and contact
 			'SOCIETE_FAC': invoice_partner.is_company and invoice_partner.name or '',
@@ -64,3 +83,12 @@ class ads_sales_order(ads_data):
 			line_seq += 1
 
 		return self
+
+	def process(self, pool, cr):
+		"""
+		Receive sales orders in a CREX file
+		@param pool: OpenERP object pool
+		@param cr: OpenERP database cursor
+		@returns True if successful. If True, the xml file on the FTP server will be deleted.
+		"""
+		pass

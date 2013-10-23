@@ -7,7 +7,7 @@ from ads_tools import convert_date
 
 class ads_purchase_order(ads_data):
 
-	data_type = 'FOUR'
+	file_name_prefix = ['FOUR']
 	xml_root = 'COMMANDEFOURNISSEURS'
 
 	def extract(self, picking):
