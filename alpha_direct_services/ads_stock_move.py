@@ -26,18 +26,23 @@ class ads_stock_move(ads_data):
         for move in self.data['MvtStk']:
 
             # extract data from self.data into move_data dict
-            if not 'TYPEMVT' in move:
-                _logger.warn(_('A move has been skipped because it was missing the TYPEMVT field: %s' % move))
+            if not all([field in move for field in ['TYPEMVT', 'CODEMVT', 'NUMBL', 'CODE_ART', 'QTE']]):
+                _logger.warn(_('A move has been skipped because it was missing a required field: %s' % move))
+                continue
 
-            move_date = 'DATEMVT' in move and move['DATEMVT'] or None
-            product_code = 'CODE_ART' in move and move['CODE_ART'] or None
-            quantity = 'QTE' in move and move['QTE'] or None
-            picking_name = 'NUMBL' in move and move['NUMBL'] or None
+            picking_name = move['NUMBL']
+            move_code = move['CODEMVT']
             move_type = move['TYPEMVT']
             move_type = move_type == 'E' and 'IN' or 'OUT'
+            
+            product_code = move['CODE_ART']
+            quantity = move['QTE']
+            move_date = 'DATEMVT' in move and move['DATEMVT']
 
-            move_data[move_type][picking_name][product_code]['quantity'] = quantity
-            move_data[move_type][picking_name][product_code]['date'] = move_date
+            # only extract PO IN's
+            if picking_name and move_type == 'IN' and move_code == 'REC':
+                move_data[move_type][picking_name][product_code]['quantity'] = quantity
+                move_data[move_type][picking_name][product_code]['date'] = move_date
 
         return move_data
     
