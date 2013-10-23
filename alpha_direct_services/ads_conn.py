@@ -142,33 +142,42 @@ class ads_conn(osv.osv):
 		self.cd('..')
 
 	def poll(self, cr, uid):
-		"""	Poll the FTP server to parse and then delete any data files	"""
+		"""	Poll the FTP server to parse, process and then delete any data files """
 		if not self._connected:
 			self.connect(cr)
 
 		# get file list from VersADS
 		self.cd(self._vers_client)
 		files = self.ls()
-
-		if files:
+		
+		try:
 			for file_name in files:
-				# get type prefix from file name, then find ads_data subclass with matching
-				# type. Instantiate said class with XML as parameter to parse into dict
+				# get type from file name
 				data_type = file_name.split('-', 1)[0]
+				
+				# find ads_data subclass with matching type
 				class_for_type = [cls for cls in ads_data.__subclasses__() if cls.data_type == data_type]
+				
 				if class_for_type:
+					# download the XML contents of the file
 					file_data = StringIO.StringIO()
 					self._conn.retrbinary('RETR %s' % file_name, file_data.write)
+					
+					# instantiate found subclass with XML as parameter to parse it into self.data
 					data = class_for_type[0](file_data.getvalue())
+					
+					# trigger process to import into OpenERP
 					res = data.process(self.pool, cr)
+					
+					# if process returns True, delete the file from the FTP server
 					if res:
 						self.delete(file_name)
 					cr and cr.commit()
 				else:
-					self.cd('..')
 					raise TypeError('Could not find subclass of ads_data with data_type %s' % data_type)
-		
-		if self._connected:
-			self.cd('..')
-		else:
-			self.connect(cr)
+		finally:
+			if self._connected:
+				self.cd('..')
+			else:
+				self.connect(cr)
+		return True
