@@ -1,5 +1,3 @@
-from copy import copy
-
 import logging
 _logger = logging.getLogger(__name__)
 from datetime import datetime
@@ -98,15 +96,14 @@ class ads_sales_order(ads_data):
 
         for expedition in self.data['Expedition']:
             # extract information
-            if not all([field in expedition for field in ['NUM_FACTURE_BL', 'NUM_CMDE', 'STATUT']]):
+            if not all([field in expedition for field in ['NUM_FACTURE_BL', 'STATUT']]):
                 _logger.warn(_('An expedition has been skipped because it was missing a required field: %s' % expedition))
                 continue
 
             picking_name = expedition['NUM_FACTURE_BL']
-            sales_order_name = expedition['NUM_CMDE']
             status = expedition['STATUT']
-            send_date = 'DATE_EXPED' in expedition and expedition['DATE_EXPED'] and parse_date(expedition['DATE_EXPED'])
-            send_date = send_date or datetime.now()
+            tracking_number = 'NUM_TRACKING' in expedition and expedition['NUM_TRACKING'] or ''
+            send_date = 'DATE_EXPED' in expedition and expedition['DATE_EXPED'] and parse_date(expedition['DATE_EXPED']) or datetime.now()
 
             # ignore all but sent
             if status != 'E':
@@ -116,6 +113,9 @@ class ads_sales_order(ads_data):
             picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name)])
             assert len(picking_ids) == 1, 'Should have found exactly 1 picking with name %s' % picking_name
             picking_id, = picking_ids
+            
+            # update OUT with tracking_number
+            picking_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
 
             # create wizard and process delivery
             context = {
@@ -125,7 +125,6 @@ class ads_sales_order(ads_data):
             }
             wizard_obj = pool.get('stock.partial.picking')
             wizard_id = wizard_obj.create(cr, 1, {'date': send_date}, context=context)
-            wizard = wizard_obj.browse(cr, 1, wizard_id)
             wizard_obj.do_partial(cr, 1, [wizard_id])
 
         return True

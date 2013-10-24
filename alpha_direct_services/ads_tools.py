@@ -26,6 +26,7 @@ def convert_date(d):
 def parse_date(d):
 	if not d:
 		return None
+	d = str(d)
 	if len(d) > 19:
 		return datetime.strptime(d, '%Y-%m-%d %H:%M:%S.%f')
 	elif len(d) > 8:
