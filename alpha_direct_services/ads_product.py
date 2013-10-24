@@ -17,7 +17,7 @@ class ads_product(ads_data):
 		"""
 
 		product_node = {
-			'CODE_ART': product.x_new_ref,
+			'CODE_ART': product.ean13,
 			'LIB_LONG': product.name or '',
 			'TYPE_ART': product.type or '',
 			'CAT_ART': 'PRO',

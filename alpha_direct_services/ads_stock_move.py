@@ -34,7 +34,7 @@ class ads_stock_move(ads_data):
             move_code = move['CODEMVT']
             move_type = move['TYPEMVT']
             move_type = move_type == 'E' and 'IN' or 'OUT'
-            
+
             product_code = move['CODE_ART']
             quantity = move['QTE']
             move_date = 'DATEMVT' in move and move['DATEMVT']
@@ -45,7 +45,7 @@ class ads_stock_move(ads_data):
                 move_data[move_type][picking_name][product_code]['date'] = move_date
 
         return move_data
-    
+
     def _find_picking(self, pool, cr, picking_name):
         """
         Find's the most recent picking for an order. This will be the original picking
@@ -55,20 +55,20 @@ class ads_stock_move(ads_data):
         picking_obj = pool.get('stock.picking')
         picking = None
         backorder_ids = picking_obj.search(cr, 1, [('backorder_id', '=', picking_name)])
-        
+
         while(backorder_ids):
             picking = picking_obj.browse(cr, 1, backorder_ids[0])
             backorder_ids = picking_obj.search(cr, 1, [('backorder_id', '=', picking.name)])
-            
+
         if not picking:
             picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name)])
-            picking = picking_obj.browse(cr, 1, picking_ids[0]) 
+            picking = picking_obj.browse(cr, 1, picking_ids[0])
         return picking.id
 
     def _process_picking(self, pool, cr, picking_name, picking_lines, picking_type):
-        """ 
-        Executes the delivery or reception wizard for the appropriate OUT or IN 
-        based on self.data received from ADS 
+        """
+        Executes the delivery or reception wizard for the appropriate OUT or IN
+        based on self.data received from ADS
         @param pool: OpenERP object pool
         @param cursor cr: OpenERP database cursor
         @param str picking_name: Name of the picking to be processed
@@ -87,12 +87,12 @@ class ads_stock_move(ads_data):
         move_date = datetime.now().strftime(ads_date_format)
         for product_code in picking_lines:
             if picking_lines[product_code]['date']:
-                move_date = picking_lines[product_code]['date'] 
+                move_date = picking_lines[product_code]['date']
                 break
 
         # create a wizard record for this picking
         context = {
-            'active_model': 'stock.picking.%s' % picking_type, 
+            'active_model': 'stock.picking.%s' % picking_type,
             'active_ids': [picking_id],
             'active_id': picking_id,
         }
@@ -102,8 +102,8 @@ class ads_stock_move(ads_data):
 
         # For each move line in the wizard set the quantity to that received from ADS or 0
         for move in wizard.move_ids:
-            if move.product_id.x_new_ref in picking_lines:
-                pool.get('stock.partial.picking.line').write(cr, 1, move.id, 
+            if move.product_id.ean13 in picking_lines:
+                pool.get('stock.partial.picking.line').write(cr, 1, move.id,
                         {'quantity': picking_lines[product_code]['quantity']
                 })
             else:
@@ -115,7 +115,7 @@ class ads_stock_move(ads_data):
     def process(self, pool, cr):
         """
         Triggers _process_po or _process_picking to handle the processing of a PO or SO picking.
-        
+
         @param pool: OpenERP object pool
         @param cr: OpenERP database cursor
         @returns True if successful. If True, the xml file on the FTP server will be deleted.

@@ -74,7 +74,7 @@ class ads_sales_order(ads_data):
         for move in picking.move_lines:
             line = {
                 'NUM_FACTURE_BL': picking.name,
-                'CODE_ART': move.product_id.x_new_ref,
+                'CODE_ART': move.product_id.ean13,
                 'LIBELLE_ART': move.product_id.name or '',
                 'QTE': move.product_qty,
                 'OBLIGATOIRE': '1',
@@ -113,7 +113,7 @@ class ads_sales_order(ads_data):
             picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name)])
             assert len(picking_ids) == 1, 'Should have found exactly 1 picking with name %s' % picking_name
             picking_id, = picking_ids
-            
+
             # update OUT with tracking_number
             picking_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
 
