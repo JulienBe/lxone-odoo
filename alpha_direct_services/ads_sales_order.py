@@ -1,6 +1,7 @@
 import logging
 _logger = logging.getLogger(__name__)
 from datetime import datetime
+import time
 
 from auto_vivification import AutoVivification
 from ads_data import ads_data
@@ -103,7 +104,7 @@ class ads_sales_order(ads_data):
             picking_name = expedition['NUM_FACTURE_BL']
             status = expedition['STATUT']
             tracking_number = 'NUM_TRACKING' in expedition and expedition['NUM_TRACKING'] or ''
-            send_date = 'DATE_EXPED' in expedition and expedition['DATE_EXPED'] and parse_date(expedition['DATE_EXPED']) or datetime.now()
+            send_date = 'DATE_EXPED' in expedition and expedition['DATE_EXPED'] and parse_date(expedition['DATE_EXPED']) or time.strftime("%Y%m%d")
 
             # ignore all but sent
             if status != 'E':
