@@ -34,7 +34,7 @@ class ads_sales_order(ads_data):
         carrier_name = picking.sale_id.carrier_id and picking.sale_id.carrier_id.name
         carrier_name = carrier_name and carrier_name in self.carrier_mapping and self.carrier_mapping[carrier_name] or ''
 
-        if not carrier_name:
+        if not picking.sale_id.carrier_id:
             _logger.warn('Could not map carrier %s to a valid value' % picking.sale_id.carrier_id.name)
 
         self.insert_data('order', {

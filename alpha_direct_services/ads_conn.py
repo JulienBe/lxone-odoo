@@ -90,6 +90,7 @@ class ads_conn(osv.osv):
             self._conn.set_pasv(self._passive)
 
         # change directory to self._mode, then save "VersClient" dir name
+        self.cd('/')
         self.cd(self._mode)
         directories = self.ls()
         if len([d for d in directories if d != 'VersADS']) == 1:
