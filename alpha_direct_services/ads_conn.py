@@ -122,6 +122,9 @@ class ads_conn(osv.osv):
 
     def delete(self, filename):
         self._conn.delete(filename)
+        
+    def rename(self, old_name, new_name):
+        self._conn.rename(old_name, new_name)
 
     def upload_data(self, data):
         """
@@ -150,9 +153,12 @@ class ads_conn(osv.osv):
         # get file list from VersADS
         self.cd(self._vers_client)
         files = self.ls()
+        
+        if 'archives' not in files:
+            self._conn.mkd('archives')
 
         try:
-            for file_name in files:
+            for file_name in [file for file in files if '.' in file]:
                 # get type from file name
                 file_prefix = file_name.split('-', 1)[0]
 
@@ -171,11 +177,11 @@ class ads_conn(osv.osv):
                     data = class_for_type[0](file_contents)
 
                     # trigger process to import into OpenERP
-                    can_delete = data.process(self.pool, cr)
+                    can_archive = data.process(self.pool, cr)
 
                     # if process returns True, delete the file from the FTP server
-                    if can_delete:
-                        self.delete(file_name)
+                    if can_archive:
+                        self.rename(file_name, 'archives/%s' % file_name)
                     cr and cr.commit()
                 else:
                     raise TypeError('Could not find subclass of ads_data with file_name_prefix %s' % file_prefix)
