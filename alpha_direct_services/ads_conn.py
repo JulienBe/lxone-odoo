@@ -80,6 +80,7 @@ class ads_conn(osv.osv):
     def connect(self, cr):
         """ Sets up a connection to the ADS FTP server """
         if self._connected:
+            self.cd('/INCONTINENCEPROTECT/%s' % self._mode)
             return self
 
         self._get_ftp_config(cr)
@@ -90,8 +91,7 @@ class ads_conn(osv.osv):
             self._conn.set_pasv(self._passive)
 
         # change directory to self._mode, then save "VersClient" dir name
-        self.cd('/')
-        self.cd(self._mode)
+        self.cd('/INCONTINENCEPROTECT/%s' % self._mode)
         directories = self.ls()
         if len([d for d in directories if d != 'VersADS']) == 1:
             self._vers_client = [d for d in directories if d != 'VersADS'][0]

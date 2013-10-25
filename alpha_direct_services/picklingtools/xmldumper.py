@@ -292,7 +292,7 @@ class XMLDumper(object) :
           t = pretty.NumericString_(was_array_typecode, content)
       elif type_content in [float, complex] :
           t = pretty.NumericString_(typecode[type_content], content)
-      elif type_content == long :
+      elif type_content in [long, int, bool] :
           t = repr(content)
       else :
           t = content

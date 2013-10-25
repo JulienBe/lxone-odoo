@@ -26,7 +26,7 @@ def upload_so_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=N
         vals['ads_result'] = ''
     except stock_picking_obj.pool.get('ads.connection').connect_exceptions as e:
         vals['ads_sent'] = False
-        vals['ads_result'] = str(e)
+        raise e
     super(stock_picking, stock_picking_obj).write(cr, uid, picking_id, vals, context=context)
 
 class stock_picking(osv.osv):

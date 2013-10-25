@@ -23,11 +23,11 @@ class ads_product(ads_data):
 			'CAT_ART': 'PRO',
 			'ART_PHYSIQUE': (product.type != 'service'),
 			'EAN': product.ean13 or '',
-			'DELAIVENTE': product.sale_delay,
-			'LONGUEUR': product.x_depth,
-			'LARGEUR': product.x_width,
-			'HAUTEUR': product.x_height,
-			'POIDS': product.weight_net,
+			'DELAIVENTE': product.sale_delay or 0,
+			'LONGUEUR': product.x_depth or 0,
+			'LARGEUR': product.x_width or 0,
+			'HAUTEUR': product.x_height or 0,
+			'POIDS': product.weight_net or 0,
 			'URL': product.x_url or '',
 		}
 
