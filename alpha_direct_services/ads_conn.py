@@ -167,7 +167,8 @@ class ads_conn(osv.osv):
                     self._conn.retrbinary('RETR %s' % file_name, file_data.write)
 
                     # instantiate found subclass with XML as parameter to parse it into self.data
-                    data = class_for_type[0](file_data.getvalue())
+                    file_contents = file_data.getvalue().decode("utf-8-sig").encode("utf-8")
+                    data = class_for_type[0](file_contents)
 
                     # trigger process to import into OpenERP
                     can_delete = data.process(self.pool, cr)
