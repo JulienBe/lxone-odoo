@@ -35,7 +35,7 @@ class ads_stock_move(ads_data):
             move_type = move['TYPEMVT']
             move_type = move_type == 'E' and 'IN' or 'OUT'
 
-            product_code = move['CODE_ART']
+            product_code = str(move['CODE_ART'])
             quantity = move['QTE']
             move_date = 'DATEMVT' in move and move['DATEMVT']
 
