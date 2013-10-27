@@ -22,8 +22,9 @@ class ads_stock_move(ads_data):
         }
         """
         move_data = AutoVivification()
+        root_key = self.data.keys()[0]
 
-        for move in self.data['MvtStk']:
+        for move in self.data[root_key]:
 
             # extract data from self.data into move_data dict
             if not all([field in move for field in ['TYPEMVT', 'CODEMVT', 'NUMBL', 'CODE_ART', 'QTE']]):
@@ -120,12 +121,13 @@ class ads_stock_move(ads_data):
         @param cr: OpenERP database cursor
         @returns True if successful. If True, the xml file on the FTP server will be deleted.
         """
-        # Some data validation
-        if 'MvtStk' not in self.data:
+        if not self.data:
             return True
 
-        if isinstance(self.data['MvtStk'], AutoVivification):
-            self.data['MvtStk'] = [self.data['MvtStk']]
+        root_key = self.data.keys()[0]
+
+        if isinstance(self.data[root_key], AutoVivification):
+            self.data[root_key] = [self.data[root_key]]
 
         # extract data into sets of move type, picking name and product codes
         move_data = self._extract_data()
