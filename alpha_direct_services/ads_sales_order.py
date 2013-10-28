@@ -92,10 +92,13 @@ class ads_sales_order(ads_data):
         @param cr: OpenERP database cursor
         @returns True if successful. If True, the xml file on the FTP server will be deleted.
         """
-        if isinstance(self.data['Expedition'], AutoVivification):
-            self.data['Expedition'] = [self.data['Expedition']]
 
-        for expedition in self.data['Expedition']:
+        root_key = self.data.keys()[0]
+
+        if isinstance(self.data[root_key], AutoVivification):
+            self.data[root_key] = [self.data[root_key]]
+
+        for expedition in self.data[root_key]:
             # extract information
             if not all([field in expedition for field in ['NUM_FACTURE_BL', 'STATUT']]):
                 _logger.warn(_('An expedition has been skipped because it was missing a required field: %s' % expedition))
