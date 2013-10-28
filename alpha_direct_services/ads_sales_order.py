@@ -2,6 +2,7 @@ import logging
 _logger = logging.getLogger(__name__)
 from datetime import datetime
 import time
+from openerp.tools.translate import _
 
 from auto_vivification import AutoVivification
 from ads_data import ads_data
