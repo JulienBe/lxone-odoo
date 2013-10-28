@@ -13,28 +13,27 @@ def upload_so_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=N
         picking = stock_picking_obj.pool.get('stock.picking').browse(cr, uid, picking_id, context=context)
         if picking.ads_sent:
             return
-        
+
         # upload products first
         for move in picking.move_lines:
             stock_picking_obj.pool.get('product.product').ads_upload(cr, uid, move.product_id.id, context=context)
-        
-        data = ads_sales_order()
-        data.extract(picking)
-        stock_picking_obj.pool.get('ads.connection').connect(cr).upload_data(data)
-        
+
+        data = ads_sales_order(picking)
+        data.upload(cr, stock_picking_obj.pool.get('ads.manager'))
+
         vals['ads_sent'] = True
         vals['ads_result'] = ''
-    except stock_picking_obj.pool.get('ads.connection').connect_exceptions as e:
+    except stock_picking_obj.pool.get('ads.manager').ftp_exceptions as e:
         vals['ads_sent'] = False
         raise e
     super(stock_picking, stock_picking_obj).write(cr, uid, picking_id, vals, context=context)
 
 class stock_picking(osv.osv):
     """
-    Inherit the stock.picking object to trigger upload of SO pickings 
+    Inherit the stock.picking object to trigger upload of SO pickings
     """
     _inherit = 'stock.picking'
-    
+
     def create(self, cr, uid, values, context=None):
         """
         Process SO picking to upload to ADS and mark as successful or not.
@@ -61,10 +60,10 @@ class stock_picking(osv.osv):
         If the upload is successful, set ads_sent to true. Otherwise
         set it to false and save the exception message in ads_result.
         """
-        
+
         if not hasattr(ids, '__iter__'):
             ids = [ids]
-        
+
         def check_state(values):
             """ Make sure we are changing the state to assigned """
             if 'state' in values and values['state'] == 'assigned':
@@ -91,7 +90,7 @@ class stock_picking(osv.osv):
 class stock_picking_in(osv.osv):
 
     _inherit = 'stock.picking.in'
-    
+
     def create(self, cr, uid, values, context=None):
         return super(stock_picking_in, self).create(cr, uid, values, context=context)
 

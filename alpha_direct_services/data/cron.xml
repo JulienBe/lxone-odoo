@@ -7,10 +7,10 @@
             <field name="interval_number">1</field>
             <field name="interval_type">minutes</field>
             <field name="numbercall">-1</field>
-            <field eval="False" name="doall"/>
-            <field eval="'ads.connection'" name="model"/>
-            <field eval="'poll'" name="function"/>
-            <field eval="'()'" name="args"/>
+            <field name="doall" eval="False" />
+            <field name="model" eval="'ads.manager'" />
+            <field name="function" eval="'poll'" />
+            <field name="args" eval="'()'" />
         </record>
 
     </data>

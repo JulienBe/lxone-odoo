@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 from copy import copy
 from ads_data import ads_data
 

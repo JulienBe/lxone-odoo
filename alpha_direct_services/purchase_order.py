@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 from copy import copy
 from openerp.osv import osv, fields
 from ads_purchase_order import ads_purchase_order
@@ -16,17 +14,17 @@ def upload_po_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=N
         picking = stock_picking_obj.browse(cr, uid, picking_id, context=context)
         if picking.ads_sent:
             return
-    
+
         # upload products first
         for move in picking.move_lines:
             stock_picking_obj.pool.get('product.product').ads_upload(cr, uid, move.product_id.id, context=context)
-    
+
         data = ads_purchase_order(picking)
-        data.upload(cr, stock_picking_obj.pool.get('ads.connection'))
-        
+        data.upload(cr, stock_picking_obj.pool.get('ads.manager'))
+
         vals['ads_sent'] = True
         vals['ads_result'] = ''
-    except stock_picking_obj.pool.get('ads.connection').connect_exceptions as e:
+    except stock_picking_obj.pool.get('ads.manager').ftp_exceptions as e:
         vals['ads_sent'] = False
         vals['ads_result'] = str(e)
     super(stock_picking, stock_picking_obj).write(cr, uid, picking_id, vals, context=context)
@@ -67,7 +65,7 @@ class stock_picking(osv.osv):
         If the upload is successful, set ads_sent to true. Otherwise
         set it to false and save the exception message in ads_result.
         """
-        
+
         if not hasattr(ids, '__iter__'):
             ids = [ids]
 

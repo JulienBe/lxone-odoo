@@ -15,11 +15,14 @@ class ads_data(object):
 	Serialization interface between python dicts and ADS XML. Designed to be inherited
 	so you can implement your own data input and output functions that build
 	the self.data AutoVivification object (See ads_order class for an example).
-	Don't forget to set the file_name_prefix and xml_root variables to define the file name
-	prefix and xml file root element name.
+	
+	Don't forget to set the file_name_prefix and xml_root variables to define the xml 
+	file name prefix (XXXX-YYYMMDD.xml) and xml file root element name. When the poll
+	function processes a file, it chooses which ads_data subclass to hand the data to
+	based on the file_name_prefix of the class and the file.
 
-	After building the self.data dict, parse this object to the upload_data function
-	of the ads_conn object. It will call the generate_xml to convert the self.data dict
+	After building the self.data dict, pass this object to the upload_data function
+	of the ads_connection object. It will call generate_xml to convert the self.data dict
 	into an xml file, then upload it to the server.
 
 	Alternatively, convert an ADS xml file into an ads_data dict by passing the XML
@@ -58,8 +61,7 @@ class ads_data(object):
 			parent = target
 			target = target[target_key]
 
-		# have we already saved data to this key? If yes, convert it to a list
-		# of dictionaries and add a second one
+		# have we already saved data to this key? If yes, convert it to a list of dicts 
 		if isinstance(target, AutoVivification) and len(target) != 0:
 			autoviv = False
 			parent[target_key] = [target]
@@ -101,12 +103,13 @@ class ads_data(object):
 		output.seek(0)
 		return output
 
-	def upload(self, cr, ads_conn):
+	def upload(self, cr, ads_manager):
 		"""
 		Upload this object to ADS
-		@param ads_conn ads_conn: the ads.connection object from the OpenERP pool
+		@param ads_manager ads_manager: the ads.manager object from the OpenERP pool
 		"""
-		ads_conn.connect(cr).upload_data(self)
+		with ads_manager.connection(cr) as conn:
+			conn.upload_data(self)
 
 	def extract(self, record):
 		"""

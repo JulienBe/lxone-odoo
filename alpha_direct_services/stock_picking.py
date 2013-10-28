@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 from copy import copy
 
 from openerp.tools.translate import _

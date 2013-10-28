@@ -49,8 +49,8 @@ class product_product(osv.osv):
             if need_to_upload(product):
                 try:
                     data = ads_product(product)
-                    data.upload(cr, self.pool.get('ads.connection'))
+                    data.upload(cr, self.pool.get('ads.manager'))
                     self.write(cr, uid, product_id, {'ads_sent': True, 'ads_sent_date': time.strftime("%Y-%m-%d %H:%M:%S"), 'ads_result': ''})
-                except self.pool.get('ads.connection').connect_exceptions as e:
+                except self.pool.get('ads.manager').ftp_exceptions as e:
                     self.write(cr, uid, product_id, {'ads_sent_date': False, 'ads_result': str(e)})
                     raise e
