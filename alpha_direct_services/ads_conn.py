@@ -1,5 +1,5 @@
-#!/usr/bin/python
-
+import logging
+_logger = logging.getLogger(__name__)
 from openerp.osv import osv, fields
 from openerp.tools.translate import _
 
@@ -147,6 +147,8 @@ class ads_conn(osv.osv):
 
     def poll(self, cr, uid):
         """ Poll the FTP server to parse, process and then delete any data files """
+        _logger.info(_("Polling ADS Server..."))
+
         if not self._connected:
             self.connect(cr)
 
@@ -157,8 +159,11 @@ class ads_conn(osv.osv):
         if 'archives' not in files:
             self._conn.mkd('archives')
 
+        files_processed = 0
         try:
             for file_name in [file for file in files if '.' in file]:
+                files_processed += 1
+
                 # get type from file name
                 file_prefix = file_name.split('-', 1)[0]
 
@@ -190,4 +195,6 @@ class ads_conn(osv.osv):
                 self.cd('..')
             else:
                 self.connect(cr)
+
+        _logger.info(_("Finished polling. Found %d files" % files_processed))        
         return True
