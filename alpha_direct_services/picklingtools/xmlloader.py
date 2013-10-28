@@ -1039,7 +1039,6 @@ class XMLLoaderA(object) :
               return_content = content + "".join(ret)
               return return_content
 
-
   #  [ 'book',                         // name 
   #    {'attr1': "1", 'attr2'="2"},    // table of attributes
   #    ["content"]                     // actual content
@@ -1089,13 +1088,13 @@ class XMLLoaderA(object) :
           ci = self._peekChar()
           if (ci == EOF) : self._syntaxError("Premature EOF?")
           c = ci
-          if ('<' == c) : # Immediately saw <
+          is_cdata = self._peekStream("<![CDATA[")
+          if ('<' == c and not is_cdata) : # Immediately saw < (that was not CDATA)
 
               # May be comment!
               if (self._peekStream("<!--")) :
                   self._consumeComment()
                   continue
-      
               
               # Get next tag 
               new_tag = []
@@ -1122,8 +1121,16 @@ class XMLLoaderA(object) :
       
           # No <, so it must be some content which we collect
           else :
+              if(is_cdata):
+                  self._consumeCData()
+              
               base_content = whitespace
               return_content = self._expectBaseContent(base_content)
+              
+              if(is_cdata):
+                  if return_content[-3:] == ']]>':
+                      return_content = return_content[0:-3]
+                      
               content.append(return_content)
 
   
@@ -1182,6 +1189,13 @@ class XMLLoaderA(object) :
               break  # Ah, no - or >, start all over looking for comment
           
 
+  def _consumeCData(self):
+      """
+      CUSTOMISATION: Consume CDATA start and end tags
+      """
+      self._expectString("Expecting <![CDATA[ to start CDATA?", "<![CDATA[")
+      return
+              
   # Currently don't handle DTDs; just throw them away
   def _consumeDTD (self) :
       
