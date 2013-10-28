@@ -1,3 +1,5 @@
+from openerp import osv
+from openerp.tools.translate import _
 from copy import copy
 from ads_data import ads_data
 
@@ -14,9 +16,12 @@ class ads_product(ads_data):
 		@param browse_record(product.product) product: the stock product browse record object
 		"""
 
+		if not product.x_new_ref:
+			raise osv.except_osv(_("Product Missing Reference IP"), _("You have to enter a Reference IP for the product '%s' before you can continue" % product.name))
+
 		product_node = {
-			'CODE_ART': product.ean13,
-			'LIB_LONG': product.name or '',
+			'CODE_ART': product.x_new_ref,
+			'LIB_LONG': product.name,
 			'TYPE_ART': product.type or '',
 			'CAT_ART': 'PRO',
 			'ART_PHYSIQUE': (product.type != 'service'),

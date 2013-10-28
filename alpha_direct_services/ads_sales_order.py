@@ -76,7 +76,7 @@ class ads_sales_order(ads_data):
         for move in picking.move_lines:
             line = {
                 'NUM_FACTURE_BL': picking.name,
-                'CODE_ART': move.product_id.ean13,
+                'CODE_ART': move.product_id.x_new_ref,
                 'LIBELLE_ART': move.product_id.name or '',
                 'QTE': move.product_qty,
                 'OBLIGATOIRE': '1',

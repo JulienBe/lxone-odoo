@@ -29,7 +29,7 @@ class ads_purchase_order(ads_data):
 				code_art_fourn = None
 
 			data = copy(template)
-			data['CODE_ART'] = move.product_id.ean13
+			data['CODE_ART'] = move.product_id.x_new_ref
 			data['CODE_ART_FOURN'] = code_art_fourn
 			data['QTE_ATTENDUE'] = move.product_qty
 			self.insert_data('COMMANDEFOURNISSEUR', data)
