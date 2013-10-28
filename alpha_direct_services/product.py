@@ -23,6 +23,10 @@ class product_product(osv.osv):
             values['ads_last_modified'] =  time.strftime("%Y-%m-%d %H:%M:%S")
         return super(product_product, self).write(cr, uid, ids, values, context=context)
 
+    def ads_upload_all(self, cr, uid, context=None):
+        ids = self.search(cr, uid, [('x_new_ref', '!=', '')])
+        self.ads_upload(cr, uid, ids, context=context)
+
     def ads_upload(self, cr, uid, ids, context=None):
         """ Upload product if ads_sent is false, or ads_sent_date < datetime.now() """
         if not isinstance(ids, (list, tuple)):
