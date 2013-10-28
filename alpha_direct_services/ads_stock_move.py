@@ -63,6 +63,7 @@ class ads_stock_move(ads_data):
 
         if not picking:
             picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name)])
+            assert picking_ids, _("Could not find picking with name '%s'" % picking_name)
             picking = picking_obj.browse(cr, 1, picking_ids[0])
         return picking.id
 
