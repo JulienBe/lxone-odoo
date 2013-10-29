@@ -1,3 +1,6 @@
+import logging
+_logger = logging.getLogger(__name__)
+
 from openerp.osv import osv
 from ads_product import ads_product
 
@@ -16,10 +19,11 @@ class product_product(osv.osv):
 
     def ads_upload_all(self, cr, uid, context=None):
         ids = self.search(cr, uid, [('x_new_ref', '!=', '')])
-        self.ads_upload(cr, uid, ids, context=context)
+        _logger.info("Starting upload of %d products" % len(ids))
+        self.ads_upload(cr, uid, ids, log=True, context=context)
         return True
 
-    def ads_upload(self, cr, uid, ids, context=None):
+    def ads_upload(self, cr, uid, ids, log=False, context=None):
         """ Upload product to ads server """
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
@@ -28,3 +32,6 @@ class product_product(osv.osv):
             product = self.browse(cr, uid, product_id, context=context)
             data = ads_product(product)
             data.upload(cr, self.pool.get('ads.manager'))
+            if log:
+                _logger.info("Uploaded product with ID %d" % product_id)
+        return True

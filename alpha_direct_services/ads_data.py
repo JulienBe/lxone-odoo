@@ -17,8 +17,8 @@ class ads_data(object):
 	Serialization interface between python dicts and ADS XML. Designed to be inherited
 	so you can implement your own data input and output functions that build
 	the self.data AutoVivification object (See ads_order class for an example).
-	
-	Don't forget to set the file_name_prefix and xml_root variables to define the xml 
+
+	Don't forget to set the file_name_prefix and xml_root variables to define the xml
 	file name prefix (XXXX-YYYMMDD.xml) and xml file root element name. When the poll
 	function processes a file, it chooses which ads_data subclass to hand the data to
 	based on the file_name_prefix of the class and the file.
@@ -63,7 +63,7 @@ class ads_data(object):
 			parent = target
 			target = target[target_key]
 
-		# have we already saved data to this key? If yes, convert it to a list of dicts 
+		# have we already saved data to this key? If yes, convert it to a list of dicts
 		if isinstance(target, AutoVivification) and len(target) != 0:
 			autoviv = False
 			parent[target_key] = [target]
@@ -114,7 +114,7 @@ class ads_data(object):
 			with ads_manager.connection(cr) as conn:
 				conn.upload_data(self)
 		except ads_manager.ftp_exceptions as e:
-			raise osv.except_osv(_("Upload Problem"), \
+			raise except_osv(_("Upload Problem"), \
                     _("".join(["There was a problem uploading the data to the ADS servers.\n\n",
                                "Please check your connection settings in ",
                                "Setings > Parameters > System Parameters and make sure ",
