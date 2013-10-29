@@ -41,7 +41,7 @@ class ads_stock_move(ads_data):
             move_date = 'DATEMVT' in move and move['DATEMVT']
 
             # only extract PO IN's
-            if picking_name and move_type == 'IN' and move_code == 'REC':
+            if picking_name and move_type == 'IN' and move_code in ['REC', 'Reception']:
                 move_data[move_type][picking_name][product_code]['quantity'] = quantity
                 move_data[move_type][picking_name][product_code]['date'] = move_date
 

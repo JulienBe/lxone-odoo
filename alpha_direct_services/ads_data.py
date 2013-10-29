@@ -5,6 +5,8 @@ import re
 from datetime import datetime
 
 from openerp.osv.orm import browse_record
+from openerp.osv.osv import except_osv
+from openerp.tools.translate import _
 
 from picklingtools.xmldumper import *
 from picklingtools import xml2dict
@@ -108,8 +110,16 @@ class ads_data(object):
 		Upload this object to ADS
 		@param ads_manager ads_manager: the ads.manager object from the OpenERP pool
 		"""
-		with ads_manager.connection(cr) as conn:
-			conn.upload_data(self)
+		try:
+			with ads_manager.connection(cr) as conn:
+				conn.upload_data(self)
+		except ads_manager.ftp_exceptions as e:
+			raise osv.except_osv(_("Upload Problem"), \
+                    _("".join(["There was a problem uploading the data to the ADS servers.\n\n",
+                               "Please check your connection settings in ",
+                               "Setings > Parameters > System Parameters and make sure ",
+                               "your IP is in the ADS FTP whitelist.\n\n",
+                               "%s""" % unicode(e)])))
 
 	def extract(self, record):
 		"""

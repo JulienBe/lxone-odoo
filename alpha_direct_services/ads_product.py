@@ -8,6 +8,17 @@ class ads_product(ads_data):
 	file_name_prefix = ['ARTI']
 	xml_root = 'flux_art'
 
+	uploaded_fields = ['x_new_ref',
+						'name',
+						'type',
+						'ean13',
+						'sale_delay',
+						'x_depth',
+						'x_width',
+						'x_height',
+						'weight_net',
+						'x_url']
+
 	def extract(self, product):
 		"""
 		Takes a product browse_record and extracts the

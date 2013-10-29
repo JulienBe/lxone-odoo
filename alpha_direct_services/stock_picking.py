@@ -10,13 +10,9 @@ def all_assigned(picking_obj, cr, ids):
     return True
 
 class stock_picking(osv.osv):
-    """ Inherit the stock.picking object to and add ads_sent and ads_result fields """
+    """ Inherit the stock.picking to prevent manual processing and cancellation after ads upload """
 
     _inherit = 'stock.picking'
-    _columns = {
-        'ads_sent': fields.boolean('Sent to ADS?', help="This field indicates whether or not this document has been uploaded to Alpha Direct Systems for processing."),
-        'ads_result': fields.text('ADS Send Results', help="If there are any errors while sending this document to ADS, they will be logged here"),
-    }
 
     def action_process(self, cr, uid, ids, context=None):
         if all_assigned(self, cr, ids):
@@ -31,13 +27,9 @@ class stock_picking(osv.osv):
             super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
 
 class stock_picking_in(osv.osv):
-    """ Inherit the stock.picking.in object to and add ads_sent and ads_result fields """
+    """ Inherit the stock.picking.in to prevent manual processing and cancellation after ads upload """
 
     _inherit = 'stock.picking.in'
-    _columns = {
-        'ads_sent': fields.boolean('Sent to ADS?', help="This field indicates whether or not this document has been uploaded to Alpha Direct Systems for processing."),
-        'ads_result': fields.text('ADS Send Results', help="If there are any errors while sending this document to ADS, they will be logged here"),
-    }
 
     def action_process(self, cr, uid, ids, context=None):
         if all_assigned(self, cr, ids):
@@ -52,13 +44,9 @@ class stock_picking_in(osv.osv):
             super(stock_picking_in, self).action_cancel(cr, uid, ids, context=context)
 
 class stock_picking_out(osv.osv):
-    """ Inherit the stock.picking.in object to and add ads_sent and ads_result fields """
+    """ Inherit the stock.picking.in to prevent manual processing and cancellation after ads upload """
 
     _inherit = 'stock.picking.out'
-    _columns = {
-        'ads_sent': fields.boolean('Sent to ADS?', help="This field indicates whether or not this document has been uploaded to Alpha Direct Systems for processing."),
-        'ads_result': fields.text('ADS Send Results', help="If there are any errors while sending this document to ADS, they will be logged here"),
-    }
 
     def action_process(self, cr, uid, ids, context=None):
         if all_assigned(self, cr, ids):

@@ -1,32 +1,15 @@
 from copy import copy
-
-from openerp.osv import osv, fields
+from openerp.osv import osv
 from ads_sales_order import ads_sales_order
 
 def upload_so_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=None):
     """
-    Extract a picking into an ads_sales_order then upload to server.
-    If there is an exception, it will be written to the ads_result field. Otherwise
-    ads_sent will be marked as True.
+    Extract and upload the picking to the server.
+    If there is an exception it will be raised.
     """
-    try:
-        picking = stock_picking_obj.pool.get('stock.picking').browse(cr, uid, picking_id, context=context)
-        if picking.ads_sent:
-            return
-
-        # upload products first
-        for move in picking.move_lines:
-            stock_picking_obj.pool.get('product.product').ads_upload(cr, uid, move.product_id.id, context=context)
-
-        data = ads_sales_order(picking)
-        data.upload(cr, stock_picking_obj.pool.get('ads.manager'))
-
-        vals['ads_sent'] = True
-        vals['ads_result'] = ''
-    except stock_picking_obj.pool.get('ads.manager').ftp_exceptions as e:
-        vals['ads_sent'] = False
-        raise e
-    super(stock_picking, stock_picking_obj).write(cr, uid, picking_id, vals, context=context)
+    picking = stock_picking_obj.browse(cr, uid, picking_id, context=context)
+    data = ads_sales_order(picking)
+    data.upload(cr, stock_picking_obj.pool.get('ads.manager'))
 
 class stock_picking(osv.osv):
     """
@@ -36,14 +19,15 @@ class stock_picking(osv.osv):
 
     def create(self, cr, uid, values, context=None):
         """
-        Process SO picking to upload to ADS and mark as successful or not.
+        Create SO picking and upload to ADS if state is assigned.
         """
         picking_id = super(stock_picking, self).create(cr, uid, values, context=context)
 
+        # is this a picking for the SO?
         if 'origin' in values and values['origin'][0:2] == 'SO' \
             and 'name' in values and values['name'][0:3] == 'OUT':
 
-            # if state is assigned, upload to ADS and set ads_sent and ads_result as appropriate
+            # if state is assigned, upload to ADS 
             if 'state' in values and values['state'] == 'assigned':
                 upload_so_picking(self, cr, uid, picking_id, context=context)
                 return picking_id
@@ -55,10 +39,7 @@ class stock_picking(osv.osv):
 
     def write(self, cr, uid, ids, values, context=None):
         """
-        On write, if state is changed to 'assigned', create a document
-        containing the data for the IN and upload it to the ADS server.
-        If the upload is successful, set ads_sent to true. Otherwise
-        set it to false and save the exception message in ads_result.
+        If picking state is changed to assigned, upload to ADS
         """
 
         if not hasattr(ids, '__iter__'):
@@ -71,21 +52,25 @@ class stock_picking(osv.osv):
             else:
                 return False
 
-        def check_type(obj, cr, ids):
+        def check_type(obj, cr, picking_id):
             """ Make sure all pickings in the write have origin SO* """
-            pickings = obj.browse(cr, 1, ids, context=context)
-            return bool([picking for picking in pickings if picking.type.lower() == 'out'])
+            picking = obj.browse(cr, 1, picking_id, context=context)
+            return picking.type.lower() == 'out'
 
-        # if state is assigned and origin is SO
-        if check_state(values) and check_type(self, cr, ids):
+        # perform the write and save value to return later
+        res = super(stock_picking, self).write(cr, uid, ids, values, context=context)
 
-            # for each target picking, upload and set results
-            for picking_id in ids:
-                upload_so_picking(self, cr, uid, picking_id, copy(values), context=context)
-            return True
-        else:
-            # otherwise return from write like normal
-            return super(stock_picking, self).write(cr, uid, ids, values, context=context)
+        # are we changing the state to assigned?
+        if not check_state(values):
+            return res
+
+        # check type of each picking and upload if appropriate
+        for picking_id in ids:
+            if check_type(self, cr, picking_id):
+                upload_so_picking(self, cr, uid, picking_id, vals=copy(values), context=context)
+
+        # return result of write
+        return res
 
 class stock_picking_in(osv.osv):
 
