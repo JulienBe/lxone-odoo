@@ -17,6 +17,7 @@ class product_product(osv.osv):
     def ads_upload_all(self, cr, uid, context=None):
         ids = self.search(cr, uid, [('x_new_ref', '!=', '')])
         self.ads_upload(cr, uid, ids, context=context)
+        return True
 
     def ads_upload(self, cr, uid, ids, context=None):
         """ Upload product to ads server """

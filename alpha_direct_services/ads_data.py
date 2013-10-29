@@ -94,7 +94,7 @@ class ads_data(object):
 	def name(self):
 		""" Generate a name for the uploaded xml file """
 		assert self.file_name_prefix, 'The self.file_name_prefix variable must be set in your inheriting class'
-		return '%s-%s.xml' % (self.file_name_prefix[0], datetime.today().strftime('%Y%m%d-%H%M%S'))
+		return '%s-%s.xml' % (self.file_name_prefix[0], datetime.today().strftime('%Y%m%d-%H%M%S-%f'))
 
 	def generate_xml(self):
 		""" Returns a StringIO containing an XML representation of self.data nested dict """
