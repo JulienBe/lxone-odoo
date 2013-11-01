@@ -30,6 +30,8 @@ class product_product(osv.osv):
 
         for product_id in ids:
             product = self.browse(cr, uid, product_id, context=context)
+            if not product.x_new_ref:
+                continue
             data = ads_product(product)
             data.upload(cr, self.pool.get('ads.manager'))
             if log:
