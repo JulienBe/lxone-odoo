@@ -106,7 +106,7 @@ class ads_stock_move(ads_data):
         for move in wizard.move_ids:
             if move.product_id.x_new_ref in picking_lines:
                 pool.get('stock.partial.picking.line').write(cr, 1, move.id,
-                        {'quantity': picking_lines[product_code]['quantity']
+                    {'quantity': picking_lines[move.product_id.x_new_ref]['quantity']
                 })
             else:
                 pool.get('stock.partial.picking.line').write(cr, 1, move.id, {'quantity': 0})
