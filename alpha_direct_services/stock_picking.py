@@ -1,5 +1,3 @@
-from copy import copy
-
 from openerp.tools.translate import _
 from openerp.osv import osv, fields
 
@@ -25,11 +23,14 @@ class stock_picking(osv.osv):
             raise osv.except_osv(_('Cannot Cancel'), _("You can't cancel a picking when it is in 'Ready to Receive' state because it has already been sent to ADS.") )
         else:
             super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
-
+            
 class stock_picking_in(osv.osv):
     """ Inherit the stock.picking.in to prevent manual processing and cancellation after ads upload """
 
     _inherit = 'stock.picking.in'
+    
+    def action_allow_invoicing(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'invoice_state': '2binvoiced'})
 
     def action_process(self, cr, uid, ids, context=None):
         if all_assigned(self, cr, ids):

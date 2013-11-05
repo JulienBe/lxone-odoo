@@ -46,6 +46,13 @@ class ads_data(object):
 	file_name_prefix = []
 	xml_root = None
 
+	def safe_get(self, dictionary, key):
+		""" Returns self.data[key] or None if it does not exist """
+		if key in dictionary:
+			return dictionary[key]
+		else:
+			return None
+
 	def insert_data(self, insert_target, params):
 		"""
 		Insert keys and values from params into self.data at insert_target.

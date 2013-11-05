@@ -42,6 +42,7 @@ http://www.picklingtools.com/
     'data': [
         'data/config.xml',
         'data/cron.xml',
+        'views/stock_picking_form.xml'
     ],
     'installable': True,
 }

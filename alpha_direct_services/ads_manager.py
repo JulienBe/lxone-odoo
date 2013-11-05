@@ -89,7 +89,7 @@ class ads_manager(osv.osv):
                 if conn._connected:
                     conn.cd('..')
                 else:
-                    conn._connect(cr)
+                    conn._connect()
 
         _logger.info(_("Processed %d files" % files_processed))
         return True
