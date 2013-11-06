@@ -13,6 +13,7 @@ from ads_sales_order import ads_sales_order
 from ads_stock_move import ads_stock_move
 from ads_product import ads_product
 from ads_return import ads_return
+from ads_stock import ads_stock
 
 class ads_manager(osv.osv):
     """
