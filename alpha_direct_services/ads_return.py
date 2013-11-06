@@ -158,7 +158,7 @@ class ads_return(ads_data):
             }
             wizard_obj = pool.get('stock.return.picking')
             try:
-                wizard_id = wizard_obj.create(cr, 1, {}, context=context)
+                wizard_id = wizard_obj.create(cr, 1, {'invoice_state': '2binvoiced'}, context=context)
             except osv.except_osv as e:
                 if 'No products to return' in e.value:
                     _logger.warn(_('Delivery Order with name "%s" is already fully returned' % ret['picking_name']))

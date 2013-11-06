@@ -29,8 +29,8 @@ class stock_picking_in(osv.osv):
 
     _inherit = 'stock.picking.in'
     
-    def action_allow_invoicing(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'invoice_state': '2binvoiced'})
+    def action_disallow_invoicing(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'invoice_state': 'none'})
 
     def action_process(self, cr, uid, ids, context=None):
         if all_assigned(self, cr, ids):
