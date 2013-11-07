@@ -1,7 +1,8 @@
 class AutoVivification(dict):
 	"""
 	Implementation of perl's autovivification feature.
-	Allows auto creation of nested dictionaries, for example:
+	Allows auto creation of nested dictionaries 
+	along with some helper methods, for example:
 
 		a = AutoVivification()
 		a['order']['customer']['address']['roadname'] = 'Avenue Louise, 42'

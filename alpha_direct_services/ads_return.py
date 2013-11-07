@@ -4,9 +4,8 @@ _logger = logging.getLogger(__name__)
 from openerp.tools.translate import _
 from openerp.osv import osv
 
-from auto_vivification import AutoVivification
 from ads_data import ads_data
-from ads_tools import parse_date
+from tools import parse_date
 
 class ads_return(ads_data):
     """
@@ -38,41 +37,27 @@ class ads_return(ads_data):
         'RCLI': 'Retour Direct Client',
     }
 
-    def process(self, pool, cr):
+    def process(self, pool, cr, ret):
         """
         Receive return in a CRET file and import into OpenERP
         @param pool: OpenERP object pool
         @param cr: OpenERP database cursor
-        @returns True if successful. If True, the xml file on the FTP server will be deleted.
+        @param AutoVivification ret: Contains data from ADS describing the return
         """
-        root_key = self.data.keys()[0]
+        # extract data
+        ret = self._extract_data(ret)
 
-        if isinstance(self.data[root_key], AutoVivification):
-            self.data[root_key] = [self.data[root_key]]
-
-        root_key = self.data.keys()[0]
-
-        # iterate over return nodes and process them
-        for ret in self.data[root_key]:
-
-            # data validation
-            if not all([field in ret for field in ['NUM_FACTURE_BL', 'CODE_MOTIF_RETOUR']]):
-                _logger.warn(_('A return has been skipped because it was missing a required field: %s' % ret))
-                continue
-
-            # extract data
-            ret = self._extract_data(ret)
-
-            # perform return
-            self._process_return(pool, cr, ret)
-
-        return True
+        # perform return
+        self._process_return(pool, cr, ret)
 
     def _extract_data(self, ret):
         """
         Extract data from a return node sent by ADS. picking_name and return_code
         are required.
         """
+        assert all([field in ret for field in ['NUM_FACTURE_BL', 'CODE_MOTIF_RETOUR']]), \
+            _('A return has been skipped because it was missing a required field: %s' % ret)
+        
         ret_data = {}
         ret_data['picking_name'] = ret['NUM_FACTURE_BL']
         ret_data['return_code'] = ret['CODE_MOTIF_RETOUR']
@@ -161,8 +146,7 @@ class ads_return(ads_data):
                 wizard_id = wizard_obj.create(cr, 1, {'invoice_state': '2binvoiced'}, context=context)
             except osv.except_osv as e:
                 if 'No products to return' in e.value:
-                    _logger.warn(_('Delivery Order with name "%s" is already fully returned' % ret['picking_name']))
-                    return
+                    raise ValueError(_('Delivery Order with name "%s" is already fully returned' % ret['picking_name']))
                 else:
                     raise e
             wizard = wizard_obj.browse(cr, 1, wizard_id)

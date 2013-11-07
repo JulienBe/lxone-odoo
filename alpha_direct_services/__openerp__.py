@@ -28,14 +28,26 @@
     'category' : 'Tools',
     'depends' : ['base', 'product', 'stock', 'sale', 'purchase', 'delivery'],
     'description': """
-Connect OpenERP with Alpha Direct Services API
-==============================================
+Connect OpenERP with Alpha Direct Services
+==========================================
 
-This module slightly modifies the processes
-for sales orders and purchase orders so that
-their stock pickings (IN's and OUT's) are
-validated from ADS.
+This module synchronises OpenERP records with Alpha Direct Services (ADS), the logistics company, by modifying workflows to upload data to ADS, and periodically polling ADS to download updates to uploaded records. 
 
+Key Features
+------------
+* Incoming Shipments are uploaded when in "Ready To Receive" state. They will then be "Received" when the polling service receives the data from ADS 
+* Delivery Orders are uploaded when in "Ready to Deliver" state. They will then be "Delivered" when the polling service receives the data from ADS
+* Returns are created when the polling service receives the data from ADS
+* Physical Inventories are created when the polling service receives the data from ADS. Note that they are confirmed but not validated automatically.
+
+Configuration
+-------------
+Please enter your ADS FTP server credentials in Settings > Parameters > System Parameters > ads_*. If "mode" is set to "test" any data will not be automatically imported by ADS. Set it to "prod" to have your data automatically imported.
+
+By default this module poles the ADS API every 5 minutes. This interval can be changed by going to Settings > Scheduler > Scheduled Actions > Poll Alpha Direct Service Server
+
+Notes
+-----
 This module uses the PicklingTools library:
 http://www.picklingtools.com/
     """,

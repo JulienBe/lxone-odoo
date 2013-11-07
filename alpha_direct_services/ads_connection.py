@@ -9,7 +9,9 @@ from ads_data import ads_data
 
 class ads_connection(object):
     """
-    Wraps an FTP connection to the ADS server and provides some helper methods
+    Wraps an FTP connection to the ADS server and provides some helper methods.
+    Use it with the python using construct, and by passing in a pool and cr to the
+    constructor.
     """
 
     def __init__(self, pool, cr):
@@ -28,6 +30,7 @@ class ads_connection(object):
         self._vers_client = None
 
     def __enter__(self):
+        """ Allows python 'using' construct"""
         try:
             self._connect()
         except all_errors as e:
@@ -40,10 +43,12 @@ class ads_connection(object):
         return self
 
     def __exit__(self, type, value, traceback):
+        """ Allows python 'using' construct"""
         self._disconnect()
 
     @property
     def _connected(self):
+        """ Pings the server to determine if we are still connected """
         try:
             self._ping()
             return True
@@ -51,6 +56,7 @@ class ads_connection(object):
             return False
 
     def _ping(self):
+        """ Pings the server to determine if we are still connected """
         self._conn.voidcmd("NOOP")
 
     def _get_config(self, config_name, value_type=str):
@@ -119,36 +125,52 @@ class ads_connection(object):
 
     # ftp convenience methods
     def ls(self):
+        """ List files and directories in the current directory """
         if hasattr(self._conn, 'mlst'):
             return self._conn.mlsd()
         else:
             return self._conn.nlst()
 
     def cd(self, dirname):
+        """ change working directory """
         if dirname:
             self._conn.cwd(dirname)
 
     def try_cd(self, dirname):
+        """ change working directory. Silently catch FTP errors """
         try:
             self.cd(dirname)
         except all_errors as e:
             pass
 
     def mkd(self, dirname):
+        """ Create directory in the current working directory """
         if dirname:
             self._conn.mkd(dirname)
 
+    def mkf(self, filename, contents, directory=None):
+        """ 
+        Create a file with filename and contents in the current or specified directory
+        @param buffer contents: Buffer object like StringIO containing contents
+        """
+        self._conn.storlines('STOR %s%s' % (directory and directory + '/' or '', filename), contents)
+
     def rename(self, old_name, new_name):
+        """ rename / move a file """
         self._conn.rename(old_name, new_name)
 
-    def archive(self, filename):
+    def move_to_archives(self, filename):
+        """ move specified file to the 'archives' folder (automatically created) """
         if 'archives' not in self.ls():
             self.mkd('archives')
         self.rename(filename, 'archives/%s' % filename)
 
-    def delete(self, filename):
-        self.archive(filename)
-        
+    def move_to_errors(self, filename):
+        """ move specified file to the 'errors' folder (automatically created) """
+        if 'errors' not in self.ls():
+            self.mkd('errors')
+        self.rename(filename, 'errors')
+
     def upload_data(self, data):
         """
         Takes an ads_data object and creates an XML file then uploads it to FTP server.
@@ -165,10 +187,10 @@ class ads_connection(object):
             xml_buffer = data.generate_xml()
             while True:
                 if data.name() not in self.ls():
-                    self._conn.storlines('STOR %s' % data.name(), xml_buffer)
+                    self.mkf(data.name(), xml_buffer)
                     break
                 else:
-                    time.sleep(1)
+                    time.sleep(0.1)
 
         finally:
             self.try_cd('..')

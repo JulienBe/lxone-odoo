@@ -10,7 +10,6 @@ from ads_connection import ads_connection
 from ads_data import ads_data
 from ads_purchase_order import ads_purchase_order
 from ads_sales_order import ads_sales_order
-from ads_stock_move import ads_stock_move
 from ads_product import ads_product
 from ads_return import ads_return
 from ads_stock import ads_stock
@@ -31,7 +30,16 @@ class ads_manager(osv.osv):
         return ads_connection(self.pool, cr)
 
     def poll(self, cr, uid=1):
-        """ Poll the FTP server to parse, process and then archive any data files """
+        """
+        Poll the ADS FTP server, download a file list and iterate over them. For each file,
+        look for a child class of ads_data whose file_name_prefix field includes the 
+        part before the first '-' of the file name. Download the file contents and use it
+        to instantiate the found class, then call process_all on it.
+        
+        Any errors caught in the process are added to errors returned by the process_all
+        function, and then written to the /errors/ directory as a .txt file, along with any
+        data nodes left in self.data after processing. 
+        """
 
         _logger.info(_("Polling ADS Server..."))
         files_processed = 0
@@ -42,12 +50,15 @@ class ads_manager(osv.osv):
             # get list of files and directories
             conn.cd(conn._vers_client)
             files_and_directories = conn.ls()
-            files_to_process = [f for f in files_and_directories if '.' in f]
+            files_to_process = [f for f in files_and_directories if len(f) > 4 and f.lower()[-4:] == '.xml' and '-' in f]
 
             try:
-                # create archive directory if doesn't already exist
+                # create archive and errors directory if doesn't already exist
                 if 'archives' not in files_and_directories:
                     conn.mkd('archives')
+
+                if 'errors' not in files_and_directories:
+                    conn.mkd('errors')
 
                 # loop over files and process them
                 for file_name in files_to_process:
@@ -65,26 +76,48 @@ class ads_manager(osv.osv):
                         if len(class_for_data_type) != 1:
                             _logger.warn(_('The following subclasses of ads_data share the file_name_prefix: %s' % class_for_data_type))
 
-                        # download the XML contents of the file
-                        file_data = StringIO()
-                        conn._conn.retrbinary('RETR %s' % file_name, file_data.write)
+                        errors = StringIO()
 
-                        # instantiate found subclass with correctly encoded file_data
-                        file_contents = file_data.getvalue().decode("utf-8-sig").encode("utf-8")
-                        data = class_for_data_type[0](file_contents)
+                        # catch any errors not caught by data.process etc
+                        try:
+                            # download the XML contents of the file
+                            file_data = StringIO()
+                            conn._conn.retrbinary('RETR %s' % file_name, file_data.write)
 
-                        # trigger process to import into OpenERP
-                        can_archive = data.process(self.pool, cr)
+                            # instantiate found subclass with correctly encoded file_data
+                            file_contents = file_data.getvalue().decode("utf-8-sig").encode("utf-8")
+                            data = class_for_data_type[0](file_contents)
 
-                        # if process returns True, archive the file from the FTP server
-                        if can_archive:
-                            conn.archive(file_name)
+                            # trigger process to import into OpenERP
+                            process_errors = data.process_all(self.pool, cr)
 
+                            if process_errors:
+                                errors.writelines([line + '\n' for line in process_errors])
+                                
+                        except Exception as e:
+                            errors.writelines('%s: %s' % (type(e), unicode(e)))
+                            
+                        finally:
+                            # archive the file we processed
+                            conn.move_to_archives(file_name)
+                            
+                            # if we have errors, create txt file containing description in /errors/*.txt
+                            if errors.getvalue():
+                                errors.seek(0)
+                                conn.mkf(file_name[0:-4] + '.txt', errors, 'errors')
+                                
+                                # and upload remaining data (or unparsable file contents) to /errors/*.xml
+                                try:
+                                    if data.data:
+                                        conn.mkf(file_name, data.generate_xml(), 'errors')
+                                except NameError:
+                                    conn.mkf(file_name, StringIO(file_contents), 'errors')
+                            
                         # commit the OpenERP cursor inbetween files
                         cr and cr.commit()
                     else:
                         _logger.info(_("Could not find subclass of ads_data with file_name_prefix %s" % file_prefix))
-                        conn.archive(file_name)
+                        conn.move_to_archives(file_name)
             finally:
                 # check we are still connected, then navigate back a directory for any further operations
                 if conn._connected:

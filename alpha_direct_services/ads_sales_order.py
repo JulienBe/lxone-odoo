@@ -6,9 +6,12 @@ from openerp.tools.translate import _
 
 from auto_vivification import AutoVivification
 from ads_data import ads_data
-from ads_tools import convert_date, parse_date
+from tools import convert_date, parse_date
 
 class ads_sales_order(ads_data):
+    """
+    Handles the importation and exportation of a sales order's delivery order
+    """
 
     file_name_prefix = ['CMDE', 'CREX']
     xml_root = 'orders'
@@ -86,50 +89,42 @@ class ads_sales_order(ads_data):
 
         return self
 
-    def process(self, pool, cr):
+    def process(self, pool, cr, expedition):
         """
         Receive sales orders in a CREX file
         @param pool: OpenERP object pool
         @param cr: OpenERP database cursor
-        @returns True if successful. If True, the xml file on the FTP server will be deleted.
+        @param AutoVivification expedition: Data from ADS describing the expedition of the SO
         """
 
-        root_key = self.data.keys()[0]
+        # extract information
+        assert all([field in expedition for field in ['NUM_FACTURE_BL', 'STATUT']]), \
+            'An expedition has been skipped because it was missing a required field: %s' % expedition
 
-        if isinstance(self.data[root_key], AutoVivification):
-            self.data[root_key] = [self.data[root_key]]
+        picking_name = expedition['NUM_FACTURE_BL']
+        status = expedition['STATUT']
+        tracking_number = 'NUM_TRACKING' in expedition and expedition['NUM_TRACKING'] or ''
+        send_date = 'DATE_EXPED' in expedition and expedition['DATE_EXPED'] and parse_date(expedition['DATE_EXPED']) or time.strftime("%Y%m%d")
 
-        for expedition in self.data[root_key]:
-            # extract information
-            if not all([field in expedition for field in ['NUM_FACTURE_BL', 'STATUT']]):
-                _logger.warn(_('An expedition has been skipped because it was missing a required field: %s' % expedition))
-                continue
+        # ignore all but sent
+        if status != 'E':
+            return
 
-            picking_name = expedition['NUM_FACTURE_BL']
-            status = expedition['STATUT']
-            tracking_number = 'NUM_TRACKING' in expedition and expedition['NUM_TRACKING'] or ''
-            send_date = 'DATE_EXPED' in expedition and expedition['DATE_EXPED'] and parse_date(expedition['DATE_EXPED']) or time.strftime("%Y%m%d")
+        picking_obj = pool.get('stock.picking.out')
+        picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name)])
+        assert len(picking_ids) == 1, 'Should have found exactly 1 picking with name %s' % picking_name
+        picking_id, = picking_ids
+        assert picking_obj.browse(cr, 1, picking_id).state != 'done', _("Picking order with name '%s' is already done" % picking_name)
 
-            # ignore all but sent
-            if status != 'E':
-                continue
+        # update OUT with tracking_number
+        picking_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
 
-            picking_obj = pool.get('stock.picking.out')
-            picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name)])
-            assert len(picking_ids) == 1, 'Should have found exactly 1 picking with name %s' % picking_name
-            picking_id, = picking_ids
-
-            # update OUT with tracking_number
-            picking_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
-
-            # create wizard and process delivery
-            context = {
-                'active_model': 'stock.picking.out',
-                'active_ids': [picking_id],
-                'active_id': picking_id,
-            }
-            wizard_obj = pool.get('stock.partial.picking')
-            wizard_id = wizard_obj.create(cr, 1, {'date': send_date}, context=context)
-            wizard_obj.do_partial(cr, 1, [wizard_id])
-
-        return True
+        # create wizard and process delivery
+        context = {
+            'active_model': 'stock.picking.out',
+            'active_ids': [picking_id],
+            'active_id': picking_id,
+        }
+        wizard_obj = pool.get('stock.partial.picking')
+        wizard_id = wizard_obj.create(cr, 1, {'date': send_date}, context=context)
+        wizard_obj.do_partial(cr, 1, [wizard_id])
