@@ -77,13 +77,3 @@ class stock_picking(osv.osv):
 
         # return result of write
         return res
-
-class stock_picking_in(osv.osv):
-
-    _inherit = 'stock.picking.in'
-
-    def create(self, cr, uid, values, context=None):
-        return super(stock_picking_in, self).create(cr, uid, values, context=context)
-
-    def write(self, cr, uid, ids, values, context=None):
-        return super(stock_picking_in, self).write(cr, uid, ids, values, context=context)

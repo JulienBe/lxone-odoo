@@ -14,6 +14,7 @@ from ads_sales_order import ads_sales_order
 from ads_product import ads_product
 from ads_return import ads_return
 from ads_stock import ads_stock
+from ads_mvts import ads_mvts
 from ads_file import ads_file
 
 class ads_manager(osv.osv):

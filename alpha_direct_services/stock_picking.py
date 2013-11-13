@@ -11,6 +11,9 @@ class stock_picking(osv.osv):
     """ Inherit the stock.picking to prevent manual processing and cancellation after ads upload """
 
     _inherit = 'stock.picking'
+    _columns = {
+        'ads_sent': fields.boolean('Sent to ADS?')
+    }
 
     def action_process(self, cr, uid, ids, context=None):
         if all_assigned(self, cr, ids):

@@ -17,7 +17,6 @@ class stock_picking(osv.osv):
     Inherit the stock.picking object to trigger upload of SO pickings
     """
     _inherit = 'stock.picking'
-    _columns = {'ads_sent': fields.boolean('Sent to ADS?')}
 
     def create(self, cr, uid, values, context=None):
         """
@@ -62,7 +61,6 @@ class stock_picking(osv.osv):
                 pickings_for_so = self.search(cr, uid, [('origin','=',picking.origin),('type','=','out')])
                 if len(pickings_for_so) > 1:
                     picking_id = sorted(list(set(pickings_for_so) - set(ids)))[0]
-                    #picking.ads_sent = False
                 
                 upload_so_picking(self, cr, uid, picking_id, vals=copy(values), context=context)
                 self.write(cr, uid, pickings_for_so, {'ads_sent': True})
@@ -70,6 +68,7 @@ class stock_picking(osv.osv):
         return res
     
     def copy(self, cr, uid, id, default=None, context=None):
+        """ Set ads_sent back to False - caused by duplication during action_process of partial wizard """
         res = super(stock_picking, self).copy(cr, uid, id, default=default, context=context)
         self.write(cr, uid, res, {'ads_sent': False})
         return res
