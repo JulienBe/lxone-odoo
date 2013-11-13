@@ -10,6 +10,7 @@ def upload_po_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=N
     picking = stock_picking_obj.browse(cr, uid, picking_id, context=context)
     data = ads_purchase_order(picking)
     data.upload(cr, stock_picking_obj.pool.get('ads.manager'))
+    stock_picking_obj.write(cr, uid, picking_id, {'ads_sent': True})
 
 class stock_picking(osv.osv):
     """
@@ -39,34 +40,39 @@ class stock_picking(osv.osv):
 
     def write(self, cr, uid, ids, values, context=None):
         """
-        If picking state is changed to assigned, upload to ADS
+        If pick state is changed to assigned, upload to ADS
         """
-
         if not hasattr(ids, '__iter__'):
             ids = [ids]
 
-        def check_state(values):
+        def state_correct(values):
             """ Make sure we are changing the state to assigned """
-            if 'state' in values and values['state'] == 'assigned':
-                return True
-            else:
-                return False
+            return 'state' in values and values['state'] == 'assigned' or False
 
-        def check_type(obj, cr, picking_id):
+        def type_correct(obj, cr, pick):
             """ Make sure all pickings in the write have origin SO* """
-            picking = obj.browse(cr, 1, picking_id, context=context)
-            return picking.type.lower() == 'in'
+            return pick.type == 'in'
+        
+        def is_sent(obj, cr, pick):
+            return pick.ads_sent
+        
+        def others_exist(obj, cr, pick):
+            return len(self.search(cr, uid, [('origin','=',pick.origin),('type','=','in')])) > 1 
 
         # perform the write and save value to return later
         res = super(stock_picking, self).write(cr, uid, ids, values, context=context)
-
+        
+        if 'ads_sent' in values:
+            return res
+        
         # are we changing the state to assigned?
-        if not check_state(values):
+        if not state_correct(values):
             return res
 
-        # check type of each picking and upload if appropriate
+        # check type of each pick and upload if appropriate
         for picking_id in ids:
-            if check_type(self, cr, picking_id):
+            pick = self.browse(cr, 1, picking_id, context=context)
+            if type_correct(self,cr,pick) and not is_sent(self,cr,pick) and not others_exist(self,cr,pick): 
                 upload_po_picking(self, cr, uid, picking_id, vals=copy(values), context=context)
 
         # return result of write

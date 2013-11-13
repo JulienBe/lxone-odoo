@@ -11,15 +11,18 @@ class ads_file(object):
 
 		if '-' in file_name and file_name.count('-') == 1 \
 		and '.' in file_name and file_name.count('.') == 1:
-			self.valid = True
+			
+			try:
+				prefix, date = file_name.split('-', 1)
+				date, extension = date.split('.')
 
-			prefix, date = file_name.split('-', 1)
-			date, extension = date.split('.')
-
-			self.date_string = date
-			self.date = parse_date(date)
-			self.prefix = prefix
-			self.extension = extension.lower()
+				self.date_string = date
+				self.date = parse_date(date)
+				self.prefix = prefix
+				self.extension = extension.lower()
+				self.valid = True
+			except ValueError:
+				self.valid = False
 		else:
 			self.valid = False
 

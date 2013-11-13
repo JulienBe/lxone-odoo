@@ -1,5 +1,5 @@
 from copy import copy
-from openerp.osv import osv
+from openerp.osv import osv, fields
 from ads_sales_order import ads_sales_order
 
 def upload_so_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=None):
@@ -10,12 +10,14 @@ def upload_so_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=N
     picking = stock_picking_obj.browse(cr, uid, picking_id, context=context)
     data = ads_sales_order(picking)
     data.upload(cr, stock_picking_obj.pool.get('ads.manager'))
+    stock_picking_obj.write(cr, uid, picking_id, {'ads_sent': True})
 
 class stock_picking(osv.osv):
     """
     Inherit the stock.picking object to trigger upload of SO pickings
     """
     _inherit = 'stock.picking'
+    _columns = {'ads_sent': fields.boolean('Sent to ADS?')}
 
     def create(self, cr, uid, values, context=None):
         """
@@ -41,35 +43,35 @@ class stock_picking(osv.osv):
         """
         If picking state is changed to assigned, upload to ADS
         """
-
         if not hasattr(ids, '__iter__'):
             ids = [ids]
 
-        def check_state(values):
-            """ Make sure we are changing the state to assigned """
-            if 'state' in values and values['state'] == 'assigned':
-                return True
-            else:
-                return False
-
-        def check_type(obj, cr, picking_id):
-            """ Make sure all pickings in the write have origin SO* """
-            picking = obj.browse(cr, 1, picking_id, context=context)
-            return picking.type.lower() == 'out'
-
         # perform the write and save value to return later
         res = super(stock_picking, self).write(cr, uid, ids, values, context=context)
-
-        # are we changing the state to assigned?
-        if not check_state(values):
+        if 'ads_sent' in values:
             return res
-
-        # check type of each picking and upload if appropriate
+        
         for picking_id in ids:
-            if check_type(self, cr, picking_id):
-                upload_so_picking(self, cr, uid, picking_id, vals=copy(values), context=context)
+            picking = self.browse(cr, uid, picking_id, context=context)
+            
+            state_correct = picking.state == 'assigned' or 'state' in values and values['state'] == 'assigned' or False
+            type_correct = picking.type.lower() == 'out'
 
-        # return result of write
+            if state_correct and type_correct and not picking.ads_sent:
+                # see if other outs with the same origin exist. If yes, upload the oldest because that is the one with the leftover lines
+                pickings_for_so = self.search(cr, uid, [('origin','=',picking.origin),('type','=','out')])
+                if len(pickings_for_so) > 1:
+                    picking_id = sorted(list(set(pickings_for_so) - set(ids)))[0]
+                    #picking.ads_sent = False
+                
+                upload_so_picking(self, cr, uid, picking_id, vals=copy(values), context=context)
+                self.write(cr, uid, pickings_for_so, {'ads_sent': True})
+
+        return res
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        res = super(stock_picking, self).copy(cr, uid, id, default=default, context=context)
+        self.write(cr, uid, res, {'ads_sent': False})
         return res
 
 class stock_picking_in(osv.osv):
