@@ -67,6 +67,14 @@ class ads_mvts(ads_data):
             product_code = str(move['CODE_ART'])
             quantity = move['QTE']
             move_date = 'DATEMVT' in move and move['DATEMVT']
+            
+            assert picking_name, 'Picking name (NUMBL field) must have a value'
+            assert move['TYPEMVT'] in ['E', 'S'], 'Move type (TYPEMVT field) must be either E or S for picking %s' % picking_name
+            assert product_code, 'Product code (CODE_ART field) must have a value for picking %s' % picking_name
+            
+            # if MVTS is for an OUT, quantity will be negative so make it positive
+            if move_type == 'out':
+                quantity = quantity * -1
 
             line_vals = {'name': product_code, 'quantity': quantity, 'date': move_date, 'move_type': move_type}
             
