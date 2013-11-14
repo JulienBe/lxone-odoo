@@ -2,6 +2,7 @@ from copy import copy
 import logging
 _logger = logging.getLogger(__name__)
 
+from openerp.osv import osv
 from openerp.tools.translate import _
 
 from ads_data import ads_data
@@ -23,6 +24,14 @@ class ads_purchase_order(ads_data):
 
         @param browse_record(stock.picking.in) picking: the stock picking browse record object
         """
+        required_data = {
+            'NUM_BL': 'This should never happen - please contact OpenERP',
+            'DATE_PREVUE': 'Expected date',
+            'LIBELLE_FOURN': 'Supplier name',
+            'CODE_ART': 'Product reference (IP)',
+            'QTE_ATTENDUE': 'Product quantity',
+        }
+        
         # create a template that contains data that does not change per PO line
         template = {
             'NUM_BL': picking.name,
@@ -37,10 +46,22 @@ class ads_purchase_order(ads_data):
             else:
                 code_art_fourn = None
 
-            data = copy(template)
-            data['CODE_ART'] = move.product_id.x_new_ref
-            data['CODE_ART_FOURN'] = code_art_fourn
-            data['QTE_ATTENDUE'] = move.product_qty
-            self.insert_data('COMMANDEFOURNISSEUR', data)
-
+            po_data = copy(template)
+            po_data['CODE_ART'] = move.product_id.x_new_ref
+            po_data['CODE_ART_FOURN'] = code_art_fourn
+            po_data['QTE_ATTENDUE'] = move.product_qty
+            
+            missing_data = {}
+            for field in required_data:
+                if not po_data[field]:
+                    missing_data[field] = required_data[field]
+            
+            if missing_data:
+                message = _('We are missing data for the following required fields:') + '\n\n' \
+                            + "\n".join(sorted(['- ' + _(missing_data[data]) for data in missing_data]))\
+                            + '\n\n' + _('These fields must be filled before we can continue')
+                raise osv.except_osv(_('Missing Required Data'), message)
+            
+            self.insert_data('COMMANDEFOURNISSEUR', po_data)
+            
         return self
