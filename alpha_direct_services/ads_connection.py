@@ -155,9 +155,17 @@ class ads_connection(object):
         """
         self._conn.storlines('STOR %s%s' % (directory and directory + '/' or '', filename), contents)
 
-    def rename(self, old_name, new_name):
+    def rename(self, old_name, new_name, add_postfix_if_exists=True):
         """ rename / move a file """
-        self._conn.rename(old_name, new_name)
+        try:
+            self._conn.rename(old_name, new_name)
+        except error_perm as e:
+            if 'existant' in e.message:
+                new_name = new_name.split('.')
+                new_name = "-new.".join(new_name)
+                self.rename(old_name, new_name)
+            else:
+                raise
 
     def move_to_archives(self, filename):
         """ move specified file to the 'archives' folder (automatically created) """

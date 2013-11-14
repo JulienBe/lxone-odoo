@@ -116,7 +116,7 @@ class ads_manager(osv.osv):
                                     data = class_for_data_type[0](file_contents)
     
                                     # trigger process to import into OpenERP
-                                    process_errors = data.process_all(self.pool, cr)
+                                    process_errors = data.process_all(self.pool, cr, conn)
     
                                     if process_errors:
                                         errors.writelines([line + '\n' for line in process_errors])

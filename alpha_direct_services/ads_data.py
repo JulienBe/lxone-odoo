@@ -150,7 +150,7 @@ class ads_data(object):
         """
         raise NotImplemented('Please implement this method in your inherited model')
 
-    def process_all(self, pool, cr):
+    def process_all(self, pool, cr, ads_conn):
         """
         Iterates over data nodes in self.data and securely calls self.process on them, while
         catching and storing any exceptions.
@@ -162,6 +162,7 @@ class ads_data(object):
         
         @param pool: OpenERP object pool
         @param cr: OpenERP database cursor
+        @param ads_connection ads_conn: Connection to the FTP server
         @returns A list of strings describing errors faced while processing the file or []
         """
         if not self.data:
@@ -190,6 +191,9 @@ class ads_data(object):
                 successes.append(i)
             except self.process_exceptions as e:
                 self.errors.append('%s: %s' % (type(e), unicode(e)))
+            
+            # ping the FTP server to maintain an open connection
+            ads_conn._ping()
 
         # call hook
         self.post_process_hook(pool, cr)

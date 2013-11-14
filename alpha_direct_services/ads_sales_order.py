@@ -41,7 +41,7 @@ class ads_sales_order(ads_data):
 
         if not picking.sale_id.carrier_id:
             _logger.warn('Could not map carrier %s to a valid value' % picking.sale_id.carrier_id.name)
-            
+
         so_data = {
             # general
             'NUM_CMDE': picking.sale_id.name,
@@ -75,7 +75,7 @@ class ads_sales_order(ads_data):
             'TELEPHONE_LIV': shipping_partner.phone or '',
             'EMAIL_LIV': shipping_partner.email or '',
         }
-        
+
         # asserts for required data
         required_data = {
             'NUM_CMDE': 'This should never happen - please contact OpenERP',
@@ -94,18 +94,20 @@ class ads_sales_order(ads_data):
             'EMAIL_LIV': 'Shipping partner email',
             'MONTANT_TOTAL_TTC': 'This should never happen - please contact OpenERP',
         }
-        
+
         missing_data = {}
         for field in required_data:
             if not so_data[field]:
                 missing_data[field] = required_data[field]
-        
+
         if missing_data:
-            message = _('We are missing data for the following required fields:') + '\n\n' \
-                        + "\n".join(sorted(['- ' + _(missing_data[data]) for data in missing_data]))\
-                        + '\n\n' + _('These fields must be filled before we can continue')
+            message = _('While processing sales order') + ' %s ' % so_data['NUM_CMDE'] \
+                      + _('and picking') + " %s " % so_data['NUM_FACTURE_BL'] \
+                      + _('there was some data missing for the following required fields:') + '\n\n' \
+                      + "\n".join(sorted(['- ' + _(missing_data[data]) for data in missing_data]))\
+                      + '\n\n' + _('These fields must be filled before we can continue')
             raise osv.except_osv(_('Missing Required Data'), message)
-        
+
         self.insert_data('order', so_data)
 
         line_seq = 1
@@ -134,14 +136,14 @@ class ads_sales_order(ads_data):
 
         picking_name = expedition['NUM_FACTURE_BL']
         tracking_number = 'NUM_TRACKING' in expedition and expedition['NUM_TRACKING'] or ''
-        
+
         if not tracking_number:
             return
 
         # find picking
         picking_obj = pool.get('stock.picking.out')
         picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name)])
-        assert len(picking_ids) == 1, 'Found %s pickings with name %s. Should have just found 1' % (len(picking_ids), picking_name)
+        assert len(picking_ids) == 1, 'Found %s pickings with name %s. Should have found 1' % (len(picking_ids), picking_name)
         picking_id, = picking_ids
 
         # update OUT with tracking_number
