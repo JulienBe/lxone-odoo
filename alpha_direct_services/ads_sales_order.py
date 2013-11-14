@@ -73,7 +73,7 @@ class ads_sales_order(ads_data):
             'PAYS_LIV': shipping_partner.country_id and shipping_partner.country_id.name or '',
             'CODE_ISO_LIV': shipping_partner.country_id and shipping_partner.country_id.code or '',
             'TELEPHONE_LIV': shipping_partner.phone or '',
-            'EMAIL_LIV': shipping_partner.email or '',
+            'EMAIL_LIV': shipping_partner.email or 'no_email',
         }
 
         # asserts for required data
@@ -91,7 +91,6 @@ class ads_sales_order(ads_data):
             'VILLE_LIV': 'Shipping partner city',
             'CODE_ISO_LIV': 'Shipping partner country',
             'TELEPHONE_LIV': 'Shipping partner phone',
-            'EMAIL_LIV': 'Shipping partner email',
             'MONTANT_TOTAL_TTC': 'This should never happen - please contact OpenERP',
         }
 
