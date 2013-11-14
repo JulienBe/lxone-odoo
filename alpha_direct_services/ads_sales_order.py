@@ -2,6 +2,7 @@ import logging
 _logger = logging.getLogger(__name__)
 from datetime import datetime
 import time
+from openerp.osv import osv
 from openerp.tools.translate import _
 
 from auto_vivification import AutoVivification
@@ -40,8 +41,8 @@ class ads_sales_order(ads_data):
 
         if not picking.sale_id.carrier_id:
             _logger.warn('Could not map carrier %s to a valid value' % picking.sale_id.carrier_id.name)
-
-        self.insert_data('order', {
+            
+        so_data = {
             # general
             'NUM_CMDE': picking.sale_id.name,
             'NUM_FACTURE_BL': picking.name,
@@ -52,7 +53,7 @@ class ads_sales_order(ads_data):
 
             # invoice_partner address and contact
             'SOCIETE_FAC': invoice_partner.is_company and invoice_partner.name or '',
-            'NOM_CLIENT_FAC': not invoice_partner.is_company and invoice_partner.name or '',
+            'NOM_CLIENT_FAC': invoice_partner.name or '',
             'ADR1_FAC': invoice_partner.street or '',
             'ADR2_FAC': invoice_partner.street2 or '',
             'CP_FAC': invoice_partner.zip or '',
@@ -73,7 +74,39 @@ class ads_sales_order(ads_data):
             'CODE_ISO_LIV': shipping_partner.country_id and shipping_partner.country_id.code or '',
             'TELEPHONE_LIV': shipping_partner.phone or '',
             'EMAIL_LIV': shipping_partner.email or '',
-        })
+        }
+        
+        # asserts for required data
+        required_data = {
+            'NUM_CMDE': 'This should never happen - please contact OpenERP',
+            'NUM_FACTURE_BL': 'This should never happen - please contact OpenERP',
+            'NOM_CLIENT_FAC': 'Invoice partner name',
+            'ADR1_FAC': 'Invoice partner address line 1',
+            'CP_FAC': 'Invoice partner zip',
+            'VILLE_FAC': 'Invoice partner city',
+            'CODE_ISO_FAC': 'Invoice partner country',
+            'NOM_CLIENT_LIV': 'Shipping partner name',
+            'ADR1_LIV': 'Shipping partner address line 1',
+            'CP_LIV': 'Shipping partner zip',
+            'VILLE_LIV': 'Shipping partner city',
+            'CODE_ISO_LIV': 'Shipping partner country',
+            'TELEPHONE_LIV': 'Shipping partner phone',
+            'EMAIL_LIV': 'Shipping partner email',
+            'MONTANT_TOTAL_TTC': 'This should never happen - please contact OpenERP',
+        }
+        
+        missing_data = {}
+        for field in required_data:
+            if not so_data[field]:
+                missing_data[field] = required_data[field]
+        
+        if missing_data:
+            message = _('We are missing data for the following required fields:') + '\n\n' \
+                        + "\n".join(sorted(['- ' + _(missing_data[data]) for data in missing_data]))\
+                        + '\n\n' + _('These fields must be filled before we can continue')
+            raise osv.except_osv(_('Missing Required Data'), message)
+        
+        self.insert_data('order', so_data)
 
         line_seq = 1
         for move in picking.move_lines:

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    	<record id="ads_view_res_partner_form" model="ir.ui.view">
+            <field name="name">res.partner.form.ads</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+            	<field name="street" position="attributes">
+            		<attribute name="required">1</attribute>
+          		</field>
+          		<field name="zip" position="attributes">
+            		<attribute name="required">1</attribute>
+          		</field>
+          		<field name="city" position="attributes">
+            		<attribute name="required">1</attribute>
+          		</field>
+          		<field name="country_id" position="attributes">
+            		<attribute name="required">1</attribute>
+          		</field>
+          		<field name="phone" position="attributes">
+            		<attribute name="required">1</attribute>
+          		</field>
+          		<field name="email" position="attributes">
+            		<attribute name="required">1</attribute>
+          		</field>
+            </field>
+        </record>
+    </data>
+</openerp>
