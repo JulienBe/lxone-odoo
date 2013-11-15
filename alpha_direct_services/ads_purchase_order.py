@@ -41,6 +41,15 @@ class ads_purchase_order(ads_data):
 
         # iterate on move lines and use the template to create a data node that represents the PO line
         for move in picking.move_lines:
+            
+            # ignore lines that dont have a product or have a discount product, and raise error if missing x_new_ref
+            if not move.product_id or move.product_id.discount:
+                continue
+            
+            if not move.product_id.x_new_ref:
+                raise osv.except_osv(_('Missing Reference'), _('The product "%s" is missing an IP Reference. One must be entered before we can continue processing picking %s.') % (move.product_id.name, picking.name))
+            
+            # get supplier specific product code if it exists
             if picking.partner_id.id in [seller.name.id for seller in move.product_id.seller_ids]:
                 code_art_fourn = [seller.product_code for seller in move.product_id.seller_ids if seller.name.id == picking.partner_id.id][0]
             else:
@@ -57,11 +66,12 @@ class ads_purchase_order(ads_data):
                     missing_data[field] = required_data[field]
             
             if missing_data:
-                message = _('We are missing data for the following required fields:') + '\n\n' \
-                            + "\n".join(sorted(['- ' + _(missing_data[data]) for data in missing_data]))\
-                            + '\n\n' + _('These fields must be filled before we can continue')
+                message = _('While processing purchase order %s and picking %s there was some data missing for the following required fields:' \
+                        % (picking.purchase_id.name, po_data['NUM_BL'])) + '\n\n' \
+                      + "\n".join(sorted(['- ' + _(missing_data[data]) for data in missing_data]))\
+                      + '\n\n' + _('These fields must be filled before we can continue')
                 raise osv.except_osv(_('Missing Required Data'), message)
-            
+
             self.insert_data('COMMANDEFOURNISSEUR', po_data)
             
         return self

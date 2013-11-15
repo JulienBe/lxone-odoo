@@ -100,9 +100,8 @@ class ads_sales_order(ads_data):
                 missing_data[field] = required_data[field]
 
         if missing_data:
-            message = _('While processing sales order') + ' %s ' % so_data['NUM_CMDE'] \
-                      + _('and picking') + " %s " % so_data['NUM_FACTURE_BL'] \
-                      + _('there was some data missing for the following required fields:') + '\n\n' \
+            message = _('While processing sales order %s and picking %s there was some data missing for the following required fields:' \
+                        % (so_data['NUM_CMDE'], so_data['NUM_FACTURE_BL'])) + '\n\n' \
                       + "\n".join(sorted(['- ' + _(missing_data[data]) for data in missing_data]))\
                       + '\n\n' + _('These fields must be filled before we can continue')
             raise osv.except_osv(_('Missing Required Data'), message)
@@ -111,6 +110,14 @@ class ads_sales_order(ads_data):
 
         line_seq = 1
         for move in picking.move_lines:
+            
+            # skip lines that don't have a product or have a discount product. Raise error if missing x_new_ref
+            if not move.product_id or move.product_id.discount:
+                continue
+            
+            if not move.product_id.x_new_ref:
+                raise osv.except_osv(_('Missing Reference'), _('Product "%s" on picking "%s" is missing an IP Reference. One must be entered before we can continue.') % (move.product_id.name, picking.name) )
+            
             line = {
                 'NUM_FACTURE_BL': picking.name,
                 'CODE_ART': move.product_id.x_new_ref,

@@ -1,7 +1,7 @@
 import logging
 _logger = logging.getLogger(__name__)
 
-from openerp.osv import osv
+from openerp.osv import osv,fields
 from ads_product import ads_product
 
 class product_product(osv.osv):
@@ -9,6 +9,9 @@ class product_product(osv.osv):
     Add some fields to product to track synchronisation and trigger upload on write
     """
     _inherit = 'product.product'
+    _columns = {
+        'discount': fields.boolean('Discount', help="This product is used to add discounts to orders by giving a negative quantity")
+    }
 
     def write(self, cr, uid, ids, values, context=None):
         """ Call ads_upload if we edit an uploaded field """
