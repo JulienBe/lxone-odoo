@@ -1,5 +1,6 @@
 from openerp.tools.translate import _
 from openerp.osv import osv, fields
+from ads_sales_order import ads_sales_order
 
 def all_assigned(picking_obj, cr, ids):
     for picking in picking_obj.read(cr, 1, ids, ['state']):
@@ -63,3 +64,16 @@ class stock_picking_out(osv.osv):
             raise osv.except_osv(_('Cannot Cancel'), _("You can't cancel a picking when it is in 'Ready to Receive' state because it has already been sent to ADS.") )
         else:
             super(stock_picking_out, self).action_cancel(cr, uid, ids, context=context)
+
+    def ads_manuel_upload(self, cr, uid, ids, context=None):
+        """ Upload this picking to ADS """
+        for picking_id in ids:
+            picking = self.browse(cr, uid, picking_id, context=context)
+            
+            # make sure state is correct
+            if not picking.state == 'assigned':
+                continue
+            
+            data = ads_sales_order(picking)
+            data.upload(cr, self.pool.get('ads.manager'))
+        return True
