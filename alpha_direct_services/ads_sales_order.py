@@ -141,10 +141,8 @@ class ads_sales_order(ads_data):
         assert 'NUM_FACTURE_BL' in expedition, 'An expedition has been skipped because it was missing a NUM_FACTURE_BL'
 
         picking_name = expedition['NUM_FACTURE_BL']
+        status = 'STATUT' in expedition and expedition['STATUT'] or ''
         tracking_number = 'NUM_TRACKING' in expedition and expedition['NUM_TRACKING'] or ''
-
-        if not tracking_number:
-            return
 
         # find picking
         picking_obj = pool.get('stock.picking.out')
@@ -153,4 +151,8 @@ class ads_sales_order(ads_data):
         picking_id, = picking_ids
 
         # update OUT with tracking_number
-        picking_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
+        if tracking_number:
+            picking_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
+            
+        if status == 'S':
+            raise Exception('TODO: Handle cancelled sales orders')
