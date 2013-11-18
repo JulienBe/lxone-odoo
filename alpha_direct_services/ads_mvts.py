@@ -65,11 +65,17 @@ class ads_mvts(ads_data):
             try:
 
                 # extract data from self.data into move_data dict
-                if not all([field in move for field in ['TYPEMVT', 'CODEMVT', 'NUMBL', 'CODE_ART', 'QTE']]):
-                    _logger.warn(_('A move has been skipped because it was missing a required field: %s' % move))
-                    continue
+                assert all([field in move and move[field] for field in ['TYPEMVT', 'CODEMVT', 'CODE_ART', 'QTE']]), \
+                    _('This move has been skipped because it was missing a required field: %s' % move)
     
-                picking_name = move['NUMBL']
+                picking_name = 'NUMBL' in move and move['NUMBL'] or ''
+                
+                # ignore MVTS without a num bl as they are manual corrections which are represented anyway in STOC files
+                if not picking_name and move['CODEMVT'] == 'REG':
+                    continue
+                
+                assert picking_name, _("Must have a picking name (NUMBL) for moves whose CODEMVT is not REG")
+                
                 move_type = move['TYPEMVT']
                 move_type = move_type == 'E' and 'in' or 'out'
     
