@@ -180,9 +180,12 @@ class ads_data(object):
         successes = []
 
         # call hook
-        self.pre_process_hook(pool, cr)
+        pre_process_errors = self.pre_process_hook(pool, cr)
+        assert isinstance(pre_process_errors, list), 'Pre process hook should return a list!'
+        self.errors =  self.errors + pre_process_errors
+        
+        # iterate over data nodes and call process
         root_key = self.data.keys()[0]
-
         for i in range(0, len(self.data[root_key])):
             data_leaf = self.data[root_key][i]
 
@@ -196,7 +199,9 @@ class ads_data(object):
             ads_conn._ping()
 
         # call hook
-        self.post_process_hook(pool, cr)
+        post_process_errors = self.post_process_hook(pool, cr)
+        assert isinstance(post_process_errors, list), 'Post process hook should return a list!'
+        self.errors =  self.errors + post_process_errors
 
         # Remove successfully processed nodes from self.data
         if self.data and self._auto_remove:
@@ -204,16 +209,16 @@ class ads_data(object):
             for i in sorted(successes, reverse=True):
                 del self.data[root_key][i]
 
-        # Return self.errors
+        # Return self.errors to be handled one level up
         return self.errors
 
     def pre_process_hook(self, pool, cr):
-        """ Called by process_all before it starts calling process on data nodes """
-        pass
+        """ Called by process_all before it calls process on data nodes. Return list of errors """
+        return []
 
     def post_process_hook(self, pool, cr):
-        """ Called by process_all after it hs called process on all data nodes """
-        pass
+        """ Called by process_all after it calls process on all data nodes. Return list of errors """
+        return []
 
     def process(self, pool, cr, data_leaf):
         """

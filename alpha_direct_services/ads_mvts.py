@@ -17,11 +17,13 @@ class ads_mvts(ads_data):
     file_name_prefix = ['MVTS']
     xml_root = 'mvts'
     _auto_remove = False
+    pre_process_errors = []
 
     def pre_process_hook(self, pool, cr):
         """ Lets us process self.data in batches per picking """
         self.data_from_xml = deepcopy(self.data)
         self.data = self._extract_to_process()
+        return self.pre_process_errors
 
     def process(self, pool, cr, picking):
         """
@@ -43,7 +45,11 @@ class ads_mvts(ads_data):
 
     def post_process_hook(self, pool, cr):
         """ Lets us process self.data in batches per picking """
-        self.data = self.data_from_xml
+        try:
+            self.data = self.data_from_xml
+            return []
+        except Exception as e:
+            return ['%s: %s' % (type(e), unicode(e))]
 
     def _extract_to_process(self):
         """
@@ -54,36 +60,42 @@ class ads_mvts(ads_data):
         root_key = self.data.keys()[0]
 
         for move in self.data[root_key]:
-
-            # extract data from self.data into move_data dict
-            if not all([field in move for field in ['TYPEMVT', 'CODEMVT', 'NUMBL', 'CODE_ART', 'QTE']]):
-                _logger.warn(_('A move has been skipped because it was missing a required field: %s' % move))
-                continue
-
-            picking_name = move['NUMBL']
-            move_type = move['TYPEMVT']
-            move_type = move_type == 'E' and 'in' or 'out'
-
-            product_code = str(move['CODE_ART'])
-            quantity = move['QTE']
-            move_date = 'DATEMVT' in move and move['DATEMVT']
             
-            assert picking_name, 'Picking name (NUMBL field) must have a value'
-            assert move['TYPEMVT'] in ['E', 'S'], 'Move type (TYPEMVT field) must be either E or S for picking %s' % picking_name
-            assert product_code, 'Product code (CODE_ART field) must have a value for picking %s' % picking_name
-            
-            # if MVTS is for an OUT, quantity will be negative so make it positive
-            if move_type == 'out':
-                quantity = quantity * -1
+            # catch exception per data node and save it in self.post_process_errors to return up a level
+            try:
 
-            line_vals = {'name': product_code, 'quantity': quantity, 'date': move_date, 'move_type': move_type}
-            
-            # try to find an existing list for picking_name. If found, append our data, otherwise create it
-            target = [picking for picking in move_data['Pickings'] if picking.keys()[0] == picking_name]
-            if not target:
-                move_data['Pickings'].append({picking_name: [line_vals]})
-            else:
-                target[0][picking_name].append(line_vals)
+                # extract data from self.data into move_data dict
+                if not all([field in move for field in ['TYPEMVT', 'CODEMVT', 'NUMBL', 'CODE_ART', 'QTE']]):
+                    _logger.warn(_('A move has been skipped because it was missing a required field: %s' % move))
+                    continue
+    
+                picking_name = move['NUMBL']
+                move_type = move['TYPEMVT']
+                move_type = move_type == 'E' and 'in' or 'out'
+    
+                product_code = str(move['CODE_ART'])
+                quantity = move['QTE']
+                move_date = 'DATEMVT' in move and move['DATEMVT']
+                
+                assert picking_name, 'Picking name (NUMBL field) must have a value'
+                assert move['TYPEMVT'] in ['E', 'S'], 'Move type (TYPEMVT field) must be either E or S for picking %s' % picking_name
+                assert product_code, 'Product code (CODE_ART field) must have a value for picking %s' % picking_name
+                
+                # if MVTS is for an OUT, quantity will be negative so make it positive
+                if move_type == 'out':
+                    quantity = quantity * -1
+    
+                line_vals = {'name': product_code, 'quantity': quantity, 'date': move_date, 'move_type': move_type}
+                
+                # try to find an existing list for picking_name. If found, append our data, otherwise create it
+                target = [picking for picking in move_data['Pickings'] if picking.keys()[0] == picking_name]
+                if not target:
+                    move_data['Pickings'].append({picking_name: [line_vals]})
+                else:
+                    target[0][picking_name].append(line_vals)
+                    
+            except Exception as e:
+                self.pre_process_errors.append('%s: %s' % (type(e), unicode(e)))
 
         return move_data
 

@@ -14,12 +14,16 @@ class ads_stock(ads_data):
 
     def pre_process_hook(self, pool, cr):
         """ Create inventory parent object and save ID for later """
-        inventory_obj = pool.get('stock.inventory')
-        inventory_data = {
-            'name': 'Alpha Direct Service Physical Inventory',
-            'date': datetime.now()
-        }
-        self.inventory_id = inventory_obj.create(cr, 1, inventory_data)
+        try:
+            inventory_obj = pool.get('stock.inventory')
+            inventory_data = {
+                              'name': 'Alpha Direct Service Physical Inventory',
+                              'date': datetime.now()
+                              }
+            self.inventory_id = inventory_obj.create(cr, 1, inventory_data)
+            return []
+        except Exception as e:
+            return ['%s: %s' % (type(e), unicode(e))]
 
     def process(self, pool, cr, physical_inventory):
         """
@@ -51,5 +55,9 @@ class ads_stock(ads_data):
 
     def post_process_hook(self, pool, cr):
         """ Confirm the inventory after adding all the lines """
-        inventory_obj = pool.get('stock.inventory')
-        inventory_obj.action_confirm(cr, 1, [self.inventory_id])
+        try:
+            inventory_obj = pool.get('stock.inventory')
+            inventory_obj.action_confirm(cr, 1, [self.inventory_id])
+            return []
+        except Exception as e:
+            return ['%s: %s' % (type(e), unicode(e))]
