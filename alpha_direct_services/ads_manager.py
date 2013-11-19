@@ -28,9 +28,9 @@ class ads_manager(osv.osv):
 
     _file_process_order = [
         'MVTS',# PO received
-        'STOC',# physical inventory
         'CREX',# SO sent
         'CRET',# return
+        'STOC',# physical inventory
     ]
 
     ftp_exceptions = all_errors

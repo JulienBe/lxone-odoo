@@ -53,17 +53,22 @@ class stock_picking(osv.osv):
         for picking_id in ids:
             picking = self.browse(cr, uid, picking_id, context=context)
             
-            state_correct = picking.state == 'assigned' or 'state' in values and values['state'] == 'assigned' or False
+            state_correct = (picking.state == 'assigned' and 'state' not in values) \
+                            or ('state' in values and values['state'] == 'assigned') \
+                            or False
             type_correct = picking.type.lower() == 'out'
 
             if state_correct and type_correct and not picking.ads_sent:
                 # see if other outs with the same origin exist. If yes, upload the oldest because that is the one with the leftover lines
-                pickings_for_so = self.search(cr, uid, [('origin','=',picking.origin),('type','=','out')])
+                pickings_for_so = self.search(cr, uid, [
+                    ('origin','=',picking.origin),
+                    ('type','=','out'),
+                    ('state','not in',['cancel', 'done'])]
+                )
                 if len(pickings_for_so) > 1:
                     picking_id = sorted(list(set(pickings_for_so) - set(ids)))[0]
                 
                 upload_so_picking(self, cr, uid, picking_id, vals=copy(values), context=context)
-                self.write(cr, uid, pickings_for_so, {'ads_sent': True})
 
         return res
     
@@ -72,13 +77,3 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self).copy(cr, uid, id, default=default, context=context)
         self.write(cr, uid, res, {'ads_sent': False})
         return res
-
-class stock_picking_in(osv.osv):
-
-    _inherit = 'stock.picking.in'
-
-    def create(self, cr, uid, values, context=None):
-        return super(stock_picking_in, self).create(cr, uid, values, context=context)
-
-    def write(self, cr, uid, ids, values, context=None):
-        return super(stock_picking_in, self).write(cr, uid, ids, values, context=context)

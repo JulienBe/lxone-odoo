@@ -9,11 +9,19 @@ def all_assigned(picking_obj, cr, ids):
     return True
 
 class stock_picking(osv.osv):
-    """ Inherit the stock.picking to prevent manual processing and cancellation after ads upload """
+    """ 
+    Inherit the stock.picking to prevent manual processing and cancellation after ads upload 
+     
+    If ADS does not have stock to fulfill an order, they cancel the order and we have to re-upload
+    it with a different BL and SO number. To handle this we cancel the BL, duplicate it (incrementing
+    the name automatically) then append the value of the ads_send_number field to the end of the original
+    SO name.
+    """
 
     _inherit = 'stock.picking'
     _columns = {
-        'ads_sent': fields.boolean('Sent to ADS?')
+        'ads_sent': fields.boolean('Sent to ADS?'),
+        'ads_send_number': fields.integer('Send Number', help="Number of times this picking has been sent to ADS - used to re-send cancelled orders"),
     }
 
     def action_process(self, cr, uid, ids, context=None):
@@ -22,16 +30,13 @@ class stock_picking(osv.osv):
         else:
             super(stock_picking, self).action_process(cr, uid, ids, context=context)
 
-    def action_cancel(self, cr, uid, ids, context=None):
-        if all_assigned(self, cr, ids):
-            raise osv.except_osv(_('Cannot Cancel'), _("You can't cancel a picking when it is in 'Ready to Receive' state because it has already been sent to ADS.") )
-        else:
-            super(stock_picking, self).action_cancel(cr, uid, ids, context=context)
-            
 class stock_picking_in(osv.osv):
     """ Inherit the stock.picking.in to prevent manual processing and cancellation after ads upload """
 
     _inherit = 'stock.picking.in'
+    _columns = {
+        'ads_send_number': fields.integer('Send Number', help="Number of times this picking has been sent to ADS - used to re-send cancelled orders"),
+    }
     
     def action_disallow_invoicing(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'invoice_state': 'none'})
@@ -41,12 +46,6 @@ class stock_picking_in(osv.osv):
             raise osv.except_osv(_('Cannot Receive Manually'), _("The picking should be received in the ADS system. It will then be automatically synchronized to OpenERP."))
         else:
             super(stock_picking_in, self).action_process(cr, uid, ids, context=context)
-
-    def action_cancel(self, cr, uid, ids, context=None):
-        if all_assigned(self, cr, ids):
-            raise osv.except_osv(_('Cannot Cancel'), _("You can't cancel a picking when it is in 'Ready to Receive' state because it has already been sent to ADS.") )
-        else:
-            super(stock_picking_in, self).action_cancel(cr, uid, ids, context=context)
 
 class stock_picking_out(osv.osv):
     """ Inherit the stock.picking.in to prevent manual processing and cancellation after ads upload """
@@ -58,12 +57,6 @@ class stock_picking_out(osv.osv):
             raise osv.except_osv(_('Cannot Deliver Manually'), _("The picking should be marked as delivered in the ADS system. It will then be automatically synchronized to OpenERP."))
         else:
             super(stock_picking_out, self).action_process(cr, uid, ids, context=context)
-
-    def action_cancel(self, cr, uid, ids, context=None):
-        if all_assigned(self, cr, ids):
-            raise osv.except_osv(_('Cannot Cancel'), _("You can't cancel a picking when it is in 'Ready to Receive' state because it has already been sent to ADS.") )
-        else:
-            super(stock_picking_out, self).action_cancel(cr, uid, ids, context=context)
 
     def ads_manuel_upload(self, cr, uid, ids, context=None):
         """ Upload this picking to ADS """
