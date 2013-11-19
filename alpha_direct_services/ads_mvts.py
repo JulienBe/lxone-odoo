@@ -53,7 +53,7 @@ class ads_mvts(ads_data):
 
     def _extract_to_process(self):
         """
-        Organises self.data into a batch of data that can be imported per picking
+        Organises self.data into a batch of data that can be imported per picking.
         @return: {'Pickings': [{'picking_name': [{'product_code': .., 'quantity': .., 'date': ..}]]}
         """
         move_data = AutoVivification({'Pickings': []})
@@ -83,9 +83,9 @@ class ads_mvts(ads_data):
                 quantity = move['QTE']
                 move_date = 'DATEMVT' in move and move['DATEMVT']
                 
-                assert picking_name, 'Picking name (NUMBL field) must have a value'
-                assert move['TYPEMVT'] in ['E', 'S'], 'Move type (TYPEMVT field) must be either E or S for picking %s' % picking_name
-                assert product_code, 'Product code (CODE_ART field) must have a value for picking %s' % picking_name
+                assert picking_name, _('Picking name (NUMBL field) must have a value for node %s') % move
+                assert move['TYPEMVT'] in ['E', 'S'], _('Move type (TYPEMVT field) must be either E or S for picking %s') % picking_name
+                assert product_code, _('Product code (CODE_ART field) must have a value for picking %s') % picking_name
                 
                 # if MVTS is for an OUT, quantity will be negative so make it positive
                 if move_type == 'out':

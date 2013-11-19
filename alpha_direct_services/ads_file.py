@@ -9,8 +9,7 @@ class ads_file(object):
 
 		self.file_name = file_name
 
-		if '-' in file_name and file_name.count('-') == 1 \
-		and '.' in file_name and file_name.count('.') == 1:
+		if '-' in file_name and '.' in file_name and file_name.count('.') == 1:
 			
 			try:
 				prefix, date = file_name.split('-', 1)

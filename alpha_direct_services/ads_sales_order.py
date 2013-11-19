@@ -149,14 +149,23 @@ class ads_sales_order(ads_data):
         picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name)])
         assert len(picking_ids) == 1, 'Found %s pickings with name %s. Should have found 1' % (len(picking_ids), picking_name)
         picking_id, = picking_ids
+        picking = picking_obj.browse(cr, 1, picking_id)
 
-        # update OUT with tracking_number
+        # set / append tracking number on picking
         if tracking_number:
+            try:
+                if picking.carrier_tracking_ref:
+                    existing_tracking_number = picking.carrier_tracking_ref.split(',')
+                    if str(tracking_number) not in existing_tracking_number:
+                        existing_tracking_number.append(tracking_number)
+                    tracking_number = ','.join(map(str, existing_tracking_number))
+            except:
+                pass
             picking_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
             
         # if status is R, order has been cancelled by ADS because of lack of stock. We then need to
         # upload the same BL with a new name and new SO name. We handle this by cancelling BL, 
-        # then triggering it's recreation
+        # duplicating it, confirming it then fixing the SO state from shipping_except
         if status == 'R':
             picking_obj = pool['stock.picking']
             picking_out_obj = pool['stock.picking.out']
@@ -171,6 +180,7 @@ class ads_sales_order(ads_data):
             # Cancel original picking, then duplicate and confirm it
             picking_out_obj.action_cancel(cr, 1, [picking_id])
             
+            # specify a name for the new BL otherwise stock module will delete the origin from it's values
             defaults = {
                 'ads_send_number': send_number, 
                 'name': pool['ir.sequence'].get(cr, 1, 'stock.picking.out')
