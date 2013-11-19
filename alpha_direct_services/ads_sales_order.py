@@ -72,7 +72,7 @@ class ads_sales_order(ads_data):
             'ETAT_LIV': shipping_partner.state_id and shipping_partner.state_id.name or '',
             'PAYS_LIV': shipping_partner.country_id and shipping_partner.country_id.name or '',
             'CODE_ISO_LIV': shipping_partner.country_id and shipping_partner.country_id.code or '',
-            'TELEPHONE_LIV': shipping_partner.phone or '',
+            'TELEPHONE_LIV': shipping_partner.phone or 'no_phone',
             'EMAIL_LIV': shipping_partner.email or 'no_email',
         }
 
