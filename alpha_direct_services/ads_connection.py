@@ -8,10 +8,6 @@ import time
 
 from ads_data import ads_data
 
-class ProductionWrongDatabaseName(Exception):
-    """ Raised when a connection is made in production mode with the wrong database name """
-    pass
-
 class ads_connection(object):
     """
     Wraps an FTP connection to the ADS server and provides some helper methods.
@@ -137,7 +133,7 @@ class ads_connection(object):
                     if not database_name == self._cr.dbname:
                         self.cd('../../')
                         self._disconnect()
-                        raise ProductionWrongDatabaseName("Current database name (%s) does not match that in the database_name.txt file in prod/misc on the FTP server. Did you forget to change the mode from prod to test?" % self._cr.dbname)
+                        raise osv.except_osv(_("Production Warning"), "The ADS module is still in production mode and your database name (%s) does not match the database name in the file 'security/database_name.txt' (%s).\n\nPlease either change your ads_mode or the database name in the text file." % (self._cr.dbname, database_name))
                 self.cd('..')
             self.cd('..')
 
