@@ -167,7 +167,7 @@ class ads_mvts(ads_data):
                 pool.get('stock.partial.picking.line').write(cr, 1, move.id,
                     {'quantity': sum([line['quantity'] for line in picking_lines if line['name'] == move.product_id.x_new_ref])
                 })
-            else:
+            elif not move.product_id.discount:
                 pool.get('stock.partial.picking.line').write(cr, 1, move.id, {'quantity': 0})
 
         # Process receipt
