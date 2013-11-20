@@ -107,12 +107,10 @@ class ads_manager(osv.osv):
     
                                 # catch any errors not caught by data.process etc
                                 try:
-                                    # download the XML contents of the file
-                                    file_data = StringIO()
-                                    conn._conn.retrbinary('RETR %s' % file_name, file_data.write)
-    
+                                    # Download and decode the file contents
+                                    file_contents = conn.download_data(file_name).decode("utf-8-sig").encode("utf-8")
+                                    
                                     # instantiate found subclass with correctly encoded file_data
-                                    file_contents = file_data.getvalue().decode("utf-8-sig").encode("utf-8")
                                     data = class_for_data_type[0](file_contents)
     
                                     # trigger process to import into OpenERP
@@ -138,9 +136,12 @@ class ads_manager(osv.osv):
                                             if data.data:
                                                 conn.mkf(file_name, data.generate_xml(), 'errors')
                                         except NameError:
-                                            conn.mkf(file_name, StringIO(file_contents), 'errors')
+                                            contents = StringIO(file_contents)
+                                            conn.mkf(file_name, contents, 'errors')
+                                            contents.close()
                                     
                                 # commit the OpenERP cursor inbetween files
+                                errors.close()
                                 cr and cr.commit()
                             else:
                                 _logger.info(_("Could not find subclass of ads_data with file_name_prefix %s" % file_prefix))

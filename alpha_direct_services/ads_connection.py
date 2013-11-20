@@ -1,11 +1,16 @@
 from openerp.osv import osv
 from openerp.tools.translate import _
 
+from StringIO import StringIO
 from ftplib import FTP
 from ftplib import error_reply, error_temp, error_perm, error_proto, all_errors
 import time
 
 from ads_data import ads_data
+
+class ProductionWrongDatabaseName(Exception):
+    """ Raised when a connection is made in production mode with the wrong database name """
+    pass
 
 class ads_connection(object):
     """
@@ -105,7 +110,7 @@ class ads_connection(object):
 
         # change directory to self._mode, then save "VersClient" dir name
         self.cd(self._mode)
-
+        
         # get name of VersClient directory
         directories = self.ls()
         vers_client_dir = filter(lambda direc: direc[0:4] == 'Vers' and direc != 'VersADS', directories)
@@ -117,6 +122,24 @@ class ads_connection(object):
         else:
             raise IOError('Could not find appropriate directories in %s folder.'\
                         + 'Normally there are VersADS and Vers*ClientName* directories' % self._mode)
+            
+        # safety check for production mode. If VersClient dir contains file "misc/database_name.txt", require
+        # the database name inside to be the same as this database name. This helps to prevent 
+        # the situation where somebody backs up and restores a db locally and forgets to change to mode test
+        if self._mode == 'prod':
+            self.cd(self._vers_client)
+            directories = self.ls()
+            if 'security' in directories:
+                self.cd('security')
+                files = self.ls()
+                if 'database_name.txt' in files:
+                    database_name = self.download_data('database_name.txt').strip()
+                    if not database_name == self._cr.dbname:
+                        self.cd('../../')
+                        self._disconnect()
+                        raise ProductionWrongDatabaseName("Current database name (%s) does not match that in the database_name.txt file in prod/misc on the FTP server. Did you forget to change the mode from prod to test?" % self._cr.dbname)
+                self.cd('..')
+            self.cd('..')
 
     def _disconnect(self):
         """ Closes a previously opened connection to the ADS FTP server """
@@ -178,6 +201,22 @@ class ads_connection(object):
         if 'errors' not in self.ls():
             self.mkd('errors')
         self.rename(filename, 'errors')
+        
+    def download_data(self, file_name):
+        """ 
+        Downloads data for the specified file 
+        @return str the contents of the file
+        """
+        data = StringIO()
+        
+        if not self._connected:
+            self._connect()
+        
+        self._conn.retrbinary('RETR %s' % file_name, data.write)
+        
+        contents = data.getvalue()
+        data.close()
+        return contents
 
     def upload_data(self, data):
         """

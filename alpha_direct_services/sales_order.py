@@ -77,3 +77,4 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self).copy(cr, uid, id, default=default, context=context)
         self.write(cr, uid, res, {'ads_sent': False})
         return res
+    
