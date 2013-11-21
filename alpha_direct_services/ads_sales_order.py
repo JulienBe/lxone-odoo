@@ -179,6 +179,7 @@ class ads_sales_order(ads_data):
                 [('origin','=',picking_out.origin), 
                  ('state', 'in', ['confirmed','assigned']), 
                  ('type','=','out')], order='name ASC')
+            assert open_picking_ids, _("Could not find an open picking with origin %s to close" % picking_out.origin)
             picking_id = sorted(open_picking_ids)[0]
             
             # browse on new target picking and get sales order object
