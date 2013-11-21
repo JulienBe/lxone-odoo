@@ -123,6 +123,12 @@ class ads_mvts(ads_data):
             picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name)])
             assert picking_ids, _("Could not find picking with name '%s'" % picking_name)
             picking = picking_obj.browse(cr, 1, picking_ids[0])
+            
+        # if picking is canceled, find another one
+        if picking.state in ['done','cancel']:
+            picking_ids = picking_obj.search(cr, 1, [('sale_id','=',picking.sale_id.id),('state','not in',['done','cancel'])])
+            picking = picking_obj.browse(cr, 1, sorted(picking_ids)[0])
+        
         return picking.id
 
     def _process_picking(self, pool, cr, picking_name, picking_lines):

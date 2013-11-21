@@ -31,15 +31,24 @@ class stock_picking(osv.osv):
             picking = self.browse(cr, uid, picking_id, context=context)
 
             if picking.type.lower() == 'out' and not picking.ads_sent:
-                # Only upload the picking if there is only 1 open OUT found (Original, or 
-                # CREX cancellation case).
-                # In case of a partial there will be a second open OUT with the same origin.
+                
+                # Behave differently if it is a partial or not. If it is a partial,
+                # there will be more than 1 picking in confirmed or assigned state.
                 pickings_for_so = self.search(cr, uid, [
-                    ('origin','=',picking.origin),
+                    ('sale_id','=',picking.sale_id.id),
                     ('type','=','out'),
                     ('state','not in',['cancel', 'done'])]
                 )
                 if len(pickings_for_so) == 1:
+                    ## First BL or CREX ##
+                    upload_so_picking(self, cr, uid, picking_id, context=context)
+                else:
+                    ## Partial ##
+                    # Find partial with unprocessed lines, add ads_send_number, then upload
+                    picking_id = sorted(set(pickings_for_so) - set(ids))[0]
+                    all_pickings_for_so = self.search(cr, 1, [('origin','=',picking.origin)])
+                    send_number = sorted([p.ads_send_number for p in self.browse(cr, 1, all_pickings_for_so)], reverse=True)[0] + 1
+                    self.write(cr, 1, picking_id, {'ads_send_number': send_number})
                     upload_so_picking(self, cr, uid, picking_id, context=context)
 
         return res
