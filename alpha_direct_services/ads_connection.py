@@ -214,11 +214,14 @@ class ads_connection(object):
         data.close()
         return contents
 
-    def upload_data(self, data):
+    def upload_data(self, data, copy_to_archive=True):
         """
-        Takes an ads_data object and creates an XML file then uploads it to FTP server.
-        If a file with the generated name() already exists, pause 1 second and try again.
+        Generates an XML file from an ads_data subclass, then generates a name for the file
+        and checks if it exists on the server. If it does, wait .1 second and generate again.
+        It will then upload the file to the server and if copy_to_archive is true, it will
+        upload the same file to the archive directory.
         @param ads_data data: Contains data to be written to the file
+        @param bool copy_to_archive: If true, the same file will also be uploaded to the archive directory
         """
         assert isinstance(data, ads_data), 'data parameter must extend ads_data class'
         if not self._connected:
@@ -228,9 +231,21 @@ class ads_connection(object):
 
         try:
             xml_buffer = data.generate_xml()
+
             while True:
-                if data.name() not in self.ls():
-                    self.mkf(data.name(), xml_buffer)
+                name = data.name()
+                files = self.ls()
+                
+                if name not in files:
+                    self.mkf(name, xml_buffer)
+                    
+                    # upload a copy to archive directory
+                    if copy_to_archive:
+                        if 'archives' not in files:
+                            self.mkd('archives')
+                        xml_buffer.seek(0)
+                        self.mkf(name, xml_buffer, 'archives')
+                        
                     break
                 else:
                     time.sleep(0.1)
