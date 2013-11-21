@@ -144,33 +144,44 @@ class ads_sales_order(ads_data):
         status = 'STATUT' in expedition and expedition['STATUT'] or ''
         tracking_number = 'NUM_TRACKING' in expedition and expedition['NUM_TRACKING'] or ''
 
-        # find picking
-        picking_obj = pool.get('stock.picking.out')
-        picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name)])
+        # find original picking
+        picking_out_obj = pool.get('stock.picking.out')
+        picking_ids = picking_out_obj.search(cr, 1, [('name', '=', picking_name)])
         assert len(picking_ids) == 1, 'Found %s pickings with name %s. Should have found 1' % (len(picking_ids), picking_name)
         picking_id, = picking_ids
-        picking = picking_obj.browse(cr, 1, picking_id)
+        picking_out = picking_out_obj.browse(cr, 1, picking_id)
 
         # set / append tracking number on picking
         if tracking_number:
             try:
-                if picking.carrier_tracking_ref:
-                    existing_tracking_number = picking.carrier_tracking_ref.split(',')
+                if picking_out.carrier_tracking_ref:
+                    existing_tracking_number = picking_out.carrier_tracking_ref.split(',')
                     if str(tracking_number) not in existing_tracking_number:
                         existing_tracking_number.append(tracking_number)
                     tracking_number = ','.join(map(str, existing_tracking_number))
             except:
                 pass
-            picking_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
+            picking_out_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
             
         # if status is R, order has been cancelled by ADS because of lack of stock. We then need to
         # upload the same BL with a new name and new SO name. We handle this by cancelling BL, 
         # duplicating it, confirming it then fixing the SO state from shipping_except
         if status == 'R':
+            
             picking_obj = pool['stock.picking']
             picking_out_obj = pool['stock.picking.out']
             sale_order_obj = pool['sale.order']
             
+            # ADS always gives us the original BL name, but they are really cancelling the 
+            # remaining products, so find the SO's oldest open BL 
+            # (Users might have manually created a new one in the meantime)
+            open_picking_ids = picking_obj.search(cr, 1, 
+                [('origin','=',picking_out.origin), 
+                 ('state', 'in', ['confirmed','assigned']), 
+                 ('type','=','out')], order='name ASC')
+            picking_id = sorted(open_picking_ids)[0]
+            
+            # browse on new target picking and get sales order object
             picking = picking_obj.browse(cr, 1, picking_id)
             sale = picking.sale_id
             
@@ -203,4 +214,3 @@ class ads_sales_order(ads_data):
             if sale_values:
                 sale_order_obj.write(cr, 1, sale.id, sale_values)
         return True
-            
