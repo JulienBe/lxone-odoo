@@ -58,6 +58,7 @@ class ads_stock(ads_data):
         try:
             inventory_obj = pool.get('stock.inventory')
             inventory_obj.action_confirm(cr, 1, [self.inventory_id])
+            inventory_obj.action_done(cr, 1, [self.inventory_id])
             return []
         except Exception as e:
             return ['%s: %s' % (type(e), unicode(e))]

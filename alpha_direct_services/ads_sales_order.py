@@ -64,7 +64,7 @@ class ads_sales_order(ads_data):
 
             # delivery address and contact
             'SOCIETE_LIV': shipping_partner.is_company and shipping_partner.name or '',
-            'NOM_CLIENT_LIV': not shipping_partner.is_company and shipping_partner.name or '',
+            'NOM_CLIENT_LIV': shipping_partner.name or '',
             'ADR1_LIV': shipping_partner.street or '',
             'ADR2_LIV': shipping_partner.street2 or '',
             'CP_LIV': shipping_partner.zip or '',
@@ -78,7 +78,7 @@ class ads_sales_order(ads_data):
 
         # asserts for required data
         required_data = {
-            'NUM_CMDE': 'This should never happen - please contact OpenERP',
+            'NUM_CMDE': 'The picking was not created by a sales order',
             'NUM_FACTURE_BL': 'This should never happen - please contact OpenERP',
             'NOM_CLIENT_FAC': 'Invoice partner name',
             'ADR1_FAC': 'Invoice partner address line 1',
