@@ -19,9 +19,7 @@ class ads_purchase_order(ads_data):
 
     def extract(self, picking):
         """
-        Takes a stock.picking.in browse_record and extracts the
-        appropriate data into self.data
-
+        Takes a stock.picking.in browse_record and extracts the appropriate data into self.data
         @param browse_record(stock.picking.in) picking: the stock picking browse record object
         """
         required_data = {

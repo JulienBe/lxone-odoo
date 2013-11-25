@@ -57,7 +57,12 @@ class stock_picking(osv.osv):
             return pick.ads_sent
         
         def others_exist(obj, cr, pick):
-            return len(self.search(cr, uid, [('origin','=',pick.origin),('type','=','in')])) > 1 
+            return len(self.search(cr, uid, [('origin','=',pick.origin),('type','=','in')])) > 1
+        
+        def not_return(pick):
+            """ Seems to be the only way to check if an IN is a return or not ... """
+            return '-' in pick.name and \
+                not sorted(pick.name.split('-'), reverse=True)[0].startswith('ret') 
 
         # perform the write and save value to return later
         res = super(stock_picking, self).write(cr, uid, ids, values, context=context)
@@ -72,7 +77,8 @@ class stock_picking(osv.osv):
         # check type of each pick and upload if appropriate
         for picking_id in ids:
             pick = self.browse(cr, 1, picking_id, context=context)
-            if type_correct(self,cr,pick) and not is_sent(self,cr,pick) and not others_exist(self,cr,pick): 
+            if type_correct(self,cr,pick) and not is_sent(self,cr,pick) \
+                    and not others_exist(self,cr,pick) and not_return(pick): 
                 upload_po_picking(self, cr, uid, picking_id, vals=copy(values), context=context)
 
         # return result of write

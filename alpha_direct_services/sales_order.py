@@ -43,13 +43,23 @@ class stock_picking(osv.osv):
                     ## First BL or CREX ##
                     upload_so_picking(self, cr, uid, picking_id, context=context)
                 else:
-                    ## Partial ##
-                    # Find partial with unprocessed lines, add ads_send_number, then upload
-                    picking_id = sorted(set(pickings_for_so) - set(ids))[0]
-                    all_pickings_for_so = self.search(cr, 1, [('origin','=',picking.origin)])
-                    send_number = sorted([p.ads_send_number for p in self.browse(cr, 1, all_pickings_for_so)], reverse=True)[0] + 1
-                    self.write(cr, 1, picking_id, {'ads_send_number': send_number})
-                    upload_so_picking(self, cr, uid, picking_id, context=context)
+                    ## Partial / Return ##
+                    returns = [p for p in self.browse(cr, 1, pickings_for_so) if '-ret' in p.name and not p.ads_sent]
+                    if returns:
+                        # found un-uploaded return, so upload it
+                        for ret in returns:
+                            picking_id = ret.id
+                            all_pickings_for_so = self.search(cr, 1, [('origin','=',picking.origin)])
+                            send_number = sorted([p.ads_send_number for p in self.browse(cr, 1, all_pickings_for_so)], reverse=True)[0] + 1
+                            self.write(cr, 1, picking_id, {'ads_send_number': send_number})
+                            upload_so_picking(self, cr, uid, picking_id, context=context)
+                    else:
+                        # Otherwise, find partial with unprocessed lines, add ads_send_number, then upload
+                        picking_id = sorted(set(pickings_for_so) - set(ids))[0]
+                        all_pickings_for_so = self.search(cr, 1, [('origin','=',picking.origin)])
+                        send_number = sorted([p.ads_send_number for p in self.browse(cr, 1, all_pickings_for_so)], reverse=True)[0] + 1
+                        self.write(cr, 1, picking_id, {'ads_send_number': send_number})
+                        upload_so_picking(self, cr, uid, picking_id, context=context)
 
         return res
     

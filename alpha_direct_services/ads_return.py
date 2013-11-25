@@ -36,6 +36,8 @@ class ads_return(ads_data):
         'RC': 'Retour avec courriers',
         'RCLI': 'Retour Direct Client',
     }
+    
+    resend_codes = ['KC', 'RD', 'RC']
 
     def process(self, pool, cr, ret):
         """
@@ -86,7 +88,7 @@ class ads_return(ads_data):
         Once all of the above criteria are satisfied, it will return the picking ID.
         If no appropriate picking is found it means either we recieved a bad picking
         name from ADS, the picking has not yet been marked as delivered, or the lines
-        has been completely returned already.
+        have been completely returned already.
 
         @param dict ret: A dictionary of return data from ADS. See self._extract_data
         """
@@ -133,7 +135,7 @@ class ads_return(ads_data):
             # validate params and find picking
             assert ret['picking_name'], _("A picking was received from ADS without a name, so we can't process it")
             picking_id = self._find_picking(pool, cr, ret)
-            assert picking_id, _("No picking found with name %s" % ret['picking_name'])
+            assert picking_id, _("Could not find appropriate BL to return for original BL %s" % ret['picking_name'])
 
             # create a wizard record for this picking. Exception thrown if already returned
             context = {
@@ -162,17 +164,35 @@ class ads_return(ads_data):
             return_details = wizard_obj.create_returns(cr, 1, [wizard_id], context=context)
             
             # write return reason to additional info box  
-            return_id = eval(return_details['domain'])[0][2]
+            return_id, = eval(return_details['domain'])[0][2]
             pool.get('stock.picking.in').write(cr, 1, return_id, {'note': ret['return_reason']})
             
             # mark return as received
             context = {
                 'active_model': 'stock.picking.in',
-                'active_ids': return_id,
-                'active_id': return_id[0],
+                'active_ids': [return_id],
+                'active_id': return_id,
             }
             wizard_obj = pool.get('stock.partial.picking')
             wizard_id = wizard_obj.create(cr, 1, {'date': ret['return_date']}, context=context)
             wizard = wizard_obj.browse(cr, 1, wizard_id)
 
             wizard_obj.do_partial(cr, 1, [wizard_id])
+            
+            # depending on return reason, return the return (i.e. create delivery order to re-send
+            # the returned products to the customer
+            if ret['return_code'] in self.resend_codes:
+                context = {
+                    'active_model': 'stock.picking.in',
+                    'active_ids': [return_id],
+                    'active_id': return_id,
+                }
+                wizard_obj = pool.get('stock.return.picking')
+                try:
+                    wizard_id = wizard_obj.create(cr, 1, {'invoice_state': 'none'}, context=context)
+                except osv.except_osv as e:
+                    if 'No products to return' in e.value:
+                        raise ValueError(_('Could not return the return (Re-send to customer) for return with ID %s' % return_id))
+                    else:
+                        raise e
+                return_details = wizard_obj.create_returns(cr, 1, [wizard_id], context=context)
