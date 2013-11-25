@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 _logger = logging.getLogger(__name__)
 from datetime import datetime
@@ -23,7 +24,8 @@ class ads_sales_order(ads_data):
         'Chronopost': '4',
         'EXAPAQ': '5',
         'GEODIS CALBERSON': '6',
-        'DHL': '7'
+        'DHL': '7',
+        'Transporteur Dedie': '8'
     }
 
     def extract(self, picking_out):
@@ -110,14 +112,14 @@ class ads_sales_order(ads_data):
 
         line_seq = 1
         for move in picking_out.move_lines:
-            
+
             # skip lines that don't have a product or have a discount product. Raise error if missing x_new_ref
             if not move.product_id or move.product_id.discount:
                 continue
-            
+
             if not move.product_id.x_new_ref:
                 raise osv.except_osv(_('Missing Reference'), _('Product "%s" on picking_out "%s" is missing an IP Reference. One must be entered before we can continue.') % (move.product_id.name, picking_out.name) )
-            
+
             line = {
                 'NUM_FACTURE_BL': picking_out.name,
                 'CODE_ART': move.product_id.x_new_ref,
@@ -162,42 +164,42 @@ class ads_sales_order(ads_data):
             except:
                 pass
             picking_out_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
-            
+
         # if status is R, order has been cancelled by ADS because of lack of stock. We then need to
-        # upload the same BL with a new name and new SO name. We handle this by cancelling BL, 
+        # upload the same BL with a new name and new SO name. We handle this by cancelling BL,
         # duplicating it, confirming it then fixing the SO state from shipping_except
         if status == 'R':
-            
+
             picking_obj = pool['stock.picking']
             picking_out_obj = pool['stock.picking.out']
             sale_order_obj = pool['sale.order']
-            
-            # ADS always gives us the original BL name, but they are really cancelling the 
-            # remaining products, so find the SO's oldest open BL 
+
+            # ADS always gives us the original BL name, but they are really cancelling the
+            # remaining products, so find the SO's oldest open BL
             # (Users might have manually created a new one in the meantime)
-            open_picking_ids = picking_obj.search(cr, 1, 
-                [('origin','=',picking_out.origin), 
-                 ('state', 'in', ['confirmed','assigned']), 
+            open_picking_ids = picking_obj.search(cr, 1,
+                [('origin','=',picking_out.origin),
+                 ('state', 'in', ['confirmed','assigned']),
                  ('type','=','out')], order='name ASC')
             assert open_picking_ids, _("Could not find an open picking with origin %s to close" % picking_out.origin)
             picking_id = sorted(open_picking_ids)[0]
-            
+
             # browse on new target picking and get sales order object
             picking = picking_obj.browse(cr, 1, picking_id)
             sale = picking.sale_id
-            
-            # value for new picking's ads_send_number 
+
+            # value for new picking's ads_send_number
             send_number = picking.ads_send_number + 1 or 1
-            
+
             # Cancel original picking, then duplicate and confirm it
             picking_out_obj.action_cancel(cr, 1, [picking_id])
-            
+
             # specify a name for the new BL otherwise stock module will delete the origin from it's values
             defaults = {
-                'ads_send_number': send_number, 
+                'ads_send_number': send_number,
                 'name': pool['ir.sequence'].get(cr, 1, 'stock.picking.out')
             }
-            
+
             picking_id = picking_obj.copy(cr, 1, picking_id, defaults)
             picking_obj.signal_button_confirm(cr, 1, [picking_id])
 
@@ -206,7 +208,7 @@ class ads_sales_order(ads_data):
             if sale.state == 'shipping_except':
                 sale_values['state'] = 'progress'
                 sale_values['shipped'] = False
-    
+
                 if (sale.order_policy == 'manual'):
                     for line in sale.order_line:
                         if (not line.invoiced) and (line.state not in ('cancel', 'draft')):
