@@ -25,7 +25,7 @@ class ads_sales_order(ads_data):
         'EXAPAQ': '5',
         'GEODIS CALBERSON': '6',
         'DHL': '7',
-        'Transporteur Dedie': '8'
+        'Transporteur Dédié': '8'
     }
 
     def extract(self, picking_out):
