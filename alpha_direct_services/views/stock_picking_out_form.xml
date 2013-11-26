@@ -17,7 +17,7 @@
             	</button>
             	<page string="Additional Info" position="after">
             		<page string="IP" states="assigned">
-            			<button name="action_process" states="assigned" string="Deliver" type="object" class="oe_highlight" confirm="Are you sure you want to process this picking manually? You should normally wait for it to be automatically marked as received by ADS. This button should only be used in exceptional circumstances."/>
+            			<button name="action_process" states="assigned" string="Deliver" type="object" class="oe_highlight" confirm="Are you sure you want to process this picking manually? You should normally wait for it to be automatically marked as delivered by ADS. This button should only be used in exceptional circumstances."/>
             		</page>
             	</page>
             </field>
