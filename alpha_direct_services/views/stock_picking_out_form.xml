@@ -15,6 +15,11 @@
             	<button string="Cancel Transfer" position="after">
             		<button name="ads_manuel_upload" type="object" string="Re-Send to ADS" states='assigned' />
             	</button>
+            	<page string="Additional Info" position="after">
+            		<page string="IP" states="assigned">
+            			<button name="action_process" states="assigned" string="Deliver" type="object" class="oe_highlight" confirm="Are you sure you want to process this picking manually? You should normally wait for it to be automatically marked as received by ADS. This button should only be used in exceptional circumstances."/>
+            		</page>
+            	</page>
             </field>
         </record>
     </data>

@@ -17,17 +17,6 @@ class ads_sales_order(ads_data):
     file_name_prefix = ['CMDE', 'CREX']
     xml_root = 'orders'
 
-    carrier_mapping = {
-        'Lettre Max': '1',
-        'Mondial Relay': '2',
-        'Colissimo access - expert - international': '3',
-        'Chronopost': '4',
-        'EXAPAQ': '5',
-        'GEODIS CALBERSON': '6',
-        'DHL': '7',
-        'Transporteur Dédié': '8'
-    }
-
     def extract(self, picking_out):
         """
         Takes a stock.picking_out.out browse_record and extracts the
