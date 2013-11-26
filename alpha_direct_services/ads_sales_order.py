@@ -38,11 +38,20 @@ class ads_sales_order(ads_data):
         picking = picking_out.pool['stock.picking'].browse(picking_out._cr, 1, picking_out.id)
         shipping_partner = picking_out.sale_id.partner_shipping_id
         invoice_partner = picking_out.sale_id.partner_invoice_id
-        carrier_name = picking_out.sale_id.carrier_id and picking_out.sale_id.carrier_id.name
-        carrier_name = carrier_name and carrier_name in self.carrier_mapping and self.carrier_mapping[carrier_name] or ''
-
-        if not picking_out.sale_id.carrier_id:
-            _logger.warn('Could not map carrier %s to a valid value' % picking_out.sale_id.carrier_id.name)
+        carrier_name = picking_out.sale_id.carrier_id and picking_out.sale_id.carrier_id.ads_ref or ''
+        
+        # Delivery method can also  be added as a move line, so find all move lines whose products 
+        # are the delivery products of a delivery method and save IDS and ads ref for later
+        carrier_obj = picking_out.pool['delivery.carrier']
+        carrier_move_ids = []
+        for move in picking_out.move_lines:
+            if move.product_id:
+                delivery_method_ids = carrier_obj.search(picking_out._cr, 1, [('product_id','=',move.product_id.id)])
+                if delivery_method_ids:
+                    carrier_move_ids.append(move.id)
+                    if not carrier_name:
+                        carrier = carrier_obj.browse(picking_out._cr, 1, delivery_method_ids[0])
+                        carrier_name = carrier.ads_ref or ''
 
         so_data = {
             # general
@@ -113,10 +122,11 @@ class ads_sales_order(ads_data):
         line_seq = 1
         for move in picking_out.move_lines:
 
-            # skip lines that don't have a product or have a discount product. Raise error if missing x_new_ref
-            if not move.product_id or move.product_id.discount:
+            # skip lines that don't have a product or have a discount or delivery method product 
+            if move.id in carrier_move_ids or not move.product_id or move.product_id.discount:
                 continue
 
+            # Raise error if missing x_new_ref
             if not move.product_id.x_new_ref:
                 raise osv.except_osv(_('Missing Reference'), _('Product "%s" on picking_out "%s" is missing an IP Reference. One must be entered before we can continue.') % (move.product_id.name, picking_out.name) )
 

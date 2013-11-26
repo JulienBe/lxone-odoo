@@ -5,3 +5,4 @@ import purchase_order
 import sales_order
 import product
 import res_partner
+import delivery_carrier
