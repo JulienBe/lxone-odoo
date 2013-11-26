@@ -71,7 +71,7 @@ class ads_mvts(ads_data):
                 picking_name = 'NUMBL' in move and move['NUMBL'] or ''
                 
                 # ignore MVTS without a num bl as they are manual corrections which are represented anyway in STOC files
-                if not picking_name and move['CODEMVT'] == 'REG':
+                if not picking_name:
                     continue
                 
                 assert picking_name, _("Must have a picking name (NUMBL) for moves whose CODEMVT is not REG")
