@@ -57,7 +57,9 @@ class stock_picking(osv.osv):
             return pick.ads_sent
         
         def others_exist(obj, cr, pick):
-            return len(self.search(cr, uid, [('origin','=',pick.origin),('type','=','in')])) > 1
+            return len(self.search(cr, uid, [('origin','=',pick.origin),
+                                             ('type','=','in'),
+                                             ('state','in',['confirmed','assigned'])])) > 1
         
         def not_return(pick):
             """ Seems to be the only way to check if an IN is a return or not ... """
