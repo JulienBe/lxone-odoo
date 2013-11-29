@@ -40,3 +40,22 @@ class product_product(osv.osv):
             if log:
                 _logger.info("Uploaded product with ID %d" % product_id)
         return True
+    
+    def is_delivery_method(self, cr, uid, ids, context=None):
+        """
+        Returns a dictionary of product IDS, where each id maps to a list of carrier ids, or False
+        if none were found
+        """
+        if not isinstance(ids, (list, tuple)):
+            ids = [ids]
+            
+        is_delivery_map = dict.fromkeys(ids, False)
+        carrier_obj = self.pool['delivery.carrier']
+        
+        for product_id in ids:
+            delivery_method_ids = carrier_obj.search(cr, uid, [('product_id','=',product_id)])
+            
+            if delivery_method_ids:
+                is_delivery_map[product_id] = delivery_method_ids
+        
+        return is_delivery_map

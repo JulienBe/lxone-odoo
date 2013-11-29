@@ -4,12 +4,24 @@ from ads_sales_order import ads_sales_order
 
 def upload_so_picking(stock_picking_obj, cr, uid, picking_id, context=None):
     """
-    Extract and upload the picking to the server.
+    Extract and upload the picking to the server. If upload returns False, it means 
+    there were no deliverable BL lines and it should be automatically marked delivered.
     If there is an exception it will be raised.
     """
     picking = stock_picking_obj.browse(cr, uid, picking_id, context=context)
     data = ads_sales_order(picking)
-    data.upload(cr, stock_picking_obj.pool.get('ads.manager'))
+    
+    if not data.upload(cr, stock_picking_obj.pool.get('ads.manager')):
+        # no lines in BL, so it consists only of undeliverable lines. Mark as delivered
+        wizard_obj = stock_picking_obj.pool['stock.partial.picking']
+        context = {
+            'active_model': 'stock.picking.out',
+            'active_ids': [picking_id],
+            'active_id': picking_id,
+        }
+        wizard_id = wizard_obj.create(cr, 1, {}, context=context)
+        wizard_obj.do_partial(cr, 1, [wizard_id])
+        
     stock_picking_obj.write(cr, uid, picking_id, {'ads_sent': True})
     cr.commit()
 

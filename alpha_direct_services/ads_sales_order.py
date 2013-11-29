@@ -29,19 +29,24 @@ class ads_sales_order(ads_data):
         invoice_partner = picking_out.sale_id.partner_invoice_id
         carrier_name = picking_out.sale_id.carrier_id and picking_out.sale_id.carrier_id.ads_ref or ''
         
-        # Delivery method can also  be added as a move line, so find all move lines whose products 
+        # Delivery method can also be added as a move line, so find all move lines whose products 
         # are the delivery products of a delivery method and save IDS and ads ref for later
-        carrier_obj = picking_out.pool['delivery.carrier']
         carrier_move_ids = []
-        for move in picking_out.move_lines:
-            if move.product_id:
-                delivery_method_ids = carrier_obj.search(picking_out._cr, 1, [('product_id','=',move.product_id.id)])
-                if delivery_method_ids:
-                    carrier_move_ids.append(move.id)
-                    if not carrier_name:
-                        carrier = carrier_obj.browse(picking_out._cr, 1, delivery_method_ids[0])
-                        carrier_name = carrier.ads_ref or ''
-
+        if not carrier_name:
+            carrier_obj = picking_out.pool['delivery.carrier']
+            product_obj = picking_out.pool['product.product']
+            
+            product_ids = [move.product_id.id for move in picking_out.move_lines if move.product_id]
+            carrier_map = product_obj.is_delivery_method(picking_out._cr, 1, product_ids)
+            
+            carrier_product_ids = [k for k, v in carrier_map.iteritems() if v]
+            carrier_move_ids = [move.id for move in picking.move_lines if move.product_id and move.product_id.id in carrier_product_ids]
+            
+            for move in picking_out.move_lines:
+                if move.id in carrier_move_ids:
+                    carrier = carrier_obj.browse(picking_out._cr, 1, carrier_map[move.product_id.id][0])
+                    carrier_name = carrier.ads_ref or ''
+                    
         so_data = {
             # general
             'NUM_CMDE': picking.ads_send_number and picking_out.sale_id.name + '-' + str(picking.ads_send_number) or picking_out.sale_id.name,
@@ -113,8 +118,8 @@ class ads_sales_order(ads_data):
             
             # skip lines that are cancelled, or don't have a product, or have a discount, delivery method or service product 
             if move.state == 'cancel' \
-            or move.id in carrier_move_ids \
             or not move.product_id \
+            or move.id in carrier_move_ids \
             or move.product_id.discount \
             or move.product_id.type == 'service':
                 continue
@@ -134,6 +139,16 @@ class ads_sales_order(ads_data):
             line_seq += 1
 
         return self
+    
+    def upload(self, cr, ads_manager):
+        """ 
+        Only upload BL's with article lines. Otherwise, all articles are non-uploadable (service,
+        discount, delivery product), so return False  so the BL can be automatically closed at sale_order.py level.
+        """
+        if self.data['order']['articles']:
+            return super(ads_sales_order, self).upload(cr, ads_manager)
+        else:
+            return False
 
     def process(self, pool, cr, expedition):
         """

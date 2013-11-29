@@ -138,6 +138,7 @@ class ads_data(object):
                                "Setings > Parameters > System Parameters and make sure ",
                                "your IP is in the ADS FTP whitelist.\n\n",
                                "%s""" % unicode(e)])))
+        return True
 
     def extract(self, record):
         """
