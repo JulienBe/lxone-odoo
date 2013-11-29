@@ -110,9 +110,13 @@ class ads_sales_order(ads_data):
 
         line_seq = 1
         for move in picking_out.move_lines:
-
-            # skip lines that don't have a product or have a discount or delivery method product 
-            if move.id in carrier_move_ids or not move.product_id or move.product_id.discount:
+            
+            # skip lines that are cancelled, or don't have a product, or have a discount, delivery method or service product 
+            if move.state == 'cancel' \
+            or move.id in carrier_move_ids \
+            or not move.product_id \
+            or move.product_id.discount \
+            or move.product_id.type == 'service':
                 continue
 
             # Raise error if missing x_new_ref
