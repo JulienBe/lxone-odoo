@@ -17,71 +17,33 @@ class stock_picking(osv.osv):
     Inherit the stock.picking object to trigger upload of PO pickings
     """
     _inherit = 'stock.picking'
-
-    def create(self, cr, uid, values, context=None):
-        """
-        Create PO picking and upload to ADS if state is assigned.
-        """
-        picking_id = super(stock_picking, self).create(cr, uid, values, context=context)
-
-        # is this a picking for the PO?
-        if 'origin' in values and values['origin'][0:2] == 'PO' \
-            and 'name' in values and values['name'][0:2] == 'IN':
-
-            # if state is assigned, upload to ADS 
-            if 'state' in values and values['state'] == 'assigned':
-                upload_po_picking(self, cr, uid, picking_id, context=context)
-                return picking_id
-            else:
-                # otherwise return id like normal
-                return picking_id
-        else:
-            return picking_id
-
-    def write(self, cr, uid, ids, values, context=None):
-        """
-        If pick state is changed to assigned, upload to ADS
-        """
+    
+    def is_return(self, pick):
+        """ Seems to be the only way to check if an IN is a return or not ... """
+        return ('-' in pick.name and sorted(pick.name.split('-'), reverse=True)[0].startswith('ret')) 
+    
+    def action_assign_wkf(self, cr, uid, ids, context=None):
+        """ Upload picking to ADS """
+        
         if not hasattr(ids, '__iter__'):
             ids = [ids]
 
-        def state_correct(values):
-            """ Make sure we are changing the state to assigned """
-            return 'state' in values and values['state'] == 'assigned' or False
-
-        def type_correct(obj, cr, pick):
-            """ Make sure all pickings in the write have origin SO* """
-            return pick.type == 'in'
-        
-        def is_sent(obj, cr, pick):
-            return pick.ads_sent
-        
-        def others_exist(obj, cr, pick):
-            return len(self.search(cr, uid, [('origin','=',pick.origin),
-                                             ('type','=','in'),
-                                             ('state','in',['confirmed','assigned'])])) > 1
-        
-        def not_return(pick):
-            """ Seems to be the only way to check if an IN is a return or not ... """
-            return not ('-' in pick.name and \
-                not sorted(pick.name.split('-'), reverse=True)[0].startswith('ret')) 
-
-        # perform the write and save value to return later
-        res = super(stock_picking, self).write(cr, uid, ids, values, context=context)
-        
-        if 'ads_sent' in values:
-            return res
-        
-        # are we changing the state to assigned?
-        if not state_correct(values):
-            return res
-
-        # check type of each pick and upload if appropriate
+        res = super(stock_picking, self).action_assign_wkf(cr, uid, ids, context=context)
+    
         for picking_id in ids:
-            pick = self.browse(cr, 1, picking_id, context=context)
-            if type_correct(self,cr,pick) and not is_sent(self,cr,pick) \
-                    and not others_exist(self,cr,pick) and not_return(pick): 
-                upload_po_picking(self, cr, uid, picking_id, vals=copy(values), context=context)
+            picking = self.browse(cr, 1, picking_id, context=context)
 
-        # return result of write
+            if picking.type.lower() == 'in' and not self.is_return(picking) and not picking.ads_sent:
+                
+                # detect if this picking is a partial
+                pickings_for_po = self.search(cr, 1 ,[
+                    ('purchase_id', '=', picking.purchase_id.id),
+                    ('type', '=', 'in'),
+                    ('state', 'not in', ['cancel']),
+                ])
+                is_partial = len(pickings_for_po) > 1
+                
+                if not is_partial:
+                    upload_po_picking(self, cr, 1, picking_id, context=context)
+                    
         return res
