@@ -187,23 +187,16 @@ class ads_sales_order(ads_data):
         # upload the same BL with a new name and new SO name. We handle this by cancelling BL,
         # duplicating it, confirming it then fixing the SO state from shipping_except
         if status == 'R':
+            
+            assert picking_out.state in ['assigned', 'confirmed'], \
+                _("The picking %s was not in state assigned or confirmed, and therefore cannot be cancelled") % picking_name
 
             picking_obj = pool['stock.picking']
             picking_out_obj = pool['stock.picking.out']
             sale_order_obj = pool['sale.order']
 
-            # ADS always gives us the original BL name, but they are really cancelling the
-            # remaining products, so find the SO's oldest open BL
-            # (Users might have manually created a new one in the meantime)
-            open_picking_ids = picking_obj.search(cr, 1,
-                [('origin','=',picking_out.origin),
-                 ('state', 'in', ['confirmed','assigned']),
-                 ('type','=','out')], order='name ASC')
-            assert open_picking_ids, _("Could not find an open picking with origin %s to close" % picking_out.origin)
-            picking_id = sorted(open_picking_ids)[0]
-
-            # browse on new target picking and get sales order object
-            picking = picking_obj.browse(cr, 1, picking_id)
+            # get stock.picking version of stock.picking.out for access to send number field
+            picking = picking_obj.browse(cr, 1, picking_out.id)
             sale = picking.sale_id
 
             # value for new picking's ads_send_number

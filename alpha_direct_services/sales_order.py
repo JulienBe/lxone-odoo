@@ -36,45 +36,50 @@ class stock_picking(osv.osv):
         
         if not hasattr(ids, '__iter__'):
             ids = [ids]
-
-        res = super(stock_picking, self).action_assign_wkf(cr, uid, ids, context=context)
-    
+        
         for picking_id in ids:
             picking = self.browse(cr, uid, picking_id, context=context)
-
+            picking_to_upload = False
+            
             if picking.type.lower() == 'out' and not picking.ads_sent:
+            
+                # find other delivery orders for this SO in assigned state
+                partial_ids = self.search(cr, 1, [('sale_id','=',picking.sale_id.id),
+                                                ('type','=','out'),
+                                                ('state','in',['assigned','confirmed'])])
                 
-                # Behave differently if it is a partial or not. If it is a partial,
-                # there will be more than 1 picking in confirmed or assigned state.
-                pickings_for_so = self.search(cr, uid, [
-                    ('sale_id','=',picking.sale_id.id),
-                    ('type','=','out'),
-                    ('state','not in',['cancel', 'done'])]
-                )
-                if len(pickings_for_so) == 1:
-                    ## First BL or CREX ##
-                    upload_so_picking(self, cr, uid, picking_id, context=context)
+                if picking_id in partial_ids: 
+                    partial_ids.remove(picking_id)
+                
+                # Picking is a return, so simply upload it regardless of partials
+                if 'ret' in picking.name:
+                    picking_to_upload = picking_id
+                
+                # It's a normal non-partial picking, so upload it
+                elif not partial_ids:
+                    picking_to_upload = picking_id
+                
+                # It's a partial, so it's the other picking that we are interested in.
+                # Set ads_sent to False and upload if state is assigned. Otherwise wait for scheduler
                 else:
-                    ## Partial / Return ##
-                    returns = [p for p in self.browse(cr, 1, pickings_for_so) if '-ret' in p.name and not p.ads_sent]
-                    if returns:
-                        # found un-uploaded return, so upload it
-                        for ret in returns:
-                            picking_id = ret.id
-                            all_pickings_for_so = self.search(cr, 1, [('origin','=',picking.origin)])
-                            send_number = sorted([p.ads_send_number for p in self.browse(cr, 1, all_pickings_for_so)], reverse=True)[0] + 1
-                            self.write(cr, 1, picking_id, {'ads_send_number': send_number})
-                            upload_so_picking(self, cr, uid, picking_id, context=context)
-                    else:
-                        # Otherwise, find partial with unprocessed lines, add ads_send_number, then upload
-                        picking_id = sorted(set(pickings_for_so) - set(ids))[0]
-                        all_pickings_for_so = self.search(cr, 1, [('origin','=',picking.origin)])
-                        send_number = sorted([p.ads_send_number for p in self.browse(cr, 1, all_pickings_for_so)], reverse=True)[0] + 1
-                        self.write(cr, 1, picking_id, {'ads_send_number': send_number})
-                        upload_so_picking(self, cr, uid, picking_id, context=context)
-
-        return res
-    
+                    partial_id = sorted(partial_ids)[0]
+                    self.write(cr, uid, partial_id, {'ads_sent': False})
+                    picking = self.browse(cr, 1, partial_id)
+                    
+                    if picking.state == 'assigned':
+                        picking_to_upload = partial_id
+                    
+                # Finally, upload the picking if applicable
+                if picking_to_upload:
+                    all_pickings_for_so = self.search(cr, 1, [('sale_id', '=', picking.sale_id.id)])
+                    send_number = sorted([p.ads_send_number for p in self.browse(cr, 1, all_pickings_for_so)], reverse=True)[0] + 1
+                    
+                    self.write(cr, 1, picking_to_upload, {'ads_send_number': send_number})
+                    upload_so_picking(self, cr, uid, picking_to_upload, context=context)
+            
+            super(stock_picking, self).action_assign_wkf(cr, uid, picking_id, context=context)
+        return True
+        
     def copy(self, cr, uid, id, default=None, context=None):
         """ Set ads_sent back to False - caused by duplication during action_process of partial wizard """
         res = super(stock_picking, self).copy(cr, uid, id, default=default, context=context)
