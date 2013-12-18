@@ -175,6 +175,9 @@ class ads_mvts(ads_data):
                 })
             elif not move.product_id.discount:
                 pool.get('stock.partial.picking.line').write(cr, 1, move.id, {'quantity': 0})
+            else:
+                # automatically fully receive discount products
+                pool.get('stock.partial.picking.line').write(cr, 1, move.id, {'quantity': move.move_id.product_qty})
 
         # Process receipt
         wizard_obj.do_partial(cr, 1, [wizard_id])
