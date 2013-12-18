@@ -81,12 +81,12 @@ class ads_connection(object):
         self._user = self._get_config('ads_user') or ''
         self._password = self._get_config('ads_password') or ''
         self._timeout = self._get_config('ads_timeout', int) or 10
-        self._mode = self._get_config('ads_mode') or 'test'
+        self._mode = self._get_config('ads_mode').upper() or 'TEST'
         self._passive = self._get_config('ads_passive', bool) or True
 
         message = _("Please check your ADS configuration settings in Settings -> Parameters -> System Parameters for the field '%s'")
 
-        if not self._mode in ['prod', 'test']:
+        if not self._mode in ['PROD', 'TEST']:
             raise osv.except_osv(_('Config Error'), _('Please check your ADS configuration settings in Settings -> Parameters -> System Parameters. Mode must be either "prod" or "test".'))
         if not self._host:
             raise osv.except_osv(_('Config Error'), message % 'host')
@@ -122,7 +122,7 @@ class ads_connection(object):
         # safety check for production mode. If VersClient dir contains file "misc/database_name.txt", require
         # the database name inside to be the same as this database name. This helps to prevent 
         # the situation where somebody backs up and restores a db locally and forgets to change to mode test
-        if self._mode == 'prod':
+        if self._mode == 'PROD':
             self.cd(self._vers_client)
             directories = self.ls()
             if 'security' in directories:
