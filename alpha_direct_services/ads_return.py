@@ -86,7 +86,7 @@ class ads_return(ads_data):
         completely returned yet.
 
         Once all of the above criteria are satisfied, it will return the picking ID.
-        If no appropriate picking is found it means either we recieved a bad picking
+        If no appropriate picking is found it means either we recieved the wrong picking
         name from ADS, the picking has not yet been marked as delivered, or the lines
         have been completely returned already.
 
@@ -96,7 +96,7 @@ class ads_return(ads_data):
         pickings = []
         
         # get original picking
-        picking_domain = [('type', '=', 'out'), '!', ('name', 'like', 'return')]
+        picking_domain = [('type', '=', 'out'), '!', ('name', 'ilike', 'ret')]
         picking_ids = picking_obj.search(cr, 1, [('name', '=', ret['picking_name'])])
         assert picking_ids, _("Could not find picking with name '%s'" % ret['picking_name'])
         picking = picking_obj.browse(cr, 1, picking_ids[0])
@@ -195,4 +195,4 @@ class ads_return(ads_data):
                         raise ValueError(_('Could not return the return (Re-send to customer) for return with ID %s' % return_id))
                     else:
                         raise e
-                return_details = wizard_obj.create_returns(cr, 1, [wizard_id], context=context)
+                wizard_obj.create_returns(cr, 1, [wizard_id], context=context)
