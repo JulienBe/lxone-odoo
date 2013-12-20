@@ -19,6 +19,12 @@ class product_product(osv.osv):
         if any([field for field in ads_product.uploaded_fields if field in values.keys()]):
             self.ads_upload(cr, uid, ids, context=context)
         return res
+    
+    def create(self, cr, uid, values, context=None):
+        """ Call ads_upload """
+        res = super(product_product, self).create(cr, uid, values, context=context)
+        self.ads_upload(cr, uid, res, context=context)
+        return res
 
     def ads_upload_all(self, cr, uid, context=None):
         ids = self.search(cr, uid, [('x_new_ref', '!=', '')])
