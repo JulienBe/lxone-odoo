@@ -28,25 +28,25 @@ class ads_sales_order(ads_data):
         shipping_partner = picking_out.sale_id.partner_shipping_id
         invoice_partner = picking_out.sale_id.partner_invoice_id
         carrier_name = picking_out.sale_id.carrier_id and picking_out.sale_id.carrier_id.ads_ref or ''
-        
-        # Delivery method can also be added as a move line, so find all move lines whose products 
+
+        # Delivery method can also be added as a move line, so find all move lines whose products
         # are the delivery products of a delivery method and save IDS and ads ref for later
         carrier_move_ids = []
         if not carrier_name:
             carrier_obj = picking_out.pool['delivery.carrier']
             product_obj = picking_out.pool['product.product']
-            
+
             product_ids = [move.product_id.id for move in picking_out.move_lines if move.product_id]
             carrier_map = product_obj.is_delivery_method(picking_out._cr, 1, product_ids)
-            
+
             carrier_product_ids = [k for k, v in carrier_map.iteritems() if v]
             carrier_move_ids = [move.id for move in picking.move_lines if move.product_id and move.product_id.id in carrier_product_ids]
-            
+
             for move in picking_out.move_lines:
                 if move.id in carrier_move_ids:
                     carrier = carrier_obj.browse(picking_out._cr, 1, carrier_map[move.product_id.id][0])
                     carrier_name = carrier.ads_ref or ''
-                    
+
         so_data = {
             # general
             'NUM_CMDE': picking.ads_send_number and picking_out.sale_id.name + '-' + str(picking.ads_send_number) or picking_out.sale_id.name,
@@ -78,7 +78,7 @@ class ads_sales_order(ads_data):
             'PAYS_LIV': shipping_partner.country_id and shipping_partner.country_id.name or '',
             'CODE_ISO_LIV': shipping_partner.country_id and shipping_partner.country_id.code or '',
             'TELEPHONE_LIV': shipping_partner.phone or 'no_phone',
-            'EMAIL_LIV': shipping_partner.email or 'no_email',
+            'EMAIL_LIV': shipping_partner.email or 'noemail@incontinence-protection.com',
         }
 
         # asserts for required data
@@ -115,8 +115,8 @@ class ads_sales_order(ads_data):
 
         line_seq = 1
         for move in picking_out.move_lines:
-            
-            # skip lines that are cancelled, or don't have a product, or have a discount, delivery method or service product 
+
+            # skip lines that are cancelled, or don't have a product, or have a discount, delivery method or service product
             if move.state == 'cancel' \
             or not move.product_id \
             or move.id in carrier_move_ids \
@@ -139,9 +139,9 @@ class ads_sales_order(ads_data):
             line_seq += 1
 
         return self
-    
+
     def upload(self, cr, ads_manager):
-        """ 
+        """
         Only upload BL's with article lines. Otherwise, all articles are non-uploadable (service,
         discount, delivery product), so return False  so the BL can be automatically closed at sale_order.py level.
         """
@@ -187,7 +187,7 @@ class ads_sales_order(ads_data):
         # upload the same BL with a new name and new SO name. We handle this by cancelling BL,
         # duplicating it, confirming it then fixing the SO state from shipping_except
         if status == 'R':
-            
+
             assert picking_out.state in ['assigned', 'confirmed'], \
                 _("The picking %s was not in state assigned or confirmed, and therefore cannot be cancelled") % picking_name
 
