@@ -8,6 +8,15 @@ import time
 
 from ads_data import ads_data
 
+def ensure_connection(function):
+    """ Check we are connected before calling a function, and connect if necessary """
+    def inner(self, *args, **kwargs):
+        if not self._connected:
+            self._connect()
+        
+        return function(self, *args, **kwargs)
+    return inner
+
 class ads_connection(object):
     """
     Wraps an FTP connection to the ADS server and provides some helper methods.
@@ -141,6 +150,13 @@ class ads_connection(object):
         """ Closes a previously opened connection to the ADS FTP server """
         if self._connected:
             self._conn.quit()
+            
+    def outer(some_func):
+         def inner():
+             print "before some_func"
+             ret = some_func() # 1
+             return ret + 1
+         return inner
 
     # ftp convenience methods
     def ls(self):
@@ -202,22 +218,19 @@ class ads_connection(object):
         """ Delete a file """
         return self._conn.delete(filename)
         
+    @ensure_connection
     def download_data(self, file_name):
         """ 
         Downloads data for the specified file 
         @return str the contents of the file
         """
         data = StringIO()
-        
-        if not self._connected:
-            self._connect()
-        
         self._conn.retrbinary('RETR %s' % file_name, data.write)
-        
         contents = data.getvalue()
         data.close()
         return contents
 
+    @ensure_connection
     def upload_data(self, data, copy_to_archive=True):
         """
         Generates an XML file from an ads_data subclass, then generates a name for the file
@@ -228,9 +241,7 @@ class ads_connection(object):
         @param bool copy_to_archive: If true, the same file will also be uploaded to the archive directory
         """
         assert isinstance(data, ads_data), 'data parameter must extend ads_data class'
-        if not self._connected:
-            self._connect()
-
+        
         self.cd(self._vers_ads)
 
         try:
@@ -258,15 +269,13 @@ class ads_connection(object):
             self.try_cd('..')
             
         return name
-            
+
+    @ensure_connection            
     def delete_data(self, file_name):
         """
         Deletes the file (and archive) with name file_name. Throws ftplib.error_perm(500) if not found
         @param string file_name: The name of the file to try to delete
         """
-        if not self._connected:
-            self._connect()
-
         self.cd(self._vers_ads)
 
         try:
