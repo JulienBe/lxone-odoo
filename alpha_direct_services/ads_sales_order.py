@@ -144,9 +144,14 @@ class ads_sales_order(ads_data):
         """
         Only upload BL's with article lines. Otherwise, all articles are non-uploadable (service,
         discount, delivery product), so return False  so the BL can be automatically closed at sale_order.py level.
+        
+        Save uploaded file name to ads_file_name field.
         """
         if self.data['order']['articles']:
-            return super(ads_sales_order, self).upload(cr, ads_manager)
+            res = super(ads_sales_order, self).upload(cr, ads_manager)
+            if self.browse_record and self.file_name:
+                self.browse_record.write({'ads_file_name': self.file_name})
+            return res
         else:
             return False
 

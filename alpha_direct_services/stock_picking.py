@@ -48,6 +48,7 @@ class stock_picking(osv.osv):
                 with self.pool['ads.manager'].connection(cr) as conn:
                     try:
                         conn.delete_data(picking.ads_file_name)
+                        self.write(cr, uid, picking_id, {'ads_sent': False, 'ads_file_name': False})
                         super(stock_picking, self).action_cancel(cr, uid, [picking_id], context=context)
                     except error_perm, e:
                         cannot_cancel()
@@ -61,13 +62,17 @@ class stock_picking_in(osv.osv):
     _inherit = 'stock.picking.in'
     _columns = {
         'ads_send_number': fields.integer('Send Number', help="Number of times this picking has been sent to ADS - used to re-send cancelled orders"),
+        'ads_file_name': fields.char('Sent to ADS?', size=40, help="The name of the file uploaded to ADS"),
     }
 
     def action_disallow_invoicing(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'invoice_state': 'none'})
 
     def ads_manuel_upload(self, cr, uid, ids, context=None):
-        """ Upload this picking to ADS """
+        """ 
+        Upload this picking to ADS. If a file_name already exists on the picking, try to delete
+        it from the server, then upload again and set new file_name. 
+        """
         for picking_id in ids:
             picking = self.browse(cr, uid, picking_id, context=context)
 
@@ -75,15 +80,26 @@ class stock_picking_in(osv.osv):
             if not picking.state == 'assigned':
                 continue
 
+            # try to delete existing file
+            if picking.ads_file_name:
+                with self.pool['ads.manager'].connection(cr) as conn:
+                    try:
+                        conn.delete_data(picking.ads_file_name)
+                    except error_perm, e:
+                        pass
+            
+            # upload file
             data = ads_purchase_order(picking)
             data.upload(cr, self.pool.get('ads.manager'))
         return True
-
 
 class stock_picking_out(osv.osv):
     """ Inherit the stock.picking.in to prevent manual processing and cancellation after ads upload """
 
     _inherit = 'stock.picking.out'
+    _columns = {
+        'ads_file_name': fields.char('Sent to ADS?', size=40, help="The name of the file uploaded to ADS"),
+    }
 
     def ads_manuel_upload(self, cr, uid, ids, context=None):
         """ Upload this picking to ADS """
@@ -94,6 +110,15 @@ class stock_picking_out(osv.osv):
             if not picking.state == 'assigned':
                 continue
 
+            # try to delete existing file
+            if picking.ads_file_name:
+                with self.pool['ads.manager'].connection(cr) as conn:
+                    try:
+                        conn.delete_data(picking.ads_file_name)
+                    except error_perm, e:
+                        pass
+            
+            # upload file
             data = ads_sales_order(picking)
             data.upload(cr, self.pool.get('ads.manager'))
         return True

@@ -41,6 +41,7 @@ class ads_data(object):
             self.data = AutoVivification.dict_to_auto_vivification(self.data)
         elif data and isinstance(data, browse_record):
             self.extract(data)
+            self.browse_record = data
         elif data:
             raise TypeError('XML must be a string, unicode or AutoVivification object')
 
@@ -58,7 +59,10 @@ class ads_data(object):
     _auto_remove = True
     
     # file name generated and set by the upload function
-    file_name = '' 
+    file_name = ''
+    
+    # When instantialising from a browse_record, save a reference to it  
+    browse_record = None
 
     def safe_get(self, dictionary, key):
         """ Returns self.data[key] or None if it does not exist """

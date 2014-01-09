@@ -10,7 +10,6 @@ def upload_po_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=N
     picking = stock_picking_obj.browse(cr, uid, picking_id, context=context)
     data = ads_purchase_order(picking)
     data.upload(cr, stock_picking_obj.pool.get('ads.manager'))
-    stock_picking_obj.write(cr, uid, picking_id, {'ads_sent': True, 'ads_file_name': data.file_name})
 
 class stock_picking(osv.osv):
     """
