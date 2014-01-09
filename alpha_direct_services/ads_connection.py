@@ -198,6 +198,10 @@ class ads_connection(object):
             self.mkd('errors')
         self.rename(filename, 'errors')
         
+    def rm(self, filename):
+        """ Delete a file """
+        return self._conn.delete(filename)
+        
     def download_data(self, file_name):
         """ 
         Downloads data for the specified file 
@@ -252,3 +256,31 @@ class ads_connection(object):
 
         finally:
             self.try_cd('..')
+            
+        return name
+            
+    def delete_data(self, file_name):
+        """
+        Deletes the file (and archive) with name file_name. Throws ftplib.error_perm(500) if not found
+        @param string file_name: The name of the file to try to delete
+        """
+        if not self._connected:
+            self._connect()
+
+        self.cd(self._vers_ads)
+
+        try:
+            # delete original file
+            self.rm(file_name)
+            
+            # no exception, so go on to delete archive
+            self.cd('archives')
+            files = self.ls()
+            if file_name in files:
+                self.rm(file_name)
+            self.cd('..')
+            
+        finally:
+            self.try_cd('..')
+            
+        return True

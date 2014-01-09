@@ -22,7 +22,7 @@ def upload_so_picking(stock_picking_obj, cr, uid, picking_id, context=None):
         wizard_id = wizard_obj.create(cr, 1, {}, context=context)
         wizard_obj.do_partial(cr, 1, [wizard_id])
         
-    stock_picking_obj.write(cr, uid, picking_id, {'ads_sent': True})
+    stock_picking_obj.write(cr, uid, picking_id, {'ads_sent': True, 'ads_file_name': data.file_name})
     cr.commit()
 
 class stock_picking(osv.osv):

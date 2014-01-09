@@ -56,6 +56,9 @@ class ads_data(object):
     # when processing the data, if true, auto remove nodes that are successful. Nodes left
     # over will be uploaded to the errors/ directory of the server
     _auto_remove = True
+    
+    # file name generated and set by the upload function
+    file_name = '' 
 
     def safe_get(self, dictionary, key):
         """ Returns self.data[key] or None if it does not exist """
@@ -130,7 +133,7 @@ class ads_data(object):
         """
         try:
             with ads_manager.connection(cr) as conn:
-                conn.upload_data(self)
+                self.file_name = conn.upload_data(self)
         except ads_manager.ftp_exceptions as e:
             raise except_osv(_("Upload Problem"), \
                     _("".join(["There was a problem uploading the data to the ADS servers.\n\n",

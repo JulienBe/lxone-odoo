@@ -1,5 +1,9 @@
+import ftplib
+from ftplib import error_perm
+
 from openerp.tools.translate import _
 from openerp.osv import osv, fields
+
 from ads_sales_order import ads_sales_order
 from ads_purchase_order import ads_purchase_order
 
@@ -23,6 +27,7 @@ class stock_picking(osv.osv):
     _columns = {
         'ads_sent': fields.boolean('Sent to ADS?'),
         'ads_send_number': fields.integer('Send Number', help="Number of times this picking has been sent to ADS - used to re-send cancelled orders"),
+        'ads_file_name': fields.char('Sent to ADS?', size=40, help="The name of the file uploaded to ADS"),
     }
 
     def action_process(self, cr, uid, ids, context=None):
@@ -30,6 +35,25 @@ class stock_picking(osv.osv):
             raise osv.except_osv(_('Cannot Process Manually'), _("The picking should be processed in the ADS system. It will then be automatically synchronized to OpenERP."))
         else:
             super(stock_picking, self).action_process(cr, uid, ids, context=context)
+            
+    def action_cancel(self, cr, uid, ids, context=None):
+        """ If file still exists on the server, delete it and cancel the picking. Otherwise raise an error """
+        
+        def cannot_cancel():
+            raise osv.except_osv(_("Cannot Cancel Delivery Order"), _("The delivery order has already been imported by ADS so it cannot be canceled anymore"))
+        
+        for picking_id in ids:
+            picking = self.browse(cr, uid, picking_id)
+            if picking.ads_file_name:
+                with self.pool['ads.manager'].connection(cr) as conn:
+                    try:
+                        conn.delete_data(picking.ads_file_name)
+                        super(stock_picking, self).action_cancel(cr, uid, [picking_id], context=context)
+                    except error_perm, e:
+                        cannot_cancel()
+            else:
+                cannot_cancel()
+        return True
 
 class stock_picking_in(osv.osv):
     """ Inherit the stock.picking.in to prevent manual processing and cancellation after ads upload """

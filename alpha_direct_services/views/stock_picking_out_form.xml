@@ -6,15 +6,17 @@
             <field name="model">stock.picking.out</field>
             <field name="inherit_id" ref="stock.view_picking_out_form"/>
             <field name="arch" type="xml">
+                <!-- Hide process button -->
             	<button name="action_process" position="attributes">
             		<attribute name="invisible">1</attribute>
             	</button>
-            	<button name="button_cancel" position="replace">
-            		<button name="button_cancel" states="confirmed,draft" string="Cancel Transfer" groups="base.group_user"/>
-            	</button>
+
+                <!-- Add re-send to ADS button -->
             	<button string="Cancel Transfer" position="after">
             		<button name="ads_manuel_upload" type="object" string="Re-Send to ADS" states='assigned' />
             	</button>
+
+                <!-- Add IP tab with process button -->
             	<page string="Additional Info" position="after">
             		<page string="IP" states="assigned">
             			<button name="action_process" states="assigned" string="Deliver" type="object" class="oe_highlight" confirm="Are you sure you want to process this picking manually? You should normally wait for it to be automatically marked as delivered by ADS. This button should only be used in exceptional circumstances."/>
