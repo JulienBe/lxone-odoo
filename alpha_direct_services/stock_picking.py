@@ -42,8 +42,8 @@ class stock_picking(osv.osv):
         def cannot_cancel():
             raise osv.except_osv(_("Cannot Cancel Delivery Order"), _("The delivery order has already been imported by ADS so it cannot be canceled anymore"))
         
-        for picking_id in ids:
-            picking = self.browse(cr, uid, picking_id)
+        for picking in self.browse(cr, uid, ids):
+            picking_id = picking.id 
             if picking.ads_file_name:
                 with self.pool['ads.manager'].connection(cr) as conn:
                     try:
@@ -53,7 +53,7 @@ class stock_picking(osv.osv):
                     except error_perm, e:
                         cannot_cancel()
             else:
-                cannot_cancel()
+                super(stock_picking, self).action_cancel(cr, uid, [picking_id], context=context)
         return True
 
 class stock_picking_in(osv.osv):
