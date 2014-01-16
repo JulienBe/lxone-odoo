@@ -43,9 +43,11 @@ class ads_stock(ads_data):
         product_code = physical_inventory['CODE_ART']
         product_quantity = physical_inventory['QTE_DISPO']
         product_id = product_obj.search(cr, 1, [('x_new_ref', '=', product_code)])
-        assert product_id, _("Could not find product with code '%s'" % product_code)
+        
+        if not product_id:
+            return
+        
         product = product_obj.browse(cr, 1, product_id[0])
-
         line_data = {
             'product_id': product.id,
             'product_uom': product.product_tmpl_id.uom_id.id,
