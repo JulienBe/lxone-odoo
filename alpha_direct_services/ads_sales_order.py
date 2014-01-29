@@ -157,7 +157,7 @@ class ads_sales_order(ads_data):
 
     def process(self, pool, cr, expedition):
         """
-        Update picking tracking numbers in OpenERP
+        Update picking tracking numbers / cancel picking orders
         @param pool: OpenERP object pool
         @param cr: OpenERP database cursor
         @param AutoVivification expedition: Data from ADS describing the expedition of the SO

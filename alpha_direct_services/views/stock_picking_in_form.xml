@@ -15,9 +15,19 @@
             	<button string="Create Invoice/Refund" position="after">
             		<button name="action_disallow_invoicing" type="object" string="Disallow Invoice / Refund" attrs="{'invisible': ['|',('state','!=','done'),('invoice_state','!=','2binvoiced')]}" />
             	</button>
+            	
+            	<!-- Replace cancel transfer button with custom manual cancel button -->
+            	<button name="button_cancel" position="replace">
+					<button name="cancel_manuel" 
+						type="object" 
+						states="assigned,confirmed,draft" 
+						string="Cancel Transfer" 
+						groups="base.group_user"
+						confirm="Are you sure you want to cancel this picking?"/>            	
+            	</button>
 
                 <!-- Add re-send to ADS button -->
-            	<button string="Cancel Transfer" position="after">
+            	<button name="cancel_manuel" position="after">
             		<button name="ads_manuel_upload" type="object" string="Re-Send to ADS" states='assigned' />
             	</button>
 

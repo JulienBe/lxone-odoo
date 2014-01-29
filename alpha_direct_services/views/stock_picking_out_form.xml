@@ -10,9 +10,19 @@
             	<button name="action_process" position="attributes">
             		<attribute name="invisible">1</attribute>
             	</button>
-
+            	
+            	<!-- Replace cancel transfer with custom manual cancel button -->
+            	<button name="button_cancel" position="replace">
+					<button name="cancel_manuel" 
+						type="object" 
+						states="assigned,confirmed,draft" 
+						string="Cancel Transfer" 
+						groups="base.group_user"
+						confirm="Are you sure you want to cancel this picking?"/>            	
+            	</button>
+            	
                 <!-- Add re-send to ADS button -->
-            	<button string="Cancel Transfer" position="after">
+            	<button name="cancel_manuel" position="after">
             		<button name="ads_manuel_upload" type="object" string="Re-Send to ADS" states='assigned' />
             	</button>
 
