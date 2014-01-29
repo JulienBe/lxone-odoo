@@ -88,11 +88,11 @@ class ads_manager(osv.osv):
                 for date in sorted(files_by_date.keys()):
                     # then according to file_process_order
                     for prefix in self._file_process_order:
-                        for file in [f for f in files_by_date[date] if f.prefix == prefix]:
+                        for file_to_process in [f for f in files_by_date[date] if f.prefix == prefix]:
 
                             files_processed += 1
-                            file_prefix = file.prefix
-                            file_name = file.file_name
+                            file_prefix = file_to_process.prefix
+                            file_name = file_to_process.file_name
                             
                             # find ads_data subclass with matching 'type' property
                             class_for_data_type = [cls for cls in ads_data.__subclasses__() if file_prefix in cls.file_name_prefix]

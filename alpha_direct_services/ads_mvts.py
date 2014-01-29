@@ -113,22 +113,17 @@ class ads_mvts(ads_data):
         """
         picking_obj = pool.get('stock.picking')
         picking = None
-        backorder_ids = picking_obj.search(cr, 1, [('backorder_id', '=', picking_name)])
+        backorder_ids = picking_obj.search(cr, 1, [('backorder_id', '=', picking_name), ('state', '=', 'assigned')])
 
         while(backorder_ids):
             picking = picking_obj.browse(cr, 1, backorder_ids[0])
-            backorder_ids = picking_obj.search(cr, 1, [('backorder_id', '=', picking.name)])
+            backorder_ids = picking_obj.search(cr, 1, [('backorder_id', '=', picking.name), ('state', '=', 'assigned')])
 
         if not picking:
-            picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name)])
-            assert picking_ids, _("Could not find picking with name '%s'" % picking_name)
+            picking_ids = picking_obj.search(cr, 1, [('name', '=', picking_name), ('state', '=', 'assigned')])
+            assert picking_ids, _("Could not find picking with name '%s' and state assigned" % picking_name)
             picking = picking_obj.browse(cr, 1, picking_ids[0])
             
-        # if picking is canceled, find another one
-        if picking.state in ['done','cancel']:
-            picking_ids = picking_obj.search(cr, 1, [('sale_id','=',picking.sale_id.id),('state','not in',['done','cancel'])])
-            picking = picking_obj.browse(cr, 1, sorted(picking_ids)[0])
-        
         return picking.id
 
     def _process_picking(self, pool, cr, picking_name, picking_lines):
