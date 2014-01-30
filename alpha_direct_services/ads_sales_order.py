@@ -154,6 +154,13 @@ class ads_sales_order(ads_data):
             return res
         else:
             return False
+        
+    def _find_picking(self, cr, picking_out_obj, picking_name):
+        """ Finds pickings by name. If name >= 30, use wildcard at end due to length limitations of ADS """
+        if len(picking_name) < 30:
+            return picking_out_obj.search(cr, 1, [('name', '=', picking_name)])
+        else:
+            return picking_out_obj.search(cr, 1, [('name', 'ilike', picking_name)])
 
     def process(self, pool, cr, expedition):
         """
@@ -171,7 +178,8 @@ class ads_sales_order(ads_data):
 
         # find original picking
         picking_out_obj = pool.get('stock.picking.out')
-        picking_ids = picking_out_obj.search(cr, 1, [('name', '=', picking_name)])
+        picking_ids = self._find_picking(cr, picking_out_obj, picking_name)
+        
         assert len(picking_ids) == 1, 'Found %s pickings with name %s. Should have found 1' % (len(picking_ids), picking_name)
         picking_id, = picking_ids
         picking_out = picking_out_obj.browse(cr, 1, picking_id)
