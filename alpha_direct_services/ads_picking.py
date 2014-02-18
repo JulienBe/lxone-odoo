@@ -9,7 +9,7 @@ from auto_vivification import AutoVivification
 from ads_data import ads_data
 from tools import parse_date
 
-class ads_mvts(ads_data):
+class ads_picking(ads_data):
     """
     Handles the processing of MVTS files to receive a purchase order or deliver a sales order
     """
