@@ -2,7 +2,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 from openerp.osv import osv,fields
-from ads_product import ads_product
+from lx_product import lx_product
 
 class product_product(osv.osv):
     """
@@ -14,26 +14,26 @@ class product_product(osv.osv):
     }
 
     def write(self, cr, uid, ids, values, context=None):
-        """ Call ads_upload if we edit an uploaded field """
+        """ Call lx_upload if we edit an uploaded field """
         res = super(product_product, self).write(cr, uid, ids, values, context=context)
-        if any([field for field in ads_product.uploaded_fields if field in values.keys()]):
-            self.ads_upload(cr, uid, ids, context=context)
+        if any([field for field in lx_product.uploaded_fields if field in values.keys()]):
+            self.lx_upload(cr, uid, ids, context=context)
         return res
     
     def create(self, cr, uid, values, context=None):
-        """ Call ads_upload """
+        """ Call lx_upload """
         res = super(product_product, self).create(cr, uid, values, context=context)
-        self.ads_upload(cr, uid, res, context=context)
+        self.lx_upload(cr, uid, res, context=context)
         return res
 
-    def ads_upload_all(self, cr, uid, context=None):
+    def lx_upload_all(self, cr, uid, context=None):
         ids = self.search(cr, uid, [('x_new_ref', '!=', '')])
         _logger.info("Starting upload of %d products" % len(ids))
-        self.ads_upload(cr, uid, ids, log=True, context=context)
+        self.lx_upload(cr, uid, ids, log=True, context=context)
         return True
 
-    def ads_upload(self, cr, uid, ids, log=False, context=None):
-        """ Upload product to ads server """
+    def lx_upload(self, cr, uid, ids, log=False, context=None):
+        """ Upload product to LX1 server """
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
 
@@ -41,8 +41,8 @@ class product_product(osv.osv):
             product = self.browse(cr, uid, product_id, context=context)
             if not product.x_new_ref:
                 continue
-            data = ads_product(product)
-            data.upload(cr, self.pool.get('ads.manager'))
+            data = lx_product(product)
+            data.upload(cr, self.pool.get('lx.manager'))
             if log:
                 _logger.info("Uploaded product with ID %d" % product_id)
         return True

@@ -4,21 +4,21 @@ _logger = logging.getLogger(__name__)
 from openerp.tools.translate import _
 from openerp.osv import osv
 
-from ads_data import ads_data
+from lx_data import lx_data
 from tools import parse_date
 
-class ads_return(ads_data):
+class lx_return(lx_data):
     """
-    Receive a CRET file from ADS. It will contain a node for each return LINE (unmerged 
+    Receive a CRET file from LX1. It will contain a node for each return LINE (unmerged 
     product and quantity returned) with the name of the original picking (regardless of splits).
 
     Because OpenERP lets you return more than the quantity of products specified on the
     picking, simply loop on all CRET nodes, find the named picking, get all linked
     backorder pickings, then find a picking with a matching product name to return quantity
-    specified by ADS.
+    specified by LX1.
 
     We cannot differenciate between pickings because an arbitrary number can be returned
-    in an arbitrary number of batches, and ADS does not know about our split picking codes.
+    in an arbitrary number of batches, and LX1 does not know about our split picking codes.
     """
 
     file_name_prefix = ['CRET']
@@ -44,7 +44,7 @@ class ads_return(ads_data):
         Receive return in a CRET file and import into OpenERP
         @param pool: OpenERP object pool
         @param cr: OpenERP database cursor
-        @param AutoVivification ret: Contains data from ADS describing the return
+        @param AutoVivification ret: Contains data from LX1 describing the return
         """
         # extract data
         ret = self._extract_data(ret)
@@ -54,7 +54,7 @@ class ads_return(ads_data):
 
     def _extract_data(self, ret):
         """
-        Extract data from a return node sent by ADS. picking_name and return_code
+        Extract data from a return node sent by LX1. picking_name and return_code
         are required.
         """
         assert all([field in ret for field in ['NUM_FACTURE_BL', 'CODE_MOTIF_RETOUR']]), \
@@ -75,22 +75,22 @@ class ads_return(ads_data):
         """
         Finds an appropriate picking to use to process the return.
 
-        This function finds the picking name specified by ADS, then all of its
+        This function finds the picking name specified by LX1, then all of its
         backorders. 
 
         It then loops over each picking, skipping if state is not either done, confirmed
         or assigned.
 
         Next it loops over stock moves in the picking and checks the state is done,
-        the product code matches the one specified by ADS, and it hasn't been 
+        the product code matches the one specified by LX1, and it hasn't been 
         completely returned yet.
 
         Once all of the above criteria are satisfied, it will return the picking ID.
         If no appropriate picking is found it means either we recieved the wrong picking
-        name from ADS, the picking has not yet been marked as delivered, or the lines
+        name from LX1, the picking has not yet been marked as delivered, or the lines
         have been completely returned already.
 
-        @param dict ret: A dictionary of return data from ADS. See self._extract_data
+        @param dict ret: A dictionary of return data from LX1. See self._extract_data
         """
         picking_obj = pool.get('stock.picking')
         pickings = []
@@ -133,7 +133,7 @@ class ads_return(ads_data):
             @param dict ret: Dictionary containing return data. See self._extract_data documentation
             """
             # validate params and find picking
-            assert ret['picking_name'], _("A picking was received from ADS without a name, so we can't process it")
+            assert ret['picking_name'], _("A picking was received from LX1 without a name, so we can't process it")
             picking_id = self._find_picking(pool, cr, ret)
             assert picking_id, _("Could not find appropriate BL to return for original BL %s" % ret['picking_name'])
 

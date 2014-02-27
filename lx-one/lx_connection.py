@@ -6,7 +6,7 @@ from ftplib import FTP
 from ftplib import error_reply, error_temp, error_perm, error_proto, all_errors
 import time
 
-from ads_data import ads_data
+from lx_data import lx_data
 
 def ensure_connection(function):
     """ Check we are connected before calling a function, and connect if necessary """
@@ -17,9 +17,9 @@ def ensure_connection(function):
         return function(self, *args, **kwargs)
     return inner
 
-class ads_connection(object):
+class lx_connection(object):
     """
-    Wraps an FTP connection to the ADS server and provides some helper methods.
+    Wraps an FTP connection to the LX1 server and provides some helper methods.
     Use it with the python using construct, and by passing in a pool and cr to the
     constructor.
     """
@@ -30,13 +30,13 @@ class ads_connection(object):
         @param pool: OpenERP object pool
         @param cr: OpenERP cursor object
         """
-        super(ads_connection, self).__init__()
+        super(lx_connection, self).__init__()
 
         self._pool = pool
         self._cr = cr
 
         self._conn = None
-        self._vers_ads = 'VersADS'
+        self._vers_lx = 'VersLX1'
         self._vers_client = None
 
     def __enter__(self):
@@ -45,10 +45,10 @@ class ads_connection(object):
             self._connect()
         except all_errors as e:
             raise osv.except_osv(_("Connection Problem"), \
-                    _("".join(["There was a problem connecting to the ADS servers.\n\n",
+                    _("".join(["There was a problem connecting to the LX1 servers.\n\n",
                                "Please check your connection settings in ",
                                "Setings > Parameters > System Parameters and make sure ",
-                               "your IP is in the ADS FTP whitelist.\n\n",
+                               "your IP is in the LX1 FTP whitelist.\n\n",
                                "%s""" % unicode(e)])))
         return self
 
@@ -85,18 +85,18 @@ class ads_connection(object):
 
     def _get_ftp_config(self):
         """ Save FTP connection parameters from ir.values to self """
-        self._host = self._get_config('ads_host') or 'ftp.alpha-d-s.com'
-        self._port = self._get_config('ads_port', int) or 21
-        self._user = self._get_config('ads_user') or ''
-        self._password = self._get_config('ads_password') or ''
-        self._timeout = self._get_config('ads_timeout', int) or 10
-        self._mode = self._get_config('ads_mode').upper() or 'TEST'
-        self._passive = self._get_config('ads_passive', bool) or True
+        self._host = self._get_config('lx_host') or 'ftp.alpha-d-s.com'
+        self._port = self._get_config('lx_port', int) or 21
+        self._user = self._get_config('lx_user') or ''
+        self._password = self._get_config('lx_password') or ''
+        self._timeout = self._get_config('lx_timeout', int) or 10
+        self._mode = self._get_config('lx_mode').upper() or 'TEST'
+        self._passive = self._get_config('lx_passive', bool) or True
 
-        message = _("Please check your ADS configuration settings in Settings -> Parameters -> System Parameters for the field '%s'")
+        message = _("Please check your LX1 configuration settings in Settings -> Parameters -> System Parameters for the field '%s'")
 
         if not self._mode in ['PROD', 'TEST']:
-            raise osv.except_osv(_('Config Error'), _('Please check your ADS configuration settings in Settings -> Parameters -> System Parameters. Mode must be either "prod" or "test".'))
+            raise osv.except_osv(_('Config Error'), _('Please check your LX1 configuration settings in Settings -> Parameters -> System Parameters. Mode must be either "prod" or "test".'))
         if not self._host:
             raise osv.except_osv(_('Config Error'), message % 'host')
         if not self._user:
@@ -105,7 +105,7 @@ class ads_connection(object):
             raise osv.except_osv(_('Config Error'), message % 'password')
 
     def _connect(self):
-        """ Sets up a connection to the ADS FTP server """
+        """ Sets up a connection to the LX1 FTP server """
         self._get_ftp_config()
         self._conn = FTP(host=self._host, user=self._user, passwd=self._password)
 
@@ -118,7 +118,7 @@ class ads_connection(object):
         
         # get name of VersClient directory
         directories = self.ls()
-        vers_client_dir = filter(lambda direc: direc[0:4] == 'Vers' and direc != 'VersADS', directories)
+        vers_client_dir = filter(lambda direc: direc[0:4] == 'Vers' and direc != 'VersLX1', directories)
 
         if len(vers_client_dir) == 1:
             self._vers_client = vers_client_dir[0]
@@ -126,7 +126,7 @@ class ads_connection(object):
             self._vers_client = 'Vers%s' % self._user
         else:
             raise IOError('Could not find appropriate directories in %s folder.'\
-                        + 'Normally there are VersADS and Vers*ClientName* directories' % self._mode)
+                        + 'Normally there are VersLX1 and Vers*ClientName* directories' % self._mode)
             
         # safety check for production mode. If VersClient dir contains file "misc/database_name.txt", require
         # the database name inside to be the same as this database name. This helps to prevent 
@@ -142,12 +142,12 @@ class ads_connection(object):
                     if not database_name == self._cr.dbname:
                         self.cd('../../')
                         self._disconnect()
-                        raise osv.except_osv(_("Production Warning"), "The ADS module is still in production mode and your database name (%s) does not match the database name in the file 'security/database_name.txt' (%s).\n\nPlease either change your ads_mode or the database name in the text file." % (self._cr.dbname, database_name))
+                        raise osv.except_osv(_("Production Warning"), "The LX1 module is still in production mode and your database name (%s) does not match the database name in the file 'security/database_name.txt' (%s).\n\nPlease either change your lx_mode or the database name in the text file." % (self._cr.dbname, database_name))
                 self.cd('..')
             self.cd('..')
 
     def _disconnect(self):
-        """ Closes a previously opened connection to the ADS FTP server """
+        """ Closes a previously opened connection to the LX1 FTP server """
         if self._connected:
             self._conn.quit()
             
@@ -233,16 +233,16 @@ class ads_connection(object):
     @ensure_connection
     def upload_data(self, data, copy_to_archive=True):
         """
-        Generates an XML file from an ads_data subclass, then generates a name for the file
+        Generates an XML file from an lx_data subclass, then generates a name for the file
         and checks if it exists on the server. If it does, wait .1 second and generate again.
         It will then upload the file to the server and if copy_to_archive is true, it will
         upload the same file to the archive directory.
-        @param ads_data data: Contains data to be written to the file
+        @param lx_data data: Contains data to be written to the file
         @param bool copy_to_archive: If true, the same file will also be uploaded to the archive directory
         """
-        assert isinstance(data, ads_data), 'data parameter must extend ads_data class'
+        assert isinstance(data, lx_data), 'data parameter must extend lx_data class'
         
-        self.cd(self._vers_ads)
+        self.cd(self._vers_lx)
 
         try:
             xml_buffer = data.generate_xml()
@@ -276,7 +276,7 @@ class ads_connection(object):
         Deletes the file (and archive) with name file_name. Throws ftplib.error_perm(500) if not found
         @param string file_name: The name of the file to try to delete
         """
-        self.cd(self._vers_ads)
+        self.cd(self._vers_lx)
 
         try:
             # delete original file

@@ -1,6 +1,6 @@
 from copy import copy
 from openerp.osv import osv, fields
-from ads_sales_order import ads_sales_order
+from lx_sales_order import lx_sales_order
 
 def upload_so_picking(stock_picking_obj, cr, uid, picking_id, context=None):
     """
@@ -9,9 +9,9 @@ def upload_so_picking(stock_picking_obj, cr, uid, picking_id, context=None):
     If there is an exception it will be raised.
     """
     picking = stock_picking_obj.browse(cr, uid, picking_id, context=context)
-    data = ads_sales_order(picking)
+    data = lx_sales_order(picking)
 
-    if not data.upload(cr, stock_picking_obj.pool.get('ads.manager')):
+    if not data.upload(cr, stock_picking_obj.pool.get('lx.manager')):
         # no lines in BL, so it consists only of undeliverable lines. Mark as delivered
         wizard_obj = stock_picking_obj.pool['stock.partial.picking']
         context = {
@@ -31,7 +31,7 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
 
     def action_assign_wkf(self, cr, uid, ids, context=None):
-        """ Upload picking to ADS """
+        """ Upload picking to LX1 """
 
         if not hasattr(ids, '__iter__'):
             ids = [ids]
@@ -40,7 +40,7 @@ class stock_picking(osv.osv):
             picking = self.browse(cr, uid, picking_id, context=context)
             picking_to_upload = False
 
-            if picking.type.lower() == 'out' and not picking.ads_sent:
+            if picking.type.lower() == 'out' and not picking.lx_sent:
 
                 # find other delivery orders for this SO in assigned state
                 partial_ids = self.search(cr, 1, [('sale_id','=',picking.sale_id.id),
@@ -59,10 +59,10 @@ class stock_picking(osv.osv):
                     picking_to_upload = picking_id
 
                 # It's a partial, so it's the other picking that we are interested in.
-                # Set ads_sent to False and upload if state is assigned. Otherwise wait for scheduler
+                # Set lx_sent to False and upload if state is assigned. Otherwise wait for scheduler
                 else:
                     partial_id = sorted(partial_ids)[0]
-                    self.write(cr, uid, partial_id, {'ads_sent': False})
+                    self.write(cr, uid, partial_id, {'lx_sent': False})
                     picking = self.browse(cr, 1, partial_id)
 
                     if picking.state == 'assigned':
@@ -71,17 +71,17 @@ class stock_picking(osv.osv):
                 # Finally, upload the picking if applicable
                 if picking_to_upload:
                     all_pickings_for_so = self.search(cr, 1, [('sale_id', '=', picking.sale_id.id)])
-                    send_number = sorted([p.ads_send_number for p in self.browse(cr, 1, all_pickings_for_so)], reverse=True)[0] + 1
+                    send_number = sorted([p.lx_send_number for p in self.browse(cr, 1, all_pickings_for_so)], reverse=True)[0] + 1
 
-                    self.write(cr, 1, picking_to_upload, {'ads_send_number': send_number})
+                    self.write(cr, 1, picking_to_upload, {'lx_send_number': send_number})
                     upload_so_picking(self, cr, uid, picking_to_upload, context=context)
 
             super(stock_picking, self).action_assign_wkf(cr, uid, picking_id, context=context)
         return True
 
     def copy(self, cr, uid, id, default=None, context=None):
-        """ Set ads_sent back to False - caused by duplication during action_process of partial wizard """
+        """ Set lx_sent back to False - caused by duplication during action_process of partial wizard """
         res = super(stock_picking, self).copy(cr, uid, id, default=default, context=context)
-        self.write(cr, uid, res, {'ads_sent': False, 'ads_file_name': ''})
+        self.write(cr, uid, res, {'lx_sent': False, 'lx_file_name': ''})
         return res
 

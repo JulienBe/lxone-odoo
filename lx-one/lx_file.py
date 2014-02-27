@@ -1,11 +1,11 @@
 from tools import parse_date
 
-class ads_file(object):
-	""" Represents a file received from ADS. Used for sorting processing priority """
+class lx_file(object):
+	""" Represents a file received from LX1. Used for sorting processing priority """
 
 	def __init__(self, file_name):
 		""" Extracts file name prefix, date and extension """
-		super(ads_file, self).__init__()
+		super(lx_file, self).__init__()
 
 		self.file_name = file_name
 

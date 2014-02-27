@@ -1,6 +1,6 @@
 from copy import copy
 from openerp.osv import osv, fields
-from ads_purchase_order import ads_purchase_order
+from lx_purchase_order import lx_purchase_order
 
 def upload_po_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=None):
     """
@@ -8,8 +8,8 @@ def upload_po_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=N
     If there is an exception it will be raised.
     """
     picking = stock_picking_obj.browse(cr, uid, picking_id, context=context)
-    data = ads_purchase_order(picking)
-    data.upload(cr, stock_picking_obj.pool.get('ads.manager'))
+    data = lx_purchase_order(picking)
+    data.upload(cr, stock_picking_obj.pool.get('lx.manager'))
 
 class stock_picking(osv.osv):
     """
@@ -22,7 +22,7 @@ class stock_picking(osv.osv):
         return ('-' in pick.name and sorted(pick.name.split('-'), reverse=True)[0].startswith('ret')) 
     
     def action_assign_wkf(self, cr, uid, ids, context=None):
-        """ Upload picking to ADS """
+        """ Upload picking to LX1 """
         
         if not hasattr(ids, '__iter__'):
             ids = [ids]
@@ -32,7 +32,7 @@ class stock_picking(osv.osv):
         for picking_id in ids:
             picking = self.browse(cr, 1, picking_id, context=context)
 
-            if picking.type.lower() == 'in' and not self.is_return(picking) and not picking.ads_sent:
+            if picking.type.lower() == 'in' and not self.is_return(picking) and not picking.lx_sent:
                 
                 # detect if this picking is a partial
                 pickings_for_po = self.search(cr, 1 ,[

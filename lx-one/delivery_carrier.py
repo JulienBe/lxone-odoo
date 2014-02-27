@@ -6,5 +6,5 @@ class delivery_carrier(osv.osv):
     """
     _inherit = 'delivery.carrier'
     _columns = {
-        'ads_ref': fields.char('ADS Ref', help="The corresponding reference number for ADS. This is the value that will be uploaded to ADS with the picking", required=True)
+        'lx_ref': fields.char('LX Ref', help="The corresponding reference number for LX1. This is the value that will be uploaded to LX1 with the picking", required=True)
     }

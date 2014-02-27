@@ -3,11 +3,11 @@ _logger = logging.getLogger(__name__)
 from datetime import datetime
 from openerp.tools.translate import _
 
-from ads_data import ads_data
+from lx_data import lx_data
 
-class ads_stock(ads_data):
+class lx_stock(lx_data):
     """
-    Receive physical inventories from ADS in a STOC file
+    Receive physical inventories from lx in a STOC file
     """
     file_name_prefix = ['STOC']
     xml_root = 'stock'

@@ -6,24 +6,24 @@ from openerp.tools.translate import _
 from ftplib import all_errors
 from StringIO import StringIO
 
-from ads_connection import ads_connection
-from ads_data import ads_data
+from lx_connection import lx_connection
+from lx_data import lx_data
 from auto_vivification import AutoVivification
-from ads_purchase_order import ads_purchase_order
-from ads_sales_order import ads_sales_order
-from ads_product import ads_product
-from ads_return import ads_return
-from ads_stock import ads_stock
-from ads_picking import ads_picking
-from ads_file import ads_file
+from lx_purchase_order import lx_purchase_order
+from lx_sales_order import lx_sales_order
+from lx_product import lx_product
+from lx_return import lx_return
+from lx_stock import lx_stock
+from lx_picking import lx_picking
+from lx_file import lx_file
 
-class ads_manager(osv.osv):
+class lx_manager(osv.osv):
     """
-    Instantiates an FTP connection wrapper object and allows polling the ADS FTP Server
+    Instantiates an FTP connection wrapper object and allows polling the LX1 FTP Server
     """
 
     _columns = {}
-    _name = 'ads.manager'
+    _name = 'lx.manager'
     _auto = False
 
     _file_process_order = [
@@ -36,15 +36,15 @@ class ads_manager(osv.osv):
     ftp_exceptions = all_errors
 
     def connection(self, cr):
-        """ Gets an instance of ads_connection class that wraps the FTP server """
-        return ads_connection(self.pool, cr)
+        """ Gets an instance of lx_connection class that wraps the FTP server """
+        return lx_connection(self.pool, cr)
 
     def poll(self, cr, uid=1):
         """
-        Poll the ADS FTP server, download a file list and iterate over them by oldest first,
+        Poll the LX1 FTP server, download a file list and iterate over them by oldest first,
         then by _file_process_order. 
         
-        For each file, look for a child class of ads_data whose file_name_prefix field includes 
+        For each file, look for a child class of lx_data whose file_name_prefix field includes 
         the part before the first '-' of the file name. Download the file contents and use it
         to instantiate the found class, then call process_all on it.
         
@@ -53,7 +53,7 @@ class ads_manager(osv.osv):
         data nodes left in self.data after processing. 
         """
 
-        _logger.info(_("Polling ADS Server..."))
+        _logger.info(_("Polling LX1 Server..."))
         files_processed = 0
         
         # get connection FTP server
@@ -63,7 +63,7 @@ class ads_manager(osv.osv):
 
             # get list of files and directories and remove any files that cannot be processed
             files_and_directories = conn.ls()
-            files_to_process = map(lambda f: ads_file(f), files_and_directories)
+            files_to_process = map(lambda f: lx_file(f), files_and_directories)
             files_to_process = filter(lambda f: f.valid, files_to_process)
             files_to_process = filter(lambda f: f.to_process(), files_to_process)
             
@@ -94,14 +94,14 @@ class ads_manager(osv.osv):
                             file_prefix = file_to_process.prefix
                             file_name = file_to_process.file_name
                             
-                            # find ads_data subclass with matching 'type' property
-                            class_for_data_type = [cls for cls in ads_data.__subclasses__() if file_prefix in cls.file_name_prefix]
+                            # find lx_data subclass with matching 'type' property
+                            class_for_data_type = [cls for cls in lx_data.__subclasses__() if file_prefix in cls.file_name_prefix]
     
                             if class_for_data_type:
     
                                 # log warning if found more than one matching class
                                 if len(class_for_data_type) != 1:
-                                    _logger.warn(_('The following subclasses of ads_data share the file_name_prefix: %s' % class_for_data_type))
+                                    _logger.warn(_('The following subclasses of lx_data share the file_name_prefix: %s' % class_for_data_type))
     
                                 errors = StringIO()
     
@@ -144,7 +144,7 @@ class ads_manager(osv.osv):
                                 errors.close()
                                 cr and cr.commit()
                             else:
-                                _logger.info(_("Could not find subclass of ads_data with file_name_prefix %s" % file_prefix))
+                                _logger.info(_("Could not find subclass of lx_data with file_name_prefix %s" % file_prefix))
                                 conn.move_to_archives(file_name)
             finally:
                 # check we are still connected, then navigate back a directory for any further operations

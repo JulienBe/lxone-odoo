@@ -6,10 +6,10 @@ from datetime import datetime
 from openerp.tools.translate import _
 
 from auto_vivification import AutoVivification
-from ads_data import ads_data
+from lx_data import lx_data
 from tools import parse_date
 
-class ads_picking(ads_data):
+class lx_picking(lx_data):
     """
     Handles the processing of MVTS files to receive a purchase order or deliver a sales order
     """
@@ -129,7 +129,7 @@ class ads_picking(ads_data):
     def _process_picking(self, pool, cr, picking_name, picking_lines_original):
         """
         Executes the reception wizard for an IN or the delivery wizard for an out with
-        data from self.data received from ADS
+        data from self.data received from LX1
         @param pool: OpenERP object pool
         @param cursor cr: OpenERP database cursor
         @param str picking_name: Name of the picking to be processed
@@ -139,7 +139,7 @@ class ads_picking(ads_data):
         if not picking_lines_original:
             return
         
-        assert picking_name, _("A picking was received from ADS without a name, so we can't process it")
+        assert picking_name, _("A picking was received from LX1 without a name, so we can't process it")
         picking_id = self._find_picking(pool, cr, picking_name)
         assert picking_id, _("No picking found with name %s" % picking_name)
         picking = pool.get('stock.picking').browse(cr, 1, picking_id)

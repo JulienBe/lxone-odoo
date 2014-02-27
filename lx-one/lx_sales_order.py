@@ -6,10 +6,10 @@ import time
 from openerp.osv import osv
 from openerp.tools.translate import _
 
-from ads_data import ads_data
+from lx_data import lx_data
 from tools import convert_date
 
-class ads_sales_order(ads_data):
+class lx_sales_order(lx_data):
     """
     Handles the importation and exportation of a sales order's delivery order
     """
@@ -27,10 +27,10 @@ class ads_sales_order(ads_data):
         picking = picking_out.pool['stock.picking'].browse(picking_out._cr, 1, picking_out.id)
         shipping_partner = picking_out.sale_id.partner_shipping_id
         invoice_partner = picking_out.sale_id.partner_invoice_id
-        carrier_name = picking_out.sale_id.carrier_id and picking_out.sale_id.carrier_id.ads_ref or ''
+        carrier_name = picking_out.sale_id.carrier_id and picking_out.sale_id.carrier_id.lx_ref or ''
 
         # Delivery method can also be added as a move line, so find all move lines whose products
-        # are the delivery products of a delivery method and save IDS and ads ref for later
+        # are the delivery products of a delivery method and save IDS and lx ref for later
         carrier_move_ids = []
         if not carrier_name:
             carrier_obj = picking_out.pool['delivery.carrier']
@@ -45,11 +45,11 @@ class ads_sales_order(ads_data):
             for move in picking_out.move_lines:
                 if move.id in carrier_move_ids:
                     carrier = carrier_obj.browse(picking_out._cr, 1, carrier_map[move.product_id.id][0])
-                    carrier_name = carrier.ads_ref or ''
+                    carrier_name = carrier.lx_ref or ''
 
         so_data = {
             # general
-            'NUM_CMDE': picking.ads_send_number and picking_out.sale_id.name + '-' + str(picking.ads_send_number) or picking_out.sale_id.name,
+            'NUM_CMDE': picking.lx_send_number and picking_out.sale_id.name + '-' + str(picking.lx_send_number) or picking_out.sale_id.name,
             'NUM_FACTURE_BL': picking_out.name,
             'DATE_EDITION': convert_date(picking_out.date),
             'MONTANT_TOTAL_TTC': picking_out.sale_id.amount_total,
@@ -140,23 +140,23 @@ class ads_sales_order(ads_data):
 
         return self
 
-    def upload(self, cr, ads_manager):
+    def upload(self, cr, lx_manager):
         """
         Only upload BL's with article lines. Otherwise, all articles are non-uploadable (service,
         discount, delivery product), so return False  so the BL can be automatically closed at sale_order.py level.
         
-        Save uploaded file name to ads_file_name field.
+        Save uploaded file name to lx_file_name field.
         """
         if self.data['order']['articles']:
-            res = super(ads_sales_order, self).upload(cr, ads_manager)
+            res = super(lx_sales_order, self).upload(cr, lx_manager)
             if self.browse_record and self.file_name:
-                self.browse_record.write({'ads_file_name': self.file_name})
+                self.browse_record.write({'lx_file_name': self.file_name})
             return res
         else:
             return False
         
     def _find_picking(self, cr, picking_out_obj, picking_name):
-        """ Finds pickings by name. If name >= 30, use wildcard at end due to length limitations of ADS """
+        """ Finds pickings by name. If name >= 30, use wildcard at end due to length limitations of LX1 """
         if len(picking_name) < 30:
             return picking_out_obj.search(cr, 1, [('name', '=', picking_name)])
         else:
@@ -167,7 +167,7 @@ class ads_sales_order(ads_data):
         Update picking tracking numbers / cancel picking orders
         @param pool: OpenERP object pool
         @param cr: OpenERP database cursor
-        @param AutoVivification expedition: Data from ADS describing the expedition of the SO
+        @param AutoVivification expedition: Data from LX1 describing the expedition of the SO
         """
         # extract information
         assert 'NUM_FACTURE_BL' in expedition, 'An expedition has been skipped because it was missing a NUM_FACTURE_BL'
@@ -196,7 +196,7 @@ class ads_sales_order(ads_data):
                 pass
             picking_out_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
 
-        # if status is R, order has been cancelled by ADS because of lack of stock. We then need to
+        # if status is R, order has been cancelled by LX1 because of lack of stock. We then need to
         # upload the same BL with a new name and new SO name. We handle this by cancelling BL,
         # duplicating it, confirming it then fixing the SO state from shipping_except
         if status == 'R':
@@ -212,15 +212,15 @@ class ads_sales_order(ads_data):
             picking = picking_obj.browse(cr, 1, picking_out.id)
             sale = picking.sale_id
 
-            # value for new picking's ads_send_number
-            send_number = picking.ads_send_number + 1 or 1
+            # value for new picking's lx_send_number
+            send_number = picking.lx_send_number + 1 or 1
 
             # Cancel original picking, then duplicate and confirm it
             picking_out_obj.action_cancel(cr, 1, [picking_id])
 
             # specify a name for the new BL otherwise stock module will delete the origin from it's values
             defaults = {
-                'ads_send_number': send_number,
+                'lx_send_number': send_number,
                 'name': pool['ir.sequence'].get(cr, 1, 'stock.picking.out')
             }
 

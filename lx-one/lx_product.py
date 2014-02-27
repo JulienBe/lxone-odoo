@@ -1,9 +1,9 @@
 from openerp import osv
 from openerp.tools.translate import _
 from copy import copy
-from ads_data import ads_data
+from lx_data import lx_data
 
-class ads_product(ads_data):
+class lx_product(lx_data):
 
 	file_name_prefix = ['ARTI']
 	xml_root = 'flux_art'

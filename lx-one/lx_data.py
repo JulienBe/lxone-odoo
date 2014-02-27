@@ -12,28 +12,28 @@ from picklingtools.xmldumper import *
 from picklingtools import xml2dict
 from auto_vivification import AutoVivification
 
-class ads_data(object):
+class lx_data(object):
     """
-    Serialization interface between python dicts and ADS XML. Designed to be inherited
+    Serialization interface between python dicts and LX1 XML. Designed to be inherited
     so you can implement your own data input and output functions that build
-    the self.data AutoVivification object (See ads_sales_order class for an example).
+    the self.data AutoVivification object (See lx_sales_order class for an example).
 
     Don't forget to set the file_name_prefix and xml_root variables to define the xml
     file name prefix (XXXX-YYYMMDD.xml) and xml file root element name. When the poll
-    function processes a file, it chooses which ads_data subclass to hand the data to
+    function processes a file, it chooses which lx_data subclass to hand the data to
     based on the file_name_prefix of the class and the file.
 
     After building the self.data dict, this object is passed to the upload_data function
-    of the ads_connection object. It will call generate_xml to convert the self.data dict
+    of the lx_connection object. It will call generate_xml to convert the self.data dict
     into an xml file, then upload it to the server.
 
-    Alternatively, this class can be used to convert an ADS xml file into an ads_data 
+    Alternatively, this class can be used to convert an LX1 xml file into an lx_data 
     dict by passing the XML into the constructor.
     """
 
     def __init__(self, data=None):
-        """ Either parse XML from ADS, or call self.extract on a browse_record """
-        super(ads_data, self).__init__()
+        """ Either parse XML from LX1, or call self.extract on a browse_record """
+        super(lx_data, self).__init__()
         self.data = AutoVivification()
 
         if data and isinstance(data, (str, unicode)):
@@ -45,7 +45,7 @@ class ads_data(object):
         elif data:
             raise TypeError('XML must be a string, unicode or AutoVivification object')
 
-    # list of file name prefix's that this class should handle when receiving them from ADS
+    # list of file name prefix's that this class should handle when receiving them from LX1
     file_name_prefix = []
 
     # name of the root xml element when generating data to upload
@@ -130,20 +130,20 @@ class ads_data(object):
         output.seek(0)
         return output
 
-    def upload(self, cr, ads_manager):
+    def upload(self, cr, lx_manager):
         """
-        Upload this object to ADS
-        @param ads_manager ads_manager: the ads.manager object from the OpenERP pool
+        Upload this object to LX1
+        @param lx_manager lx_manager: the lx.manager object from the OpenERP pool
         """
         try:
-            with ads_manager.connection(cr) as conn:
+            with lx_manager.connection(cr) as conn:
                 self.file_name = conn.upload_data(self)
-        except ads_manager.ftp_exceptions as e:
+        except lx_manager.ftp_exceptions as e:
             raise except_osv(_("Upload Problem"), \
-                    _("".join(["There was a problem uploading the data to the ADS servers.\n\n",
+                    _("".join(["There was a problem uploading the data to the LX1 servers.\n\n",
                                "Please check your connection settings in ",
                                "Setings > Parameters > System Parameters and make sure ",
-                               "your IP is in the ADS FTP whitelist.\n\n",
+                               "your IP is in the LX1 FTP whitelist.\n\n",
                                "%s""" % unicode(e)])))
         return True
 
@@ -158,7 +158,7 @@ class ads_data(object):
         """
         raise NotImplemented('Please implement this method in your inherited model')
 
-    def process_all(self, pool, cr, ads_conn):
+    def process_all(self, pool, cr, lx_conn):
         """
         Iterates over data nodes in self.data and securely calls self.process on them, while
         catching and storing any exceptions.
@@ -170,7 +170,7 @@ class ads_data(object):
         
         @param pool: OpenERP object pool
         @param cr: OpenERP database cursor
-        @param ads_connection ads_conn: Connection to the FTP server
+        @param lx_connection lx_conn: Connection to the FTP server
         @returns A list of strings describing errors faced while processing the file or []
         """
         if not self.data:
@@ -204,7 +204,7 @@ class ads_data(object):
                 self.errors.append('%s: %s' % (type(e), unicode(e)))
             
             # ping the FTP server to maintain an open connection
-            ads_conn._ping()
+            lx_conn._ping()
 
         # call hook
         post_process_errors = self.post_process_hook(pool, cr)

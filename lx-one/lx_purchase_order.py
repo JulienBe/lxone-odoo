@@ -5,10 +5,10 @@ _logger = logging.getLogger(__name__)
 from openerp.osv import osv
 from openerp.tools.translate import _
 
-from ads_data import ads_data
+from lx_data import lx_data
 from tools import convert_date
 
-class ads_purchase_order(ads_data):
+class lx_purchase_order(lx_data):
     """
     Handles the extraction of a purchase order's picking.
     """
