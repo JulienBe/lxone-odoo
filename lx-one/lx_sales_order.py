@@ -116,11 +116,10 @@ class lx_sales_order(lx_data):
         line_seq = 1
         for move in picking_out.move_lines:
 
-            # skip lines that are cancelled, or don't have a product, or have a discount, delivery method or service product
+            # skip lines that are cancelled, or don't have a product, delivery method or service product
             if move.state == 'cancel' \
             or not move.product_id \
             or move.id in carrier_move_ids \
-            or move.product_id.discount \
             or move.product_id.type == 'service':
                 continue
 
@@ -142,8 +141,8 @@ class lx_sales_order(lx_data):
 
     def upload(self, cr, lx_manager):
         """
-        Only upload BL's with article lines. Otherwise, all articles are non-uploadable (service,
-        discount, delivery product), so return False  so the BL can be automatically closed at sale_order.py level.
+        Only upload BL's with article lines. Otherwise, all articles are non-uploadable (service, delivery product), 
+	so return False  so the BL can be automatically closed at sale_order.py level.
         
         Save uploaded file name to lx_file_name field.
         """

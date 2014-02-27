@@ -40,10 +40,6 @@ class lx_purchase_order(lx_data):
         # iterate on move lines and use the template to create a data node that represents the PO line
         for move in picking.move_lines:
             
-            # ignore lines that dont have a product or have a discount product, and raise error if missing x_new_ref
-            if not move.product_id or move.product_id.discount:
-                continue
-            
             if not move.product_id.x_new_ref:
                 raise osv.except_osv(_('Missing Reference'), _('The product "%s" is missing an IP Reference. One must be entered before we can continue processing picking %s.') % (move.product_id.name, picking.name))
             

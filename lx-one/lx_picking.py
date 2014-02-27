@@ -181,11 +181,6 @@ class lx_picking(lx_data):
             move_quantity_ordered = move.move_id.product_qty
             remainder = None
             
-            # automatically fully receive discount products
-            if move.product_id.discount:
-                wizard_line_obj.write(cr, 1, move.id, {'quantity': move_quantity_ordered})
-                continue
-            
             # process picking lines in reverse order, removing them at the end
             for picking_line_index in reversed(xrange(len(picking_lines))):
                 picking_line = picking_lines[picking_line_index]
