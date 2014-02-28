@@ -1,7 +1,20 @@
 <?xml version="1.0"?>
 <openerp>
 	<data>
-		<act_window name="Configure LX1 Connection" res_model="ir.config_parameter" 
-			id="lx-one.action_config" domain="[('key', 'like', 'lx_%')]" />
+
+		<act_window name="All Updates" 
+			res_model="lx.update" 
+			id="lx-one.action_all_updates" />
+
+		<act_window name="Updates to Execute" 
+			res_model="lx.update" 
+			id="lx-one.action_updates_to_execute"
+			domain="[('state', '!=', 'executed')]" />
+
+		<act_window name="Configure LX1 Connection" 
+			res_model="ir.config_parameter" 
+			id="lx-one.action_config" 
+			domain="[('key', 'like', 'lx_%')]" />
+			
 	</data>
 </openerp>

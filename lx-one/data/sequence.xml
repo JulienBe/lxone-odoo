@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+		<record id="lx-one.sequence_update_type" model="ir.sequence.type"> 
+			<field name="name">LX1 Update</field> 
+			<field name="code">lx.update</field> 
+		</record> 
+			
+		<record id="lx-one.sequence_update" model="ir.sequence"> 
+			<field name="name">LX1 Update</field> 
+			<field name="code">lx.update</field> 
+		</record>
+
+    </data>
+</openerp>
