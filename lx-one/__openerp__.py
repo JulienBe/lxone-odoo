@@ -86,6 +86,8 @@ http://www.picklingtools.com/
 
     """,
     'data': [
+        'data/actions.xml',
+        'data/menus.xml',
         'data/config.xml',
         'data/cron.xml',
         'views/stock_picking_in_form.xml',

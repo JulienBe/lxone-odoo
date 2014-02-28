@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<openerp>
+	<data>
+		<menuitem name="LX1 Sync" id="lx-one.menu_main" sequence="100" />
+		<menuitem name="Configuration" id="lx-one.config" parent="lx-one.menu_main" sequence="100" />
+		<menuitem name="LX1 Configuration Settings" id="lx-one.config_config" 
+			parent="lx-one.config" action="lx-one.action_config" sequence="100" />
+	</data>
+</openerp>
