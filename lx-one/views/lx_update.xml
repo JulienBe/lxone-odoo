@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="lx_view_update_tree" model="ir.ui.view">
+            <field name="name">lx.update.tree</field>
+            <field name="model">lx.update</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Updates" colors="red:state=='failed';blue:state=='executed'">
+                    <field name="state"/>
+                    <field name="sequence"/>
+                    <field name="object_type" />
+                    <field name="result" />
+                    <field name="file_name" />
+                    <field name="node_number" />
+                </tree>
+            </field>
+        </record>
+
+    	<record id="lx_view_update_form" model="ir.ui.view">
+            <field name="name">lx.update.form</field>
+            <field name="model">lx.update</field>
+            <field name="type">form</field>
+             <field name="arch" type="xml">
+                <form string="Update" version="7.0">
+                    <header>
+                        <button type="object" name="execute" string="Execute" class="oe_highlight" />
+                        <field name="state" widget="statusbar" />
+                    </header>
+                    <sheet>
+                        <group>
+                            <field name="sequence" />
+                            <field name="object_type" />
+                            <field name="result" readonly="True" />
+                            <field name="file_name" />
+                            <field name="node_number" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

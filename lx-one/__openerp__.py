@@ -91,6 +91,7 @@ http://www.picklingtools.com/
         'data/sequence.xml',
         'data/config.xml',
         'data/cron.xml',
+        'views/lx_update.xml',
         'views/stock_picking_in_form.xml',
         'views/res_partner_form.xml',
         'views/stock_picking_out_form.xml',

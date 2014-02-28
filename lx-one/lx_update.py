@@ -15,9 +15,9 @@ class lx_update(osv.osv):
     _columns = {
         'sequence': fields.char('Execution Sequence'),
         'state': fields.selection( (
-                ('To Execute', 'to_execute'), 
-                ('Executed', 'executed'), 
-                ('Failed', 'failed')
+                ('to_execute', 'To Execute'), 
+                ('executed', 'Executed'), 
+                ('failed', 'Failed')
             ), 'State'),
         'object_type': fields.char('Object Type', size=12),
         'data': fields.text('Data'),
