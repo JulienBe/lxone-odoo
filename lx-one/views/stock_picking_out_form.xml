@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-    	<record id="ads_view_stock_picking_out_form" model="ir.ui.view">
-            <field name="name">stock.picking.out.form.ads</field>
+    	<record id="lx_view_stock_picking_out_form" model="ir.ui.view">
+            <field name="name">stock.picking.out.form.lx</field>
             <field name="model">stock.picking.out</field>
             <field name="inherit_id" ref="stock.view_picking_out_form"/>
             <field name="arch" type="xml">
@@ -21,15 +21,15 @@
 						confirm="Are you sure you want to cancel this picking?"/>            	
             	</button>
             	
-                <!-- Add re-send to ADS button -->
+                <!-- Add re-send to LX1 button -->
             	<button name="cancel_manuel" position="after">
-            		<button name="ads_manuel_upload" type="object" string="Re-Send to ADS" states='assigned' />
+            		<button name="lx_manuel_upload" type="object" string="Re-Send to LX1" states='assigned' />
             	</button>
 
                 <!-- Add IP tab with process button -->
             	<page string="Additional Info" position="after">
             		<page string="IP" states="assigned">
-            			<button name="action_process" states="assigned" string="Deliver" type="object" class="oe_highlight" confirm="Are you sure you want to process this picking manually? You should normally wait for it to be automatically marked as delivered by ADS. This button should only be used in exceptional circumstances."/>
+            			<button name="action_process" states="assigned" string="Deliver" type="object" class="oe_highlight" confirm="Are you sure you want to process this picking manually? You should normally wait for it to be automatically marked as delivered by LX1. This button should only be used in exceptional circumstances."/>
             		</page>
             	</page>
             </field>
