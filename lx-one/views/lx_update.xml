@@ -26,12 +26,14 @@
                 <form string="Update" version="7.0">
                     <header>
                         <button type="object" name="execute" string="Execute" class="oe_highlight" />
+                        <button type="object" name="execute_all" string="Execute All" />
                         <field name="state" widget="statusbar" />
                     </header>
                     <sheet>
                         <group>
                             <field name="sequence" />
                             <field name="object_type" />
+                            <field name="data" />
                             <field name="result" readonly="True" />
                             <field name="file_name" />
                             <field name="node_number" />
