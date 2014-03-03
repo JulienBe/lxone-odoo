@@ -1,14 +1,23 @@
 <?xml version="1.0"?>
 <openerp>
 	<data>
+	
+		<act_window name="All Files" 
+			res_model="lx.update.file" 
+			id="lx-one.action_all_update_files" />
+
+		<act_window name="Files to Process" 
+			res_model="lx.update.file" 
+			id="lx-one.action_update_files_to_process"
+			domain="[('state', '!=', 'done')]" />
 
 		<act_window name="All Updates" 
-			res_model="lx.update" 
-			id="lx-one.action_all_updates" />
+			res_model="lx.update.node" 
+			id="lx-one.action_all_update_nodes" />
 
 		<act_window name="Updates to Execute" 
-			res_model="lx.update" 
-			id="lx-one.action_updates_to_execute"
+			res_model="lx.update.node" 
+			id="lx-one.action_update_nodes_to_execute"
 			domain="[('state', '!=', 'executed')]" />
 
 		<act_window name="Configure LX1 Connection" 

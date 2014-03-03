@@ -2,15 +2,27 @@
 <openerp>
     <data noupdate="1">
 
-		<record id="lx-one.sequence_update_type" model="ir.sequence.type"> 
-			<field name="name">LX1 Update</field> 
-			<field name="code">lx.update</field> 
+	    <!-- date file -->
+		<record id="lx-one.sequence_update_file_type" model="ir.sequence.type"> 
+			<field name="name">LX1 Update File</field> 
+			<field name="code">lx.update.file</field> 
 		</record> 
 			
-		<record id="lx-one.sequence_update" model="ir.sequence"> 
-			<field name="name">LX1 Update</field> 
-			<field name="code">lx.update</field> 
+		<record id="lx-one.sequence_update_file" model="ir.sequence"> 
+			<field name="name">LX1 Update File</field> 
+			<field name="code">lx.update.file</field> 
 		</record>
 
+		<!-- update nodes -->
+		<record id="lx-one.sequence_update_node_type" model="ir.sequence.type"> 
+			<field name="name">LX1 Update Node</field> 
+			<field name="code">lx.update.node</field> 
+		</record> 
+			
+		<record id="lx-one.sequence_update_node" model="ir.sequence"> 
+			<field name="name">LX1 Update Node</field> 
+			<field name="code">lx.update.node</field> 
+		</record>
+		
     </data>
 </openerp>

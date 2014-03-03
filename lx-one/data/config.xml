@@ -4,7 +4,7 @@
 
         <record model="ir.config_parameter" id="ir_config_parameter_ad_host">
             <field name="key">lx_host</field>
-            <field name="value" eval="'ftp.alpha-d-s.com'" />
+            <field name="value" eval="''" />
         </record>
 
         <record model="ir.config_parameter" id="ir_config_parameter_ad_port">

@@ -1,6 +1,7 @@
 import manager
 import connection
-import update 
+import update_node
+import update_file
 
 import oe_stock_picking
 import oe_purchase_order

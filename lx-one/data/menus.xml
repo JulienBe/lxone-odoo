@@ -12,17 +12,29 @@
 			parent="lx-one.menu_main"
 			sequence="10" />
 
-		<menuitem name="All Updates" 
-			id="lx-one.menu_all_updates" 
+		<menuitem name="All Files" 
+			id="lx-one.menu_all_update_files" 
 			parent="lx-one.menu_updates" 
-			action="lx-one.action_all_updates" 
+			action="lx-one.action_all_update_files" 
+			sequence="5" />
+
+		<menuitem name="Files To Process" 
+			id="lx-one.menu_update_files_to_process" 
+			parent="lx-one.menu_updates" 
+			action="lx-one.action_update_files_to_process" 
 			sequence="10" />
 
-		<menuitem name="Updates To Execute" 
-			id="lx-one.menu_updates_to_execute" 
+		<menuitem name="All Updates"
+			id="lx-one.menu_all_update_nodes" 
 			parent="lx-one.menu_updates" 
-			action="lx-one.action_updates_to_execute" 
-			sequence="10" />
+			action="lx-one.action_all_update_nodes" 
+			sequence="6" />
+
+		<menuitem name="Updates To Execute" 
+			id="lx-one.menu_update_nodes_to_parse" 
+			parent="lx-one.menu_updates" 
+			action="lx-one.action_update_nodes_to_execute" 
+			sequence="11" />
 
 		<!-- config -->
 		<menuitem name="Configuration" 

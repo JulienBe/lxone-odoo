@@ -3,7 +3,7 @@
     <data noupdate="1">
 
         <record id="ir_cron_lx_poll" model="ir.cron">
-            <field name="name">Poll Alpha Direct Service Server</field>
+            <field name="name">Poll LX1 Server</field>
             <field name="interval_number">5</field>
             <field name="interval_type">minutes</field>
             <field name="numbercall">-1</field>

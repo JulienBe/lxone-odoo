@@ -2,40 +2,41 @@
 <openerp>
     <data>
 
-        <record id="lx_view_update_tree" model="ir.ui.view">
-            <field name="name">lx.update.tree</field>
-            <field name="model">lx.update</field>
+        <record id="lx_view_update_node_tree" model="ir.ui.view">
+            <field name="name">lx.update.node.tree</field>
+            <field name="model">lx.update.node</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Updates" colors="red:state=='failed';blue:state=='executed'">
+                    <field name="create_date" />
                     <field name="state"/>
                     <field name="sequence"/>
                     <field name="object_type" />
                     <field name="result" />
-                    <field name="file_name" />
                     <field name="node_number" />
+                    <button type="object" name="execute" string="Execute" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','=','executed')]}" />
                 </tree>
             </field>
         </record>
 
-    	<record id="lx_view_update_form" model="ir.ui.view">
-            <field name="name">lx.update.form</field>
-            <field name="model">lx.update</field>
+    	<record id="lx_view_update_node_form" model="ir.ui.view">
+            <field name="name">lx.update.node.form</field>
+            <field name="model">lx.update.node</field>
             <field name="type">form</field>
              <field name="arch" type="xml">
                 <form string="Update" version="7.0">
                     <header>
-                        <button type="object" name="execute" string="Execute" class="oe_highlight" />
-                        <button type="object" name="execute_all" string="Execute All" />
+                        <button type="object" name="execute" string="Execute" class="oe_highlight" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','=','executed')]}" />
                         <field name="state" widget="statusbar" />
                     </header>
                     <sheet>
                         <group>
+                        	<field name="update_file_id" />
+                            <field name="create_date" />
                             <field name="sequence" />
                             <field name="object_type" />
                             <field name="data" />
-                            <field name="result" readonly="True" />
-                            <field name="file_name" />
+                            <field name="result" />
                             <field name="node_number" />
                         </group>
                     </sheet>

@@ -48,7 +48,7 @@ Configuration
 -------------
 Please enter your LX1 FTP server credentials in Settings > Parameters > System Parameters > lx\_*. If "mode" is set to "test" any data will not be automatically imported by LX1. Set it to "prod" to have your data automatically imported.
 
-By default this module poles the LX1 API every 5 minutes. This interval can be changed by going to Settings > Scheduler > Scheduled Actions > Poll Alpha Direct Service Server
+By default this module poles the LX1 API every 5 minutes. This interval can be changed by going to Settings > Scheduler > Scheduled Actions > Poll LX1 Server
 
 Technical Information
 ---------------------
@@ -91,7 +91,9 @@ http://www.picklingtools.com/
         'data/sequence.xml',
         'data/config.xml',
         'data/cron.xml',
-        'views/lx_update.xml',
+        
+        'views/lx_update_file.xml',
+        'views/lx_update_node.xml',
         'views/stock_picking_in_form.xml',
         'views/res_partner_form.xml',
         'views/stock_picking_out_form.xml',

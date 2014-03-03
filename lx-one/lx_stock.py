@@ -17,7 +17,7 @@ class lx_stock(lx_data):
         try:
             inventory_obj = pool.get('stock.inventory')
             inventory_data = {
-                              'name': 'Alpha Direct Service Physical Inventory',
+                              'name': 'LX1 Physical Inventory',
                               'date': datetime.now()
                               }
             self.inventory_id = inventory_obj.create(cr, 1, inventory_data)

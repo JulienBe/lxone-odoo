@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="lx_view_update_file_tree" model="ir.ui.view">
+            <field name="name">lx.update.file.tree</field>
+            <field name="model">lx.update.file</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Updates" colors="red:failed==1;blue:state=='done'">
+                	<field name="create_date" />
+                	<field name="file_name" />
+                    <field name="state"/> 
+                    <field name="sequence"/>
+                    <field name="result" />
+                    <field name="failed" />
+                    <button type="object" name="parse" string="Parse" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','to_parse')]}" />
+                    <button type="object" name="generate_update_nodes" string="Generate Updates" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','to_generate_update_nodes')]}" />
+                    <button type="object" name="execute_update_nodes" string="Execute Updates" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','awaiting_updates')]}" />
+                </tree>
+            </field>
+        </record>
+
+    	<record id="lx_view_update_file_form" model="ir.ui.view">
+            <field name="name">lx.update.file.form</field>
+            <field name="model">lx.update.file</field>
+            <field name="type">form</field>
+             <field name="arch" type="xml">
+                <form string="Update" version="7.0">
+                    <header>
+                        <button type="object" name="parse" string="Parse" class="oe_highlight" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','to_parse')]}" />
+                        <button type="object" name="generate_update_nodes" string="Generate Updates" class="oe_highlight" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','to_generate_update_nodes')]}" />
+                        <button type="object" name="execute_update_nodes" string="Execute Updates" class="oe_highlight" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','awaiting_updates')]}" />
+                        
+                        <field name="state" widget="statusbar" />
+                    </header>
+                    <sheet>
+                        <group>
+                        	<field name="failed" invisible="1" />
+                        	<field name="create_date" />
+                            <field name="file_name" />
+                            <field name="sequence" />
+                            <field name="xml" attrs="{'invisible': [('state', '!=', 'to_parse')]}" />
+                            <field name="parsed_xml" attrs="{'invisible': [('state', '==', 'to_parse')]}" />
+                            <field name="result" attrs="{'invisible': [('failed', '=', False)]}" />
+                            <field name="update_node_ids" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>
