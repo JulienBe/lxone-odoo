@@ -1,10 +1,10 @@
-import lx_manager
-import lx_connection
-import lx_update 
+import manager
+import connection
+import update 
 
-import stock_picking
-import purchase_order
-import sales_order
-import product
-import res_partner
-import delivery_carrier
+import oe_stock_picking
+import oe_purchase_order
+import oe_sales_order
+import oe_product
+import oe_res_partner
+import oe_delivery_carrier

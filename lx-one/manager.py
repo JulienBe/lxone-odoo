@@ -6,7 +6,7 @@ from openerp.tools.translate import _
 from ftplib import all_errors
 from StringIO import StringIO
 
-from lx_connection import lx_connection
+from connection import lx_connection
 from lx_data import lx_data
 from auto_vivification import AutoVivification
 from lx_purchase_order import lx_purchase_order
@@ -15,7 +15,7 @@ from lx_product import lx_product
 from lx_return import lx_return
 from lx_stock import lx_stock
 from lx_picking import lx_picking
-from lx_file import lx_file
+from file import lx_file
 
 class lx_manager(osv.osv):
     """
