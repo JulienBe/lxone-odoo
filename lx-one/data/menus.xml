@@ -16,13 +16,13 @@
 			id="lx-one.menu_all_sync" 
 			parent="lx-one.menu_sync_all" 
 			action="lx-one.action_all_sync" 
-			sequence="10" />
+			sequence="5" />
 			
 		<menuitem name="Sync Now" 
 			id="lx-one.menu_sync_now" 
 			parent="lx-one.menu_sync_all" 
 			action="lx-one.action_sync_now" 
-			sequence="5" />
+			sequence="10" />
 			
 		<!-- files -->
 		<menuitem name="Files" 

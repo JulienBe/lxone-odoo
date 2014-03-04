@@ -4,6 +4,8 @@ from openerp.tools.translate import _
 from ftplib import all_errors
 from StringIO import StringIO
 from datetime import datetime
+from threading import Lock
+import time
 
 from connection import lx_connection
 from lx_data import lx_data
@@ -25,6 +27,7 @@ class lx_manager(osv.osv):
     _columns = {}
     _name = 'lx.manager'
     _auto = False
+    _lock = None
 
     _file_process_order = [
         'MVTS',# PO received
@@ -46,6 +49,12 @@ class lx_manager(osv.osv):
         file sequence number. For each file, download the contents and create a lx.update.file 
         record, committing cursor in between files.
         """
+        # setup thread locking
+        if not self._lock:
+            self._lock = Lock()
+            
+        if not self._lock.acquire(False):
+            raise osv.except_osv(_('Already Syncing'), _('We are already synchronizing with LX1. Please wait a while before trying again...'))
 
         files_processed = 0
         sync_id = False
@@ -67,6 +76,7 @@ class lx_manager(osv.osv):
             
             # return if there are no files to process
             if not files_to_process:
+                self._lock.release()
                 return sync_id
             
             # Prepare values for lx.sync record
@@ -134,5 +144,8 @@ class lx_manager(osv.osv):
         
         # update lx.sync record
         sync_obj.write(cr, uid, [sync_id], sync_vals)
+        
+        # release thread lock
+        self._lock.release()
 
         return sync_id
