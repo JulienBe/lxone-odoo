@@ -1,5 +1,7 @@
 import manager
 import connection
+
+import sync
 import update_node
 import update_file
 

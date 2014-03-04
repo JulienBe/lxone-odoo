@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="lx_view_sync_tree" model="ir.ui.view">
+            <field name="name">lx.sync.tree</field>
+            <field name="model">lx.sync</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Synchronizations">
+                	<field name="date" />
+                	<field name="log" />
+                </tree>
+            </field>
+        </record>
+
+    	<record id="lx_view_sync_form" model="ir.ui.view">
+            <field name="name">lx.sync.form</field>
+            <field name="model">lx.sync</field>
+            <field name="type">form</field>
+             <field name="arch" type="xml">
+                <form string="Update" version="7.0">
+                    <sheet>
+                        <group>
+                        	<field name="date" />
+                			<field name="log" />
+                			<field name="update_file_ids" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

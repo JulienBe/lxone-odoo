@@ -19,12 +19,13 @@ class lx_update_file(osv.osv):
 
     _columns = {
         'create_date' : fields.datetime('Create Date', readonly=True),
+        'sync_id': fields.many2one('lx.sync', 'Synchronization'),
         'update_node_ids': fields.one2many('lx.update.node', 'update_file_id', 'Updates'),
         'sequence': fields.char('File Processing Sequence', required=True, readonly=True),
         'state': fields.selection( (
                 ('to_parse', 'To Parse'), 
                 ('to_generate_update_nodes', 'To Generate Updates'), 
-                ('awaiting_updates', 'Waiting For Update Execution'),
+                ('awaiting_update_nodes', 'Waiting For Update Execution'),
                 ('done', 'Fully Processed'),
             ), 'State'),
         'failed': fields.boolean('Failed'),
@@ -39,12 +40,28 @@ class lx_update_file(osv.osv):
         'sequence': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'lx.update.file')
     }
     
+    def _sanitize_values(self, vals):
+        """ Convert XML to use XML entities and pretty print parsed_xml """
+        if vals.get('xml'):
+            vals['xml'] = vals['xml'].decode("utf-8-sig").encode("utf-8")
+            
+        if vals.get('parsed_xml'):
+            vals['parsed_xml'] = json.dumps(vals['parsed_xml'], indent=4)
+            
+        return vals
+    
+    def create(self, cr, uid, vals, context=None):
+        """ Sanitize values """
+        vals = self._sanitize_values(vals)
+        return super(lx_update_file, self).create(cr, uid, vals, context=context)
+    
     def write(self, cr, uid, ids, vals, context=None):
-        """
-        When changing state, automatically set failed to False
-        """
+        """ When changing state, automatically set failed to False, and sanitize values """
         if 'state' in vals:
             vals['failed'] = False
+        
+        vals = self._sanitize_values(vals)
+        
         return super(lx_update_file, self).write(cr, uid, ids, vals, context=context)
 
     def parse(self, cr, uid, ids, context=None):
@@ -63,16 +80,14 @@ class lx_update_file(osv.osv):
             
             # do parse
             try:
-                xml = update_file.xml.decode("utf-8-sig").encode("utf-8")
-                parsed_xml = xml2dict.ConvertFromXML(xml)
-                parsed_xml = json.dumps(parsed_xml, indent=4)
+                parsed_xml = xml2dict.ConvertFromXML(update_file.xml)
                 
                 # change state
                 update_file.write({'state': 'to_generate_update_nodes', 'parsed_xml': parsed_xml})
                 parse_result[update_file['id']] = True
                 
             except Exception, e:
-                result = 'Error while parsing: %s' % str(e)
+                result = 'Error while parsing: %s' % unicode(e)
                 update_file.write({'failed': True, 'result': result})
                 parse_result[update_file['id']] = False
                 
@@ -80,7 +95,7 @@ class lx_update_file(osv.osv):
 
     def parse_all(self, cr, uid, ids=[], context=None):
         """ Gets ids for all files whose state is not parsed and calls parse on them """
-        all_ids = self.search(cr, uid, [('state', '!=', 'parsed')], context=context)
+        all_ids = self.search(cr, uid, [('state', '=', 'to_parse')], context=context)
         return self.parse(cr, uid, all_ids)
 
     def generate_update_nodes(self, cr, uid, ids, context=None):
@@ -110,37 +125,42 @@ class lx_update_file(osv.osv):
                     vals = {
                         'update_file_id': update_file.id,
                         'object_type': 'TEST',
-                        'data': json.dumps(node, indent=4),
+                        'data': node,
                         'node_number': node_index + 1,
                     }
                     node_obj.create(cr, uid, vals, context=context)
                     
-                update_file.write({'state': 'awaiting_updates'})
+                update_file.write({'state': 'awaiting_update_nodes'})
                 
             except Exception, e:
-                result = 'Error while executing the update: %s' % str(e)
+                result = 'Error while executing the update: %s' % unicode(e)
                 update_file.write({'failed': True, 'result': result})
     
-    def generate_all_update_nodes(self, cr, uid, ids, context=None):
+    def generate_all_update_nodes(self, cr, uid, ids=[], context=None):
         """ Gets ids for all files whose state is to_generate_update_nodes and calls generate_update_nodes on them """
         all_ids = self.search(cr, uid, [('state', '=', 'to_generate_update_nodes')], context=context)
         return self.generate_update_nodes(cr, uid, all_ids)
     
     def execute_update_nodes(self, cr, uid, ids, context=None):
-        """ trigger execution of updates linked to this file """
+        """ trigger execution of updates """
         for update_file in self.browse(cr, uid, ids, context=context):
             
-            if update_file.state != 'awaiting_updates':
+            if update_file.state != 'awaiting_update_nodes':
                 continue
             
             for update_node in update_file.update_node_ids:
                 update_node.execute()
     
+    def execute_all_update_nodes(self, cr, uid, ids=[], context=None):
+        """ Gets ids for all files whose state is awaiting_update_nodes and calls execute_update_nodes on them """
+        all_ids = self.search(cr, uid, [('state', '=', 'awaiting_update_nodes')], context=context)
+        return self.execute_update_nodes(cr, uid, all_ids)
+    
     def check_still_waiting(self, cr, uid, ids, context=None):
         """ If all update_node_ids are in state executed, mark update.file state as done """
         for update_file in self.browse(cr, uid, ids, context=context):
             
-            if update_file.state != 'awaiting_updates':
+            if update_file.state != 'awaiting_update_nodes':
                 continue
                 
             if all([node.state == 'executed' for node in update_file.update_node_ids]):

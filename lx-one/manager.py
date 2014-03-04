@@ -1,10 +1,9 @@
-import logging
-_logger = logging.getLogger(__name__)
 from openerp.osv import osv
 from openerp.tools.translate import _
 
 from ftplib import all_errors
 from StringIO import StringIO
+from datetime import datetime
 
 from connection import lx_connection
 from lx_data import lx_data
@@ -15,6 +14,7 @@ from lx_product import lx_product
 from lx_return import lx_return
 from lx_stock import lx_stock
 from lx_picking import lx_picking
+from lx_test import lx_test
 from file import lx_file
 
 class lx_manager(osv.osv):
@@ -31,6 +31,7 @@ class lx_manager(osv.osv):
         'CREX',# SO sent
         'CRET',# return
         'STOC',# physical inventory
+        'TEST',
     ]
 
     ftp_exceptions = all_errors
@@ -41,111 +42,71 @@ class lx_manager(osv.osv):
 
     def poll(self, cr, uid=1):
         """
-        Poll the LX1 FTP server, download a file list and iterate over them by oldest first,
-        then by _file_process_order. 
-        
-        For each file, look for a child class of lx_data whose file_name_prefix field includes 
-        the part before the first '-' of the file name. Download the file contents and use it
-        to instantiate the found class, then call process_all on it.
-        
-        Any errors caught in the process are added to errors returned by the process_all
-        function, and then written to the /errors/ directory as a .txt file, along with any
-        data nodes left in self.data after processing. 
+        Poll the LX1 FTP server, download a file list and iterate over them by oldest first by 
+        file sequence number. For each file, download the contents and create a lx.update.file 
+        record, committing cursor in between files.
         """
 
-        _logger.info(_("Polling LX1 Server..."))
         files_processed = 0
+        sync_id = False
+        update_file_obj = self.pool.get('lx.update.file')
+        sync_obj = self.pool.get('lx.sync')
         
-        # get connection FTP server
+        # get connection to FTP server
         with self.connection(cr) as conn:
 
             conn.cd(conn._vers_client)
 
             # get list of files and directories and remove any files that cannot be processed
+            # then order files by file_sequence so they are processed in the correct order
             files_and_directories = conn.ls()
             files_to_process = map(lambda f: lx_file(f), files_and_directories)
             files_to_process = filter(lambda f: f.valid, files_to_process)
             files_to_process = filter(lambda f: f.to_process(), files_to_process)
+            files_to_process.sort(key=lambda f: f.file_sequence)
             
-            # then sort by date and add to dictionary where the key is the date so we can process
-            # chronologically and with file prefix order 
-            files_to_process.sort(key=lambda f: f.date)
-            files_by_date = AutoVivification()
-            for f in files_to_process:
-                if not isinstance(files_by_date[f.date], list):
-                    files_by_date[f.date] = []
-                files_by_date[f.date].append(f)
+            # return if there are no files to process
+            if not files_to_process:
+                return sync_id
+            
+            # Prepare values for lx.sync record
+            sync_vals = {
+                'date': datetime.now(), 
+                'log': [],
+            }
+            sync_id = sync_obj.create(cr, uid, sync_vals)
 
+            # Process files within try catch block and append errors to sync_vals
             try:
-                # create archive and errors directory if doesn't already exist
-                if 'archives' not in files_and_directories:
-                    conn.mkd('archives')
+                for file_to_process in files_to_process:
 
-                if 'errors' not in files_and_directories:
-                    conn.mkd('errors')
-                
-                # process by earliest date first
-                for date in sorted(files_by_date.keys()):
-                    # then according to file_process_order
-                    for prefix in self._file_process_order:
-                        for file_to_process in [f for f in files_by_date[date] if f.prefix == prefix]:
+                    files_processed += 1
+                    file_name = file_to_process.file_name
+                    activity = 'processing file'
 
-                            files_processed += 1
-                            file_prefix = file_to_process.prefix
-                            file_name = file_to_process.file_name
-                            
-                            # find lx_data subclass with matching 'type' property
-                            class_for_data_type = [cls for cls in lx_data.__subclasses__() if file_prefix in cls.file_name_prefix]
-    
-                            if class_for_data_type:
-    
-                                # log warning if found more than one matching class
-                                if len(class_for_data_type) != 1:
-                                    _logger.warn(_('The following subclasses of lx_data share the file_name_prefix: %s' % class_for_data_type))
-    
-                                errors = StringIO()
-    
-                                # catch any errors not caught by data.process etc
-                                try:
-                                    # Download and decode the file contents
-                                    file_contents = conn.download_data(file_name).decode("utf-8-sig").encode("utf-8")
-                                    
-                                    # instantiate found subclass with correctly encoded file_data
-                                    data = class_for_data_type[0](file_contents)
-    
-                                    # trigger process to import into OpenERP
-                                    process_errors = data.process_all(self.pool, cr, conn)
-    
-                                    if process_errors:
-                                        errors.writelines([line + '\n' for line in process_errors])
-                                        
-                                except Exception as e:
-                                    errors.writelines('%s: %s' % (type(e), unicode(e)))
-                                    
-                                finally:
-                                    # archive the file we processed
-                                    conn.move_to_archives(file_name)
-                                    
-                                    # if we have errors, create txt file containing description in /errors/*.txt
-                                    if errors.getvalue():
-                                        errors.seek(0)
-                                        conn.mkf(file_name[0:-4] + '.txt', errors, 'errors')
-                                        
-                                        # and upload remaining data (or unparsable file contents) to /errors/*.xml
-                                        try:
-                                            if data.data:
-                                                conn.mkf(file_name, data.generate_xml(), 'errors')
-                                        except NameError:
-                                            contents = StringIO(file_contents)
-                                            conn.mkf(file_name, contents, 'errors')
-                                            contents.close()
-                                    
-                                # commit the OpenERP cursor inbetween files
-                                errors.close()
-                                cr and cr.commit()
-                            else:
-                                _logger.info(_("Could not find subclass of lx_data with file_name_prefix %s" % file_prefix))
-                                conn.move_to_archives(file_name)
+                    # download file contents and create lx.update.file from it, then save ID in sync_vals                    
+                    try:
+                        activity = 'creating lx.update.file'
+                        file_contents = conn.download_data(file_name)
+                        vals = {
+                            'xml': file_contents,
+                            'file_name': file_name,
+                            'sync_id': sync_id,
+                        }
+                        update_file_id = update_file_obj.create(cr, uid, vals)
+                        
+                        # delete the file we successfully processed
+                        activity = 'deleting file from ftp server'
+                        conn.rm(file_name)
+
+                    except Exception as e:
+                        sync_vals['log'].append('Error while %s for %s: %s' % (activity, file_name, unicode(e)))
+                        files_processed -= 1
+                        
+                    finally:
+                        # commit the OpenERP cursor inbetween files
+                        cr and cr.commit()
+                        
             finally:
                 # check we are still connected, then navigate back a directory for any further operations
                 if conn._connected:
@@ -153,5 +114,25 @@ class lx_manager(osv.osv):
                 else:
                     conn._connect()
 
-        _logger.info(_("Processed %d files" % files_processed))
-        return True
+        # * end with conn * #
+        
+        try:
+            # trigger parse all files
+            activity = 'parsing all files'
+            update_file_obj.parse_all(cr, uid)
+            
+            # trigger creation of all lx.update.nodes for files
+            activity = 'generating all updates'
+            update_file_obj.generate_all_update_nodes(cr, uid)
+            
+            # trigger execution of all lx.update.nodes for files
+            activity = 'executing all update nodes'
+            update_file_obj.execute_all_update_nodes(cr, uid)
+            
+        except Exception as e:
+            sync_vals['log'].append('Error while %s: %s' % (activity, unicode(e)))
+        
+        # update lx.sync record
+        sync_obj.write(cr, uid, [sync_id], sync_vals)
+
+        return sync_id

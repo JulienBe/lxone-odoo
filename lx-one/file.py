@@ -4,21 +4,19 @@ class lx_file(object):
 	""" Represents a file received from LX1. Used for sorting processing priority """
 
 	def __init__(self, file_name):
-		""" Extracts file name prefix, date and extension """
+		""" Extracts file date and extension """
 		super(lx_file, self).__init__()
 
 		self.file_name = file_name
 
-		if '-' in file_name and '.' in file_name and file_name.count('.') == 1:
+		if file_name.count('.') == 1:
 			
 			try:
-				prefix, date = file_name.split('-', 1)
-				date, extension = date.split('.')
+				customer, file_sequence, extension = file_name.replace('.', '_').split('_')
 
-				self.date_string = date
-				self.date = parse_date(date)
-				self.prefix = prefix
 				self.extension = extension.lower()
+				self.customer = customer
+				self.file_sequence = file_sequence
 				self.valid = True
 			except ValueError:
 				self.valid = False

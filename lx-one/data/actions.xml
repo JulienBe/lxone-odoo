@@ -2,6 +2,10 @@
 <openerp>
 	<data>
 	
+		<act_window name="Synchronizations" 
+			res_model="lx.sync" 
+			id="lx-one.action_all_sync" />
+	
 		<act_window name="All Files" 
 			res_model="lx.update.file" 
 			id="lx-one.action_all_update_files" />
@@ -24,6 +28,28 @@
 			res_model="ir.config_parameter" 
 			id="lx-one.action_config" 
 			domain="[('key', 'like', 'lx_%')]" />
+			
+		<record id="lx-one.action_sync_now" model="ir.actions.server">
+            <field name="sequence" eval="5"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_lx_manager"/>
+            <field name="code">
+sync_id = self.poll(cr)
+if sync_id:
+    action = {
+        'res_id': sync_id,
+        'name': 'Sync Results',
+        'view_type': 'form',
+        'view_mode': 'form',
+        'res_model': 'lx.sync',
+        'type': 'ir.actions.act_window',
+        'nodestroy': True,
+    }
+			</field>
+            <field name="condition">True</field>
+            <field name="name">LX1 Synchronise Now</field>
+        </record>
 			
 	</data>
 </openerp>

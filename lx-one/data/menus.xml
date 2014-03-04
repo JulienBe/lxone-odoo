@@ -5,24 +5,48 @@
 		<menuitem name="LX1 Sync" 
 			id="lx-one.menu_main" 
 			sequence="100" />
+			
+		<!-- sync -->
+		<menuitem name="Synchronizations" 
+			id="lx-one.menu_sync_all" 
+			parent="lx-one.menu_main"
+			sequence="5" />
 
-		<!-- updates -->
-		<menuitem name="Updates" 
-			id="lx-one.menu_updates" 
+		<menuitem name="Synchronizations" 
+			id="lx-one.menu_all_sync" 
+			parent="lx-one.menu_sync_all" 
+			action="lx-one.action_all_sync" 
+			sequence="10" />
+			
+		<menuitem name="Sync Now" 
+			id="lx-one.menu_sync_now" 
+			parent="lx-one.menu_sync_all" 
+			action="lx-one.action_sync_now" 
+			sequence="5" />
+			
+		<!-- files -->
+		<menuitem name="Files" 
+			id="lx-one.menu_files" 
 			parent="lx-one.menu_main"
 			sequence="10" />
 
 		<menuitem name="All Files" 
 			id="lx-one.menu_all_update_files" 
-			parent="lx-one.menu_updates" 
+			parent="lx-one.menu_files" 
 			action="lx-one.action_all_update_files" 
 			sequence="5" />
 
 		<menuitem name="Files To Process" 
 			id="lx-one.menu_update_files_to_process" 
-			parent="lx-one.menu_updates" 
+			parent="lx-one.menu_files" 
 			action="lx-one.action_update_files_to_process" 
 			sequence="10" />
+
+		<!-- updates -->
+		<menuitem name="Updates" 
+			id="lx-one.menu_updates" 
+			parent="lx-one.menu_main"
+			sequence="15" />
 
 		<menuitem name="All Updates"
 			id="lx-one.menu_all_update_nodes" 

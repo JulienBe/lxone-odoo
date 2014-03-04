@@ -93,16 +93,12 @@ class lx_connection(object):
         self._mode = self._get_config('lx_mode').upper() or 'TEST'
         self._passive = self._get_config('lx_passive', bool) or True
 
-        message = _("Please check your LX1 configuration settings in Settings -> Parameters -> System Parameters for the field '%s'")
+        message = _("Please check your LX1 configuration settings in LX1 Sync > Configuration > LX1 Configuration Settings for field '%s'")
 
         if not self._mode in ['PROD', 'TEST']:
             raise osv.except_osv(_('Config Error'), _('Please check your LX1 configuration settings in Settings -> Parameters -> System Parameters. Mode must be either "prod" or "test".'))
         if not self._host:
             raise osv.except_osv(_('Config Error'), message % 'host')
-        if not self._user:
-            raise osv.except_osv(_('Config Error'), message % 'user')
-        if not self._password:
-            raise osv.except_osv(_('Config Error'), message % 'password')
 
     def _connect(self):
         """ Sets up a connection to the LX1 FTP server """
@@ -118,7 +114,7 @@ class lx_connection(object):
         
         # get name of VersClient directory
         directories = self.ls()
-        vers_client_dir = filter(lambda direc: direc[0:4] == 'Vers' and direc != 'VersLX1', directories)
+        vers_client_dir = filter(lambda direc: direc[0:4] == 'Vers' and direc != self._vers_lx, directories)
 
         if len(vers_client_dir) == 1:
             self._vers_client = vers_client_dir[0]
@@ -151,13 +147,6 @@ class lx_connection(object):
         if self._connected:
             self._conn.quit()
             
-    def outer(some_func):
-         def inner():
-             print "before some_func"
-             ret = some_func() # 1
-             return ret + 1
-         return inner
-
     # ftp convenience methods
     def ls(self):
         """ List files and directories in the current directory """
@@ -201,12 +190,6 @@ class lx_connection(object):
                 self.rename(old_name, new_name)
             else:
                 raise
-
-    def move_to_archives(self, filename):
-        """ move specified file to the 'archives' folder (automatically created) """
-        if 'archives' not in self.ls():
-            self.mkd('archives')
-        self.rename(filename, 'archives/%s' % filename)
 
     def move_to_errors(self, filename):
         """ move specified file to the 'errors' folder (automatically created) """

@@ -1,6 +1,8 @@
 from openerp.osv import osv, fields
 from openerp.tools.translate import _
 
+import json
+
 class lx_update_node(osv.osv):
     """
     These records represent data coming from LX1. Each one should be able to be executed
@@ -38,6 +40,23 @@ class lx_update_node(osv.osv):
         'state': 'to_execute',
         'sequence': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'lx.update.node')
     }
+    
+    def _sanitize_values(self, vals):
+        """ Pretty print data field contents """
+        if vals.get('data'):
+            vals['data'] = json.dumps(vals['data'], indent=4)
+            
+        return vals
+    
+    def create(self, cr, uid, vals, context=None):
+        """ Sanitize values """
+        vals = self._sanitize_values(vals)
+        return super(lx_update_node, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        """ sanitize values """
+        vals = self._sanitize_values(vals)
+        return super(lx_update_node, self).write(cr, uid, ids, vals, context=context)
 
     def execute(self, cr, uid, ids, context=None):
         """
@@ -47,6 +66,9 @@ class lx_update_node(osv.osv):
         nodes.sort(key=lambda node: int(node['sequence']))
         for node in nodes:
             node = self.browse(cr, uid, node['id'], context=context)
+            
+            if node.state == 'executed':
+                continue
             
             # do execution
             try:
@@ -59,7 +81,7 @@ class lx_update_node(osv.osv):
                 node.update_file_id.check_still_waiting()
                 
             except Exception, e:
-                result = 'Error while executing: %s' % str(e)
+                result = 'Error while executing: %s' % unicode(e)
                 node.write({'state': 'failed', 'result': result})
 
     def execute_all(self, cr, uid, ids=[], context=None):
