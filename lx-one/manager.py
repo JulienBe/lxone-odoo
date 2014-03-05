@@ -38,21 +38,33 @@ class lx_manager(osv.osv):
     ]
 
     ftp_exceptions = all_errors
+    
+    def thread_lock(function):
+        """ Aquire a thread lock before calling the function and release it afterwards """
+        
+        def inner(self, *args, **kwargs):
+            if not self._lock.acquire(False):
+                raise osv.except_osv(_('Already Syncing'), _('We are already synchronizing with LX1. Please wait a while before trying again...'))
+            
+            res = function(self, *args, **kwargs)
+            
+            self._lock.release()
+            return res
+        
+        return inner
 
     def connection(self, cr):
         """ Gets an instance of lx_connection class that wraps the FTP server """
         return lx_connection(self.pool, cr)
 
+    @thread_lock
     def poll(self, cr, uid=1):
         """
         Poll the LX1 FTP server, download a file list and iterate over them by oldest first by 
         file sequence number. For each file, download the contents and create a lx.update.file 
         record, committing cursor in between files.
         """
-        # setup thread locking
-        if not self._lock.acquire(False):
-            raise osv.except_osv(_('Already Syncing'), _('We are already synchronizing with LX1. Please wait a while before trying again...'))
-
+        
         files_processed = 0
         sync_id = False
         update_file_obj = self.pool.get('lx.update.file')
@@ -73,7 +85,6 @@ class lx_manager(osv.osv):
             
             # return if there are no files to process
             if not files_to_process:
-                self._lock.release()
                 return sync_id
             
             # Prepare values for lx.sync record
@@ -141,8 +152,5 @@ class lx_manager(osv.osv):
         
         # update lx.sync record
         sync_obj.write(cr, uid, [sync_id], sync_vals)
-        
-        # release thread lock
-        self._lock.release()
 
         return sync_id
