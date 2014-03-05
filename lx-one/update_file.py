@@ -6,6 +6,8 @@ from picklingtools.xmldumper import *
 from picklingtools import xml2dict
 import json
 
+from auto_vivification import AutoVivification
+
 class lx_update_file(osv.osv):
     """
     This object represents an XML file downloaded from LX1. The original XML contents is saved
@@ -44,7 +46,11 @@ class lx_update_file(osv.osv):
     def _sanitize_values(self, vals):
         """ Convert XML to use XML entities and pretty print parsed_xml """
         if vals.get('parsed_xml'):
-            vals['parsed_xml'] = json.dumps(vals['parsed_xml'], indent=4, ensure_ascii=False)
+            if isinstance(vals['parsed_xml'], (dict, list, tuple, AutoVivification)):
+                vals['parsed_xml'] = json.dumps(vals['parsed_xml'], indent=4, ensure_ascii=False)
+            
+        if 'state' in vals and 'result' not in vals:
+            vals['result'] = ''
             
         return vals
     

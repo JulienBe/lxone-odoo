@@ -3,6 +3,7 @@ from openerp.tools.translate import _
 
 import json
 
+from auto_vivification import AutoVivification
 from lx_data import lx_data
 from lx_purchase_order import lx_purchase_order
 from lx_sales_order import lx_sales_order
@@ -53,7 +54,8 @@ class lx_update_node(osv.osv):
     def _sanitize_values(self, vals):
         """ Pretty print data field contents """
         if vals.get('data'):
-            vals['data'] = json.dumps(vals['data'], indent=4, ensure_ascii=False)
+            if isinstance(vals['data'], (dict, list, tuple, AutoVivification)):
+                vals['data'] = json.dumps(vals['data'], indent=4, ensure_ascii=False)
             
         if 'state' in vals and 'result' not in vals:
             vals['result'] = ''

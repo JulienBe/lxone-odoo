@@ -35,7 +35,7 @@
                             <field name="create_date" />
                             <field name="sequence" />
                             <field name="object_type" />
-                            <field name="data" />
+                            <field name="data" attrs="{'readonly': [('state', '=', 'executed')]}" />
                             <field name="result" />
                             <field name="node_number" />
                         </group>

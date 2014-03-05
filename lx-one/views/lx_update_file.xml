@@ -40,9 +40,15 @@
                         	<field name="create_date" />
                             <field name="file_name" />
                             <field name="sequence" />
-                            <field name="xml" attrs="{'invisible': [('state', '!=', 'to_parse')]}" />
-                            <field name="parsed_xml" attrs="{'invisible': [('state', '==', 'to_parse')]}" />
-                            <field name="result" attrs="{'invisible': [('failed', '=', False)]}" />
+                            <notebook colspan="4">
+                            	<page string="XML">
+                            		<field name="xml" attrs="{'readonly': [('state', '!=', 'to_parse')]}" />
+                        		</page>
+                        		<page string="Parsed XML">
+                            		<field name="parsed_xml" attrs="{'readonly': [('state', 'in', ['to_parse', 'awaiting_update_nodes', 'done'])]}" />
+                            	</page>
+                            </notebook>
+                            <field name="result" attrs="{'invisible': [('failed', '=', False)]}" style="color: red" />
                             <field name="update_node_ids" />
                         </group>
                     </sheet>
