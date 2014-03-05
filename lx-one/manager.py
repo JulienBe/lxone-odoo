@@ -46,9 +46,12 @@ class lx_manager(osv.osv):
             if not self._lock.acquire(False):
                 raise osv.except_osv(_('Already Syncing'), _('We are already synchronizing with LX1. Please wait a while before trying again...'))
             
-            res = function(self, *args, **kwargs)
-            
-            self._lock.release()
+            try:
+                res = function(self, *args, **kwargs)
+            except:
+                raise
+            finally:
+                self._lock.release()
             return res
         
         return inner
@@ -154,3 +157,9 @@ class lx_manager(osv.osv):
         sync_obj.write(cr, uid, [sync_id], sync_vals)
 
         return sync_id
+
+def get_lx_data_subclass(file_name_prefix):
+    """ Finds a subclass of lx_data whose file_name_prefix matches @param file_name_prefix """
+    class_for_data_type = [cls for cls in lx_data.__subclasses__() if file_name_prefix in cls.file_name_prefix]
+    assert len(class_for_data_type) == 1, _('Should have found 1 class for data type %s' % file_name_prefix)
+    return class_for_data_type[0]

@@ -7,6 +7,7 @@ from picklingtools import xml2dict
 import json
 
 from auto_vivification import AutoVivification
+from manager import get_lx_data_subclass
 
 class lx_update_file(osv.osv):
     """
@@ -35,6 +36,7 @@ class lx_update_file(osv.osv):
         'xml': fields.text('XML Data', required=True, help="The XML that was inside the file from LX1"),
         'parsed_xml': fields.text('Parsed XML Data', help="The result of parsing the XML data from the file"),
         'result': fields.text('Failure Message', readonly=True, help="Any errors encountered during processing the file will be listed here"),
+        'object_type': fields.char('Object Type', size=12, required=True, readonly=True, help="The type of data contained in this file"),
         'file_name': fields.char('File Name', size=64, required=True, readonly=True, help="The name of the file that contained the XML"),
     }
 
@@ -100,8 +102,22 @@ class lx_update_file(osv.osv):
     def parse_all(self, cr, uid, ids=[], context=None):
         """ Gets ids for all files whose state is not parsed and calls parse on them """
         all_ids = self.search(cr, uid, [('state', '=', 'to_parse')], context=context)
-        return self.parse(cr, uid, all_ids)
-
+        return self.parse(cr, uid, all_ids, context=context)
+    
+    def _interpolate_object_type(self, cr, uid, ids):
+        """ tries to work out the object type from the parsed xml. Returns dictionary mapping of ids """
+        type = 'TEST'
+        return dict.fromkeys(ids, type)
+    
+    def reorganise_data(self, cr, uid, ids, context=None):
+        """ Interpolates the data type of the file, then calls reorganise_data on the appropriate lx_data subclass """
+        object_type = self._interpolate_object_type(cr, uid, ids)
+        
+        for update_file in self.browse(cr, uid, ids, context=context):
+            cls = get_lx_data_subclass(object_type[update_file.id])
+            reorganised_parsed_xml = cls.reorganise_data(update_file.parsed_xml)
+            update_file.write({'parsed_xml': reorganised_parsed_xml, 'object_type': object_type[update_file.id]})
+    
     def generate_update_nodes(self, cr, uid, ids, context=None):
         """
         Generates an lx.update.node for each lx.update.file 
@@ -118,10 +134,17 @@ class lx_update_file(osv.osv):
             
             # generate updates
             try:
+                activity = 'evalling the data'
                 data = eval(update_file.parsed_xml)
+                
                 if not isinstance(data, list):
                     data = [data]
                 
+                # reorganise the data for processing
+                activity = 'reorganising the data'
+                self.reorganise_data(cr, uid, [update_file.id], context)
+                
+                activity = 'creating the updates'
                 for node_index in xrange(0, len(data)):
                     node = data[node_index]
                     
@@ -137,13 +160,13 @@ class lx_update_file(osv.osv):
                 update_file.write({'state': 'awaiting_update_nodes'})
                 
             except Exception, e:
-                result = 'Error while executing the update: %s' % unicode(e)
+                result = 'Error while %s: %s' % (activity, unicode(e))
                 update_file.write({'failed': True, 'result': result})
     
     def generate_all_update_nodes(self, cr, uid, ids=[], context=None):
         """ Gets ids for all files whose state is to_generate_update_nodes and calls generate_update_nodes on them """
         all_ids = self.search(cr, uid, [('state', '=', 'to_generate_update_nodes')], context=context)
-        return self.generate_update_nodes(cr, uid, all_ids)
+        return self.generate_update_nodes(cr, uid, all_ids, context=context)
     
     def execute_update_nodes(self, cr, uid, ids, context=None):
         """ trigger execution of updates """
@@ -158,7 +181,7 @@ class lx_update_file(osv.osv):
     def execute_all_update_nodes(self, cr, uid, ids=[], context=None):
         """ Gets ids for all files whose state is awaiting_update_nodes and calls execute_update_nodes on them """
         all_ids = self.search(cr, uid, [('state', '=', 'awaiting_update_nodes')], context=context)
-        return self.execute_update_nodes(cr, uid, all_ids)
+        return self.execute_update_nodes(cr, uid, all_ids, context=context)
     
     def check_still_waiting(self, cr, uid, ids, context=None):
         """ If all update_node_ids are in state executed, mark update.file state as done """
@@ -169,3 +192,6 @@ class lx_update_file(osv.osv):
                 
             if all([node.state == 'executed' for node in update_file.update_node_ids]):
                 update_file.write({'state': 'done'})
+
+    def unlink(self, cr, uid, ids, context=None):
+        raise osv.except_osv(_('Cannot Delete'), _('Deletion has been disabled for file records because it is important to maintain a complete audit trail'))

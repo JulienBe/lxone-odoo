@@ -4,14 +4,7 @@ from openerp.tools.translate import _
 import json
 
 from auto_vivification import AutoVivification
-from lx_data import lx_data
-from lx_purchase_order import lx_purchase_order
-from lx_sales_order import lx_sales_order
-from lx_product import lx_product
-from lx_return import lx_return
-from lx_stock import lx_stock
-from lx_picking import lx_picking
-from lx_test import lx_test
+from manager import get_lx_data_subclass
 
 class lx_update_node(osv.osv):
     """
@@ -89,9 +82,8 @@ class lx_update_node(osv.osv):
             # do execution
             try:
                 # find appropriate lx_data class, instantiate it, and trigger process
-                class_for_data_type = [cls for cls in lx_data.__subclasses__() if node.object_type in cls.file_name_prefix]
-                assert len(class_for_data_type) == 1, _('Should have found 1 class for data type %s' % node.object_type)
-                data = class_for_data_type[0](json.loads(node.data))
+                cls = get_lx_data_subclass(node.object_type)
+                data = cls(json.loads(node.data))
                 data.process(self.pool, cr)
             
                 # change state
@@ -108,3 +100,6 @@ class lx_update_node(osv.osv):
         """ Gets ids for all nodes whose state is not executed and calls execute on them """
         all_ids = self.search(cr, uid, [('state', '!=', 'executed')], context=context)
         self.execute(cr, uid, all_ids)
+
+    def unlink(self, cr, uid, ids, context=None):
+        raise osv.except_osv(_('Cannot Delete'), _('Deletion has been disabled for update records because it is important to maintain a complete audit trail'))

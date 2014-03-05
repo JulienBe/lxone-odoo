@@ -147,7 +147,7 @@ class lx_data(object):
         return True
     
     @staticmethod
-    def reorganise_data(self, data):
+    def reorganise_data(data):
         """
         This method is called by the poll function to give each object type the opportunity
         to reorganise the data received from LX1, after it is parsed from the XML file and

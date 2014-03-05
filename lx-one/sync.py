@@ -39,3 +39,6 @@ class lx_sync(osv.osv):
         """ Sanitize input values """
         vals = self._sanitize_values(vals)
         return super(lx_sync, self).write(cr, uid, ids, vals, context=context)
+    
+    def unlink(self, cr, uid, ids, context=None):
+        raise osv.except_osv(_('Cannot Delete'), _('Deletion has been disabled for synchronization records because it is important to maintain a complete audit trail'))
