@@ -31,19 +31,19 @@ class lx_update_node(osv.osv):
         return res
 
     _columns = {
-        'name': fields.function(_get_name, type='char', method=True, string="Name"),
+        'name': fields.function(_get_name, type='char', method=True, string="Name", help="The name of the file and the number of the XML node that contained this data"),
         'create_date' : fields.datetime('Create Date', readonly=True),
-        'update_file_id': fields.many2one('lx.update.file', 'File'),
-        'sequence': fields.char('Execution Sequence', required=True, readonly=True),
+        'update_file_id': fields.many2one('lx.update.file', 'File', help="The file that is responsible for this update"),
+        'sequence': fields.char('Execution Sequence', required=True, readonly=True, help="This field determines the order that updates will be processed"),
         'state': fields.selection( (
                 ('to_execute', 'To Execute'), 
                 ('executed', 'Executed'), 
                 ('failed', 'Failed')
-            ), 'State'),
-        'object_type': fields.char('Object Type', size=12, required=True, readonly=True),
-        'data': fields.text('Data', required=True,),
-        'result': fields.text('Execution Result', readonly=True),
-        'node_number': fields.integer('XML Node Number', required=True, readonly=True),
+            ), 'State', help="The state field indicates the progression along the process workflow of the update"),
+        'object_type': fields.char('Object Type', size=12, required=True, readonly=True, help="The type of data contained in this update"),
+        'data': fields.text('Data', required=True, help="The data in JSON format that was downloaded from LX1"),
+        'result': fields.text('Execution Result', readonly=True, help="Any errors during the update execution process will be saved here"),
+        'node_number': fields.integer('XML Node Number', required=True, readonly=True, help="The XML node number in the file that created this update"),
     }
 
     _defaults = { 

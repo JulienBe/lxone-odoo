@@ -9,6 +9,7 @@
             <field name="arch" type="xml">
                 <tree string="Synchronizations">
                 	<field name="date" />
+                	<field name="file_count" />
                 	<field name="log" />
                 </tree>
             </field>
@@ -23,6 +24,7 @@
                     <sheet>
                         <group>
                         	<field name="date" />
+                        	<field name="file_count" />
                 			<field name="log" />
                 			<field name="update_file_ids" />
                         </group>

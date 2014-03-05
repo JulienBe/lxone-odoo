@@ -22,20 +22,20 @@ class lx_update_file(osv.osv):
 
     _columns = {
         'create_date' : fields.datetime('Create Date', readonly=True),
-        'sync_id': fields.many2one('lx.sync', 'Synchronization'),
-        'update_node_ids': fields.one2many('lx.update.node', 'update_file_id', 'Updates'),
-        'sequence': fields.char('File Processing Sequence', required=True, readonly=True),
+        'sync_id': fields.many2one('lx.sync', 'Synchronization', help="The synchronization that was responsible for creating this file"),
+        'update_node_ids': fields.one2many('lx.update.node', 'update_file_id', 'Updates', help="Updates that this file created"),
+        'sequence': fields.char('File Processing Sequence', required=True, readonly=True, help="This field determines the order that files will be processed"),
         'state': fields.selection( (
                 ('to_parse', 'To Parse'), 
                 ('to_generate_update_nodes', 'To Generate Updates'), 
                 ('awaiting_update_nodes', 'Waiting For Update Execution'),
                 ('done', 'Fully Processed'),
-            ), 'State'),
-        'failed': fields.boolean('Failed'),
-        'xml': fields.text('XML Data', required=True,),
-        'parsed_xml': fields.text('Parsed XML Data'),
-        'result': fields.text('Failure Message', readonly=True),
-        'file_name': fields.char('File Name', size=64, required=True, readonly=True),
+            ), 'State', help="The state represents this record's stage in the workflow process"),
+        'failed': fields.boolean('Failed', help="Indicates there was a problem while processing the file"),
+        'xml': fields.text('XML Data', required=True, help="The XML that was inside the file from LX1"),
+        'parsed_xml': fields.text('Parsed XML Data', help="The result of parsing the XML data from the file"),
+        'result': fields.text('Failure Message', readonly=True, help="Any errors encountered during processing the file will be listed here"),
+        'file_name': fields.char('File Name', size=64, required=True, readonly=True, help="The name of the file that contained the XML"),
     }
 
     _defaults = { 
