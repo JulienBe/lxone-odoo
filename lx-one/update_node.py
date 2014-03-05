@@ -3,6 +3,15 @@ from openerp.tools.translate import _
 
 import json
 
+from lx_data import lx_data
+from lx_purchase_order import lx_purchase_order
+from lx_sales_order import lx_sales_order
+from lx_product import lx_product
+from lx_return import lx_return
+from lx_stock import lx_stock
+from lx_picking import lx_picking
+from lx_test import lx_test
+
 class lx_update_node(osv.osv):
     """
     These records represent data coming from LX1. Each one should be able to be executed
@@ -44,7 +53,10 @@ class lx_update_node(osv.osv):
     def _sanitize_values(self, vals):
         """ Pretty print data field contents """
         if vals.get('data'):
-            vals['data'] = json.dumps(vals['data'], indent=4)
+            vals['data'] = json.dumps(vals['data'], indent=4, ensure_ascii=False)
+            
+        if 'state' in vals and 'result' not in vals:
+            vals['result'] = ''
             
         return vals
     
@@ -60,7 +72,9 @@ class lx_update_node(osv.osv):
 
     def execute(self, cr, uid, ids, context=None):
         """
-        Sorts IDs by their sequence, process them, then set state to executed
+        Sorts IDs by their sequence, then find an appropriate lx_data child class based on 
+        the node.object_type and lx_data.file_name_prefix, instantiate it and call process.
+        Then set state to executed, or catch errors and set as failed.
         """
         nodes = self.read(cr, uid, ids, ['sequence'], context=context)
         nodes.sort(key=lambda node: int(node['sequence']))
@@ -72,10 +86,14 @@ class lx_update_node(osv.osv):
             
             # do execution
             try:
-                result = 'Picking closed'
+                # find appropriate lx_data class, instantiate it, and trigger process
+                class_for_data_type = [cls for cls in lx_data.__subclasses__() if node.object_type in cls.file_name_prefix]
+                assert len(class_for_data_type) == 1, _('Should have found 1 class for data type %s' % node.object_type)
+                data = class_for_data_type[0](json.loads(node.data))
+                data.process(self.pool, cr)
             
                 # change state
-                node.write({'state': 'executed', 'result': result})
+                node.write({'state': 'executed'})
                 
                 # trigger update.file state check
                 node.update_file_id.check_still_waiting()

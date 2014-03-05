@@ -36,12 +36,11 @@ class lx_data(object):
         super(lx_data, self).__init__()
         self.data = AutoVivification()
 
-        if data and isinstance(data, (str, unicode)):
-            self.data = xml2dict.ConvertFromXML(data)
-            self.data = AutoVivification.dict_to_auto_vivification(self.data)
-        elif data and isinstance(data, browse_record):
+        if data and isinstance(data, browse_record):
             self.extract(data)
             self.browse_record = data
+        elif data and isinstance(data, (dict, list, tuple)):
+            self.data = AutoVivification.dict_to_auto_vivification(data)
         elif data:
             raise TypeError('XML must be a string, unicode or AutoVivification object')
 
@@ -146,6 +145,18 @@ class lx_data(object):
                                "your IP is in the LX1 FTP whitelist.\n\n",
                                "%s""" % unicode(e)])))
         return True
+    
+    @staticmethod
+    def reorganise_data(self, data):
+        """
+        This method is called by the poll function to give each object type the opportunity
+        to reorganise the data received from LX1, after it is parsed from the XML file and
+        before it is used to generate update nodes.
+        
+        @param AutoVivification data: The parsed XML from LX1
+        @return data 
+        """
+        return data
 
     def extract(self, record):
         """
@@ -158,80 +169,10 @@ class lx_data(object):
         """
         raise NotImplemented('Please implement this method in your inherited model')
 
-    def process_all(self, pool, cr, lx_conn):
-        """
-        Iterates over data nodes in self.data and securely calls self.process on them, while
-        catching and storing any exceptions.
-        
-        If self._auto_remove is true, successfully processed nodes (without exceptions) will be 
-        removed from self.data.  
-        
-        The pre_process_hook and post_process_hook are called before and after data iteration.
-        
-        @param pool: OpenERP object pool
-        @param cr: OpenERP database cursor
-        @param lx_connection lx_conn: Connection to the FTP server
-        @returns A list of strings describing errors faced while processing the file or []
-        """
-        if not self.data:
-            return []
-        
-        # get root element name
-        root_key = self.data.keys()[0]
-
-        # if only have one root element, convert it to a list for iteration
-        if isinstance(self.data[root_key], AutoVivification):
-            self.data[root_key] = [self.data[root_key]]
-
-        # iterate through elements while processing them. Save errors for later
-        self.errors = []
-        successes = []
-
-        # call hook
-        pre_process_errors = self.pre_process_hook(pool, cr)
-        assert isinstance(pre_process_errors, list), 'Pre process hook should return a list!'
-        self.errors =  self.errors + pre_process_errors
-        
-        # iterate over data nodes and call process
-        root_key = self.data.keys()[0]
-        for i in range(0, len(self.data[root_key])):
-            data_leaf = self.data[root_key][i]
-
-            try:
-                self.process(pool, cr, data_leaf)
-                successes.append(i)
-            except self.process_exceptions as e:
-                self.errors.append('%s: %s' % (type(e), unicode(e)))
-            
-            # ping the FTP server to maintain an open connection
-            lx_conn._ping()
-
-        # call hook
-        post_process_errors = self.post_process_hook(pool, cr)
-        assert isinstance(post_process_errors, list), 'Post process hook should return a list!'
-        self.errors =  self.errors + post_process_errors
-
-        # Remove successfully processed nodes from self.data
-        if self.data and self._auto_remove:
-            root_key = self.data.keys()[0]
-            for i in sorted(successes, reverse=True):
-                del self.data[root_key][i]
-
-        # Return self.errors to be handled one level up
-        return self.errors
-
-    def pre_process_hook(self, pool, cr):
-        """ Called by process_all before it calls process on data nodes. Return list of errors """
-        return []
-
-    def post_process_hook(self, pool, cr):
-        """ Called by process_all after it calls process on all data nodes. Return list of errors """
-        return []
-
-    def process(self, pool, cr, data_leaf):
+    def process(self, pool, cr):
         """
         Called by process_all which is triggered by the OpenERP poll function.
-        Override this method to do something with data_leaf in OpenERP. Any exceptions
+        Override this method to do something with self.data in OpenERP. Any exceptions
         should be raised.
 
         @param pool: OpenERP object pool

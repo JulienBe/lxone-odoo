@@ -5,11 +5,12 @@ from ftplib import all_errors
 from StringIO import StringIO
 from datetime import datetime
 from threading import Lock
-import time
 
 from connection import lx_connection
-from lx_data import lx_data
 from auto_vivification import AutoVivification
+from file import lx_file
+
+from lx_data import lx_data
 from lx_purchase_order import lx_purchase_order
 from lx_sales_order import lx_sales_order
 from lx_product import lx_product
@@ -17,7 +18,6 @@ from lx_return import lx_return
 from lx_stock import lx_stock
 from lx_picking import lx_picking
 from lx_test import lx_test
-from file import lx_file
 
 class lx_manager(osv.osv):
     """
@@ -27,7 +27,7 @@ class lx_manager(osv.osv):
     _columns = {}
     _name = 'lx.manager'
     _auto = False
-    _lock = None
+    _lock = Lock()
 
     _file_process_order = [
         'MVTS',# PO received
@@ -50,9 +50,6 @@ class lx_manager(osv.osv):
         record, committing cursor in between files.
         """
         # setup thread locking
-        if not self._lock:
-            self._lock = Lock()
-            
         if not self._lock.acquire(False):
             raise osv.except_osv(_('Already Syncing'), _('We are already synchronizing with LX1. Please wait a while before trying again...'))
 

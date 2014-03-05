@@ -208,10 +208,10 @@ class lx_connection(object):
         @return str the contents of the file
         """
         data = StringIO()
-        self._conn.retrbinary('RETR %s' % file_name, data.write)
+        self._conn.retrlines('RETR %s' % file_name, data.write)
         contents = data.getvalue()
         data.close()
-        return contents
+        return unicode(contents)
 
     @ensure_connection
     def upload_data(self, data, copy_to_archive=True):

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from openerp.osv import osv, fields
 from openerp.tools.translate import _
 
@@ -42,11 +43,8 @@ class lx_update_file(osv.osv):
     
     def _sanitize_values(self, vals):
         """ Convert XML to use XML entities and pretty print parsed_xml """
-        if vals.get('xml'):
-            vals['xml'] = vals['xml'].decode("utf-8-sig").encode("utf-8")
-            
         if vals.get('parsed_xml'):
-            vals['parsed_xml'] = json.dumps(vals['parsed_xml'], indent=4)
+            vals['parsed_xml'] = json.dumps(vals['parsed_xml'], indent=4, ensure_ascii=False)
             
         return vals
     
