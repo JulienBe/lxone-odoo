@@ -3,7 +3,7 @@ from copy import copy
 from openerp.osv import osv,fields
 
 from lx_sales_order import lx_sales_order
-import oe_lx
+from oe_lx import oe_lx
 
 def upload_so_picking(stock_picking_obj, cr, uid, picking_id, context=None):
     """
@@ -27,7 +27,7 @@ def upload_so_picking(stock_picking_obj, cr, uid, picking_id, context=None):
 
     cr.commit()
 
-class stock_picking(oe_lx.oe_lx, osv.osv):
+class stock_picking(oe_lx, osv.osv):
     """
     Inherit the stock.picking object to trigger upload of SO pickings
     """

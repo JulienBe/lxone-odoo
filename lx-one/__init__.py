@@ -1,6 +1,7 @@
 import manager
 import connection
 
+import oe_lx
 import oe_stock_picking
 import oe_purchase_order
 import oe_sales_order

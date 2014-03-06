@@ -4,8 +4,16 @@ from openerp.tools.translate import _
 
 import oe_lx
 
+def filter_inherit(inherit):
+    """ Remove lx.oe from _inherit list """
+    if isinstance(inherit, list):
+        inherit = [n for n in inherit if n != 'lx.oe'][0]
+    return inherit
+
 def friendly_name(technical_name):
     """ try and get a friendly name from a technical name, i.e. stock.picking becomes Stock Picking """
+    if isinstance(technical_name, list):
+        technical_name = [n for n in technical_name if n != 'lx.oe'][0]
     return technical_name.replace('.', ' ').title()
 
 class lx_file_sent(osv.osv):
@@ -29,7 +37,7 @@ class lx_file_sent(osv.osv):
         'result': fields.text('Failure Message', help="Any errors encountered during file upload will be listed here", readonly=True),
         'object_type': fields.char('Object Type', size=12, required=True, help="The type of data contained in this file", readonly=True),
         'file_name': fields.char('File Name', size=64, required=True, help="The name of the file that contained the XML", readonly=True),
-        'record_id': fields.reference('Record To Upload', list({(model._inherit, friendly_name(model._inherit)) for model in oe_lx.oe_lx.__subclasses__()}), 128, required=True),
+        'record_id': fields.reference('Record To Upload', list({(filter_inherit(model._inherit), friendly_name(model._inherit)) for model in oe_lx.oe_lx.__subclasses__()}), 128, required=True),
     }
 
     _defaults = { 

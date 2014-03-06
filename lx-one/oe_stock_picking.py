@@ -5,7 +5,7 @@ from openerp.osv import osv, fields
 
 from lx_sales_order import lx_sales_order
 from lx_purchase_order import lx_purchase_order
-import oe_lx
+from oe_lx import oe_lx
 
 def all_assigned(picking_obj, cr, ids):
     """ Returns true if all pickings have state 'assigned' """
@@ -47,7 +47,7 @@ def pick_cancel_manuel(obj, cr, uid, ids, context=None):
             obj.action_cancel(cr, uid, [picking_id], context=context)
     return True
 
-class stock_picking(oe_lx.oe_lx, osv.osv):
+class stock_picking(oe_lx, osv.osv):
     """
     Inherit the stock.picking to prevent manual processing.
 
@@ -70,7 +70,7 @@ class stock_picking(oe_lx.oe_lx, osv.osv):
         else:
             super(stock_picking, self).action_process(cr, uid, ids, context=context)
             
-class stock_picking_in(oe_lx.oe_lx, osv.osv):
+class stock_picking_in(oe_lx, osv.osv):
     """ Inherit the stock.picking.in to prevent manual processing and cancellation after lx upload """
 
     _inherit = 'stock.picking.in'
@@ -112,7 +112,7 @@ class stock_picking_in(oe_lx.oe_lx, osv.osv):
             data.upload(cr, self.pool.get('lx.manager'))
         return True
 
-class stock_picking_out(oe_lx.oe_lx, osv.osv):
+class stock_picking_out(oe_lx, osv.osv):
     """ Inherit the stock.picking.in to prevent manual processing and cancellation after LX1 upload """
 
     _inherit = 'stock.picking.out'
