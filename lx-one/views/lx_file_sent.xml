@@ -8,12 +8,13 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Updates" colors="red:failed==True;blue:state=='uploaded'">
+                	<field name="failed" invisible="True" />
                 	<field name="create_date" />
                 	<field name="state" />
                     <field name="upload_date"/>
                     <field name="record_id"/> 
                     <field name="file_name"/>
-                    <button type="object" name="upload" string="Upload" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','uploaded')]}" />
+                    <button type="object" name="upload" string="Upload" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','=','uploaded')]}" />
                 </tree>
             </field>
         </record>
@@ -25,7 +26,7 @@
              <field name="arch" type="xml">
                 <form string="Update" version="7.0">
                     <header>
-                        <button type="object" name="upload" string="Upload" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','uploaded')]}" />
+                        <button type="object" name="upload" string="Upload" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','=','uploaded')]}" />
                         
                         <field name="state" widget="statusbar" />
                     </header>

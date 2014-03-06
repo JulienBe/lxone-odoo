@@ -43,6 +43,9 @@ class lx_file_sent(osv.osv):
     _defaults = { 
         'state': 'to_upload',
     }
-
+    
     def unlink(self, cr, uid, ids, context=None):
         raise osv.except_osv(_('Cannot Delete'), _('Deletion has been disabled for file sent records because it is important to maintain a complete audit trail'))
+
+    def upload(self, cr, uid, ids, context=None):
+        raise NotImplementedError('Not implemented yet')

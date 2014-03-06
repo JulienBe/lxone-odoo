@@ -8,5 +8,5 @@ class delivery_carrier(oe_lx, osv.osv):
     _inherit = 'delivery.carrier'
     
     _columns = {
-        'lx_ref': fields.char('LX Ref', help="The corresponding reference number for LX1. This is the value that will be uploaded to LX1 with the picking", required=True)
+        'lx_ref': fields.char('LX Reference', help="The corresponding reference number for LX1. This is the value that will be uploaded to LX1 with the picking", required=True)
     }

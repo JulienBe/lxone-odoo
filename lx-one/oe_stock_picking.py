@@ -58,27 +58,18 @@ class stock_picking(oe_lx, osv.osv):
     """
 
     _inherit = 'stock.picking'
-    _columns = {
-        'lx_sent': fields.boolean('Sent to LX1?'),
-        'lx_send_number': fields.integer('Send Number', help="Number of times this picking has been sent to LX1 - used to re-send cancelled orders"),
-        'lx_file_name': fields.char('Sent to LX1?', size=40, help="The name of the file uploaded to LX1"),
-    }
 
     def action_process(self, cr, uid, ids, context=None):
         if all_assigned(self, cr, ids):
             raise osv.except_osv(_('Cannot Process Manually'), _("The picking should be processed in the LX1 system. It will then be automatically synchronized to OpenERP."))
         else:
             super(stock_picking, self).action_process(cr, uid, ids, context=context)
-            
+
 class stock_picking_in(oe_lx, osv.osv):
     """ Inherit the stock.picking.in to prevent manual processing and cancellation after lx upload """
 
     _inherit = 'stock.picking.in'
-    _columns = {
-        'lx_send_number': fields.integer('Send Number', help="Number of times this picking has been sent to LX1 - used to re-send cancelled orders"),
-        'lx_file_name': fields.char('Sent to LX1?', size=40, help="The name of the file uploaded to LX1"),
-    }
-    
+
     def cancel_manuel(self, cr, uid, ids, context=None):
         """ Manual cancellation by user on form view """
         return pick_cancel_manuel(self, cr, uid, ids, context=context)
@@ -116,9 +107,6 @@ class stock_picking_out(oe_lx, osv.osv):
     """ Inherit the stock.picking.in to prevent manual processing and cancellation after LX1 upload """
 
     _inherit = 'stock.picking.out'
-    _columns = {
-        'lx_file_name': fields.char('Sent to LX1?', size=40, help="The name of the file uploaded to LX1"),
-    }
     
     def cancel_manuel(self, cr, uid, ids, context=None):
         """ Manual cancellation by user on form view """
