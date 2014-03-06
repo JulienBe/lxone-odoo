@@ -37,8 +37,8 @@ class lx_data(object):
         self.data = AutoVivification()
 
         if data and isinstance(data, browse_record):
-            self.extract(data)
             self.browse_record = data
+            self.extract(data)
         elif data and isinstance(data, (dict, list, tuple)):
             self.data = AutoVivification.dict_to_auto_vivification(data)
         elif data:

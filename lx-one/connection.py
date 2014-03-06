@@ -1,4 +1,5 @@
 from openerp.osv import osv
+from openerp.osv.orm import browse_record
 from openerp.tools.translate import _
 
 from StringIO import StringIO
@@ -6,6 +7,7 @@ from ftplib import FTP
 from ftplib import error_reply, error_temp, error_perm, error_proto, all_errors
 import time
 
+from tools import get_config
 from lx_data import lx_data
 
 def ensure_connection(function):
@@ -69,29 +71,15 @@ class lx_connection(object):
         """ Pings the server to determine if we are still connected """
         self._conn.voidcmd("NOOP")
 
-    def _get_config(self, config_name, value_type=str):
-        """
-        Get a configuration value from ir.values by config_name (For this model)
-        @param str config_name: The name of the ir.values record to get
-        @param object value_type: Used to cast the value to an appropriate return type.
-        """
-        values_obj = self._pool.get('ir.config_parameter')
-        value_ids = values_obj.search(self._cr, 1, [('key','=',config_name)])
-        if value_ids:
-            value = values_obj.browse(self._cr, 1, value_ids[0]).value
-            return value_type(value)
-        else:
-            return None
-
     def _get_ftp_config(self):
         """ Save FTP connection parameters from ir.values to self """
-        self._host = self._get_config('lx_host') or 'ftp.alpha-d-s.com'
-        self._port = self._get_config('lx_port', int) or 21
-        self._user = self._get_config('lx_user') or ''
-        self._password = self._get_config('lx_password') or ''
-        self._timeout = self._get_config('lx_timeout', int) or 10
-        self._mode = self._get_config('lx_mode').upper() or 'TEST'
-        self._passive = self._get_config('lx_passive', bool) or True
+        self._host = get_config(self._pool, self._cr, 'lx_host') or 'localhost'
+        self._port = get_config(self._pool, self._cr, 'lx_port', int) or 21
+        self._user = get_config(self._pool, self._cr, 'lx_user') or ''
+        self._password = get_config(self._pool, self._cr, 'lx_password') or ''
+        self._timeout = get_config(self._pool, self._cr, 'lx_timeout', int) or 10
+        self._mode = get_config(self._pool, self._cr, 'lx_mode').upper() or 'TEST'
+        self._passive = get_config(self._pool, self._cr, 'lx_passive', bool) or True
 
         message = _("Please check your LX1 configuration settings in LX1 Sync > Configuration > LX1 Configuration Settings for field '%s'")
 
@@ -252,6 +240,27 @@ class lx_connection(object):
             self.try_cd('..')
             
         return name
+    
+    @ensure_connection
+    def upload_file_sent(self, cr, uid, file_sent):
+        """ Takes a browse record on a lx.file.sent object and uploads it to the server """
+        assert isinstance(file_sent, browse_record), _('data parameter must extend lx_data class')
+        assert file_sent._name == 'lx.file.sent', _("file_sent must have _name 'lx.file.sent'")
+        
+        self.cd(self._vers_lx)
+
+        try:
+            xml_buffer = StringIO(file_sent.xml)
+            files = self.ls()
+            
+            if file_sent.file_name in files:
+                raise osv.except_osv(_('File Already Exists'), _("A file with name '%s' already exists on the FTP server! This should never happen as file names should contain unique sequence numbers...") % file_sent.file_name)
+            
+            self.mkf(file_sent.file_name, xml_buffer)
+        finally:
+            self.try_cd('..')
+            
+        return file_sent.file_name
 
     @ensure_connection            
     def delete_data(self, file_name):

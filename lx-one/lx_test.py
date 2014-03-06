@@ -25,3 +25,16 @@ class lx_test(lx_data):
         pass
     
         return 'Import successful'
+    
+    def extract(self, picking):
+        """ Extract picking browse record into self.data for uploading later """
+        
+        if not picking.purchase_id:
+            raise osv.except_osv(_("Missing purchase"), _("missing purchase record id"))
+
+        picking_node = {
+            'name': picking.name,
+            'purchase_name': picking.purchase_id.name,
+        }
+
+        self.insert_data('PICKING', picking_node)

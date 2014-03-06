@@ -2,39 +2,44 @@
 <openerp>
     <data noupdate="1">
 
-        <record model="ir.config_parameter" id="ir_config_parameter_ad_host">
+        <record model="ir.config_parameter" id="ir_config_parameter_lx_host">
             <field name="key">lx_host</field>
-            <field name="value" eval="''" />
+            <field name="value" eval="'localhost'" />
         </record>
 
-        <record model="ir.config_parameter" id="ir_config_parameter_ad_port">
+        <record model="ir.config_parameter" id="ir_config_parameter_lx_port">
             <field name="key">lx_port</field>
             <field name="value" eval="'21'" />
         </record>
 
-        <record model="ir.config_parameter" id="ir_config_parameter_ad_user">
+        <record model="ir.config_parameter" id="ir_config_parameter_lx_user">
             <field name="key">lx_user</field>
             <field name="value" eval="''"></field>
         </record>
 
-        <record model="ir.config_parameter" id="ir_config_parameter_ad_password">
+        <record model="ir.config_parameter" id="ir_config_parameter_lx_password">
             <field name="key">lx_password</field>
             <field name="value" eval="''"></field>
         </record>
 
-        <record model="ir.config_parameter" id="ir_config_parameter_ad_timeout">
+        <record model="ir.config_parameter" id="ir_config_parameter_lx_timeout">
             <field name="key">lx_timeout</field>
             <field name="value" eval="'10'" />
         </record>
 
-        <record model="ir.config_parameter" id="ir_config_parameter_ad_mode">
+        <record model="ir.config_parameter" id="ir_config_parameter_lx_mode">
             <field name="key">lx_mode</field>
             <field name="value" eval="'test'" />
         </record>
 
-        <record model="ir.config_parameter" id="ir_config_parameter_ad_passive">
+        <record model="ir.config_parameter" id="ir_config_parameter_lx_passive">
             <field name="key">lx_passive</field>
             <field name="value" eval="'True'" />
+        </record>
+
+        <record model="ir.config_parameter" id="ir_config_parameter_lx_company_name">
+            <field name="key">lx_company_name</field>
+            <field name="value" eval="'OpenERP'" />
         </record>
 
     </data>

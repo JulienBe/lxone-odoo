@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
+
 from openerp.osv import osv, fields
 from openerp.tools.translate import _
 
 import oe_lx
+from tools import get_config
 
 def filter_inherit(inherit):
     """ Remove lx.oe from _inherit list """
@@ -42,10 +45,31 @@ class lx_file_sent(osv.osv):
 
     _defaults = { 
         'state': 'to_upload',
-    }
+        'file_name': lambda obj, cr, uid, context: '%s_%s.xml' % (get_config(obj.pool, cr, 'lx_company_name'), obj.pool.get('ir.sequence').get(cr, uid, 'lx.file.sent')),
+    } 
     
+    def write(self, cr, uid, ids, vals, context=None):
+        """ add update_date to vals automatically """
+        if vals.get('state') == 'uploaded' and 'upload_date' not in vals:
+            vals['upload_date'] = datetime.now()
+        return super(lx_file_sent, self).write(cr, uid, ids, vals, context=context)
+        
     def unlink(self, cr, uid, ids, context=None):
         raise osv.except_osv(_('Cannot Delete'), _('Deletion has been disabled for file sent records because it is important to maintain a complete audit trail'))
 
     def upload(self, cr, uid, ids, context=None):
-        raise NotImplementedError('Not implemented yet')
+        """ Uploads file to ftp server then sets state to uploaded """
+        lx_manager = self.pool.get('lx.manager')
+        
+        for file_sent in self.browse(cr, uid, ids):
+            try:
+                with lx_manager.connection(cr) as conn:
+                    self.file_name = conn.upload_file_sent(cr, uid, file_sent)
+                    file_sent.write({'state': 'uploaded'})
+            except lx_manager.ftp_exceptions as e:
+                raise except_osv(_("Upload Problem"), \
+                        _("".join(["There was a problem uploading the data to the LX1 servers.\n\n",
+                                   "Please check your connection settings in ",
+                                   "Setings > Parameters > System Parameters and make sure ",
+                                   "your IP is in the LX1 FTP whitelist.\n\n",
+                                   "%s""" % unicode(e)])))

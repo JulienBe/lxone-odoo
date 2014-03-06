@@ -33,7 +33,7 @@ class stock_picking(oe_lx, osv.osv):
         for picking_id in ids:
             picking = self.browse(cr, 1, picking_id, context=context)
 
-            if picking.type.lower() == 'in' and not self.is_return(picking) and not picking.lx_sent:
+            if picking.type.lower() == 'in' and not self.is_return(picking):
                 
                 # detect if this picking is a partial
                 pickings_for_po = self.search(cr, 1 ,[

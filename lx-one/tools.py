@@ -23,3 +23,18 @@ def parse_date(d):
 		return datetime.strptime(d, '%Y-%m-%d %H:%M:%S')
 	else:
 		return datetime.strptime(d, '%Y%m%d')
+
+def get_config(pool, cr, config_name, value_type=str):
+    """
+    Get a configuration value from ir.values by config_name (For this model)
+    @param pool: oe object pool
+    @param str config_name: The name of the ir.values record to get
+    @param object value_type: Used to cast the value to an appropriate return type.
+    """
+    values_obj = pool.get('ir.config_parameter')
+    value_ids = values_obj.search(cr, 1, [('key','=',config_name)])
+    if value_ids:
+        value = values_obj.browse(cr, 1, value_ids[0]).value
+        return value_type(value)
+    else:
+        return None

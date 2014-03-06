@@ -1,5 +1,9 @@
 from copy import deepcopy
 from openerp.osv import osv, fields
+from openerp.tools.translate import _
+
+from tools import get_config
+from lx_data import lx_data
 
 class oe_lx(object):
     """
@@ -26,3 +30,23 @@ class oe_lx(object):
         """ OE will only merge _columns dicts for classes inheriting from osv.osv, so do it here manually """
         self._columns = dict(self._lx_columns.items() + self._columns.items())
         return super(oe_lx, self).__init__(pool, cr)
+
+    def upload(self, cr, uid, browse_record, lx_data_subclass):
+        """ A convenience method for child classes to create a file.sent object and trigger upload on it """
+        assert issubclass(lx_data_subclass, lx_data), _("lx_data_subclass parameter should be a subclass of lx_data")
+        file_sent_obj = self.pool.get('lx.file.sent')
+        
+        data = lx_data_subclass(browse_record)
+        xml_io = data.generate_xml()
+        xml = xml_io.getvalue()
+        xml_io.close()
+        
+        vals = {
+           'xml': xml, 
+           'object_type': lx_data_subclass.file_name_prefix[0], 
+           'record_id': '%s,%s' % (browse_record._name, browse_record.id),
+        }
+        
+        file_id = file_sent_obj.create(cr, uid, vals)
+        file_name = file_sent_obj.upload(cr, uid, [file_id])
+        return file_name
