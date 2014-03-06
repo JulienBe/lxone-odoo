@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="lx_view_file_sent_tree" model="ir.ui.view">
+            <field name="name">lx.file.sent.tree</field>
+            <field name="model">lx.file.sent</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Updates" colors="red:failed==True;blue:state=='uploaded'">
+                	<field name="create_date" />
+                	<field name="state" />
+                    <field name="upload_date"/>
+                    <field name="record_id"/> 
+                    <field name="file_name"/>
+                    <button type="object" name="upload" string="Upload" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','uploaded')]}" />
+                </tree>
+            </field>
+        </record>
+
+    	<record id="lx_view_file_sent_form" model="ir.ui.view">
+            <field name="name">lx.file.sent.form</field>
+            <field name="model">lx.file.sent</field>
+            <field name="type">form</field>
+             <field name="arch" type="xml">
+                <form string="Update" version="7.0">
+                    <header>
+                        <button type="object" name="upload" string="Upload" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','uploaded')]}" />
+                        
+                        <field name="state" widget="statusbar" />
+                    </header>
+                    <sheet>
+                        <group>
+                        	<field name="failed" invisible="1" />
+                        	<field name="create_date" />
+                        	<field name="upload_date" attrs="{'invisible': [('state', '!=', 'uploaded')]}" />
+                            <field name="record_id" />
+                            <field name="object_type" />
+                            <field name="xml" />
+                            <field name="result" attrs="{'invisible': [('failed', '=', False)]}" style="color: red" />
+                            <field name="file_name" attrs="{'invisible': [('state', '!=', 'uploaded')]}" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

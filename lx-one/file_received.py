@@ -9,27 +9,27 @@ import json
 from auto_vivification import AutoVivification
 from manager import get_lx_data_subclass
 
-class lx_update_file(osv.osv):
+class lx_file_received(osv.osv):
     """
     This object represents an XML file downloaded from LX1. The original XML contents is saved
     in the xml field. The xml is then parsed and the resulting data is saved in the parsed_xml field.
     
-    Next step is to create lx.update.node objects from the data. The state represents this objects
-    progression through the parse / node generation process. 
+    Next step is to create lx.update objects from the data. The state represents this objects
+    progression through the parse / update generation process. 
     """
 
-    _name = 'lx.update.file'
+    _name = 'lx.file.received'
     _rec_name = 'file_name'
 
     _columns = {
         'create_date' : fields.datetime('Create Date', readonly=True),
         'sync_id': fields.many2one('lx.sync', 'Synchronization', help="The synchronization that was responsible for creating this file"),
-        'update_node_ids': fields.one2many('lx.update.node', 'update_file_id', 'Updates', help="Updates that this file created"),
+        'update_ids': fields.one2many('lx.update', 'file_received_id', 'Updates', help="Updates that this file created"),
         'sequence': fields.char('File Processing Sequence', required=True, readonly=True, help="This field determines the order that files will be processed"),
         'state': fields.selection( (
                 ('to_parse', 'To Parse'), 
-                ('to_generate_update_nodes', 'To Generate Updates'), 
-                ('awaiting_update_nodes', 'Waiting For Update Execution'),
+                ('to_generate_updates', 'To Generate Updates'), 
+                ('awaiting_updates', 'Waiting For Update Execution'),
                 ('done', 'Fully Processed'),
             ), 'State', help="The state represents this record's stage in the workflow process"),
         'failed': fields.boolean('Failed', help="Indicates there was a problem while processing the file"),
@@ -42,7 +42,7 @@ class lx_update_file(osv.osv):
 
     _defaults = { 
         'state': 'to_parse',
-        'sequence': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'lx.update.file')
+        'sequence': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'lx.file.received')
     }
     
     def _sanitize_values(self, vals):
@@ -59,7 +59,7 @@ class lx_update_file(osv.osv):
     def create(self, cr, uid, vals, context=None):
         """ Sanitize values """
         vals = self._sanitize_values(vals)
-        return super(lx_update_file, self).create(cr, uid, vals, context=context)
+        return super(lx_file_received, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         """ When changing state, automatically set failed to False, and sanitize values """
@@ -68,34 +68,34 @@ class lx_update_file(osv.osv):
         
         vals = self._sanitize_values(vals)
         
-        return super(lx_update_file, self).write(cr, uid, ids, vals, context=context)
+        return super(lx_file_received, self).write(cr, uid, ids, vals, context=context)
 
     def parse(self, cr, uid, ids, context=None):
         """
-        Sorts IDs by their sequence, parse them, then set state to to_generate_update_nodes
+        Sorts IDs by their sequence, parse them, then set state to to_generate_updates
         """
-        update_files = self.read(cr, uid, ids, ['sequence'], context=context)
-        update_files.sort(key=lambda update_file: int(update_file['sequence']))
+        files_received = self.read(cr, uid, ids, ['sequence'], context=context)
+        files_received.sort(key=lambda file_received: int(file_received['sequence']))
         parse_result = dict.fromkeys(ids)
         
-        for update_file in update_files:
-            update_file = self.browse(cr, uid, update_file['id'], context=context)
+        for file_received in files_received:
+            file_received = self.browse(cr, uid, file_received['id'], context=context)
             
-            if update_file.state != 'to_parse':
+            if file_received.state != 'to_parse':
                 continue
             
             # do parse
             try:
-                parsed_xml = xml2dict.ConvertFromXML(update_file.xml)
+                parsed_xml = xml2dict.ConvertFromXML(file_received.xml)
                 
                 # change state
-                update_file.write({'state': 'to_generate_update_nodes', 'parsed_xml': parsed_xml})
-                parse_result[update_file['id']] = True
+                file_received.write({'state': 'to_generate_updates', 'parsed_xml': parsed_xml})
+                parse_result[file_received['id']] = True
                 
             except Exception, e:
                 result = 'Error while parsing: %s' % unicode(e)
-                update_file.write({'failed': True, 'result': result})
-                parse_result[update_file['id']] = False
+                file_received.write({'failed': True, 'result': result})
+                parse_result[file_received['id']] = False
                 
         return parse_result
 
@@ -113,85 +113,85 @@ class lx_update_file(osv.osv):
         """ Interpolates the data type of the file, then calls reorganise_data on the appropriate lx_data subclass """
         object_type = self._interpolate_object_type(cr, uid, ids)
         
-        for update_file in self.browse(cr, uid, ids, context=context):
-            cls = get_lx_data_subclass(object_type[update_file.id])
-            reorganised_parsed_xml = cls.reorganise_data(update_file.parsed_xml)
-            update_file.write({'parsed_xml': reorganised_parsed_xml, 'object_type': object_type[update_file.id]})
+        for file_received in self.browse(cr, uid, ids, context=context):
+            cls = get_lx_data_subclass(object_type[file_received.id])
+            reorganised_parsed_xml = cls.reorganise_data(file_received.parsed_xml)
+            file_received.write({'parsed_xml': reorganised_parsed_xml, 'object_type': object_type[file_received.id]})
     
-    def generate_update_nodes(self, cr, uid, ids, context=None):
+    def generate_updates(self, cr, uid, ids, context=None):
         """
-        Generates an lx.update.node for each lx.update.file 
+        Generates an lx.update for each lx.file.received 
         """
-        update_files = self.read(cr, uid, ids, ['sequence'], context=context)
-        update_files.sort(key=lambda update_file: int(update_file['sequence']))
+        files_received = self.read(cr, uid, ids, ['sequence'], context=context)
+        files_received.sort(key=lambda file_received: int(file_received['sequence']))
         generate_result = dict.fromkeys(ids)
         
-        for update_file in update_files:
-            update_file = self.browse(cr, uid, update_file['id'], context=context)
+        for file_received in files_received:
+            file_received = self.browse(cr, uid, file_received['id'], context=context)
             
-            if update_file.state != 'to_generate_update_nodes':
+            if file_received.state != 'to_generate_updates':
                 continue
             
             # generate updates
             try:
                 activity = 'evalling the data'
-                data = eval(update_file.parsed_xml)
+                data = eval(file_received.parsed_xml)
                 
                 if not isinstance(data, list):
                     data = [data]
                 
                 # reorganise the data for processing
                 activity = 'reorganising the data'
-                self.reorganise_data(cr, uid, [update_file.id], context)
+                self.reorganise_data(cr, uid, [file_received.id], context)
                 
                 activity = 'creating the updates'
-                for node_index in xrange(0, len(data)):
-                    node = data[node_index]
+                for update_index in xrange(0, len(data)):
+                    update = data[update_index]
                     
-                    node_obj = self.pool.get('lx.update.node')
+                    update_obj = self.pool.get('lx.update')
                     vals = {
-                        'update_file_id': update_file.id,
+                        'file_received_id': file_received.id,
                         'object_type': 'TEST',
-                        'data': node,
-                        'node_number': node_index + 1,
+                        'data': update,
+                        'node_number': update_index + 1,
                     }
-                    node_obj.create(cr, uid, vals, context=context)
+                    update_obj.create(cr, uid, vals, context=context)
                     
-                update_file.write({'state': 'awaiting_update_nodes'})
+                file_received.write({'state': 'awaiting_updates'})
                 
             except Exception, e:
                 result = 'Error while %s: %s' % (activity, unicode(e))
-                update_file.write({'failed': True, 'result': result})
+                file_received.write({'failed': True, 'result': result})
     
-    def generate_all_update_nodes(self, cr, uid, ids=[], context=None):
-        """ Gets ids for all files whose state is to_generate_update_nodes and calls generate_update_nodes on them """
-        all_ids = self.search(cr, uid, [('state', '=', 'to_generate_update_nodes')], context=context)
-        return self.generate_update_nodes(cr, uid, all_ids, context=context)
+    def generate_all_updates(self, cr, uid, ids=[], context=None):
+        """ Gets ids for all files whose state is to_generate_updates and calls generate_updates on them """
+        all_ids = self.search(cr, uid, [('state', '=', 'to_generate_updates')], context=context)
+        return self.generate_updates(cr, uid, all_ids, context=context)
     
-    def execute_update_nodes(self, cr, uid, ids, context=None):
+    def execute_updates(self, cr, uid, ids, context=None):
         """ trigger execution of updates """
-        for update_file in self.browse(cr, uid, ids, context=context):
+        for file_received in self.browse(cr, uid, ids, context=context):
             
-            if update_file.state != 'awaiting_update_nodes':
+            if file_received.state != 'awaiting_updates':
                 continue
             
-            for update_node in update_file.update_node_ids:
-                update_node.execute()
+            for update in file_received.update_ids:
+                update.execute()
     
-    def execute_all_update_nodes(self, cr, uid, ids=[], context=None):
-        """ Gets ids for all files whose state is awaiting_update_nodes and calls execute_update_nodes on them """
-        all_ids = self.search(cr, uid, [('state', '=', 'awaiting_update_nodes')], context=context)
-        return self.execute_update_nodes(cr, uid, all_ids, context=context)
+    def execute_all_updates(self, cr, uid, ids=[], context=None):
+        """ Gets ids for all files whose state is awaiting_updates and calls execute_updates on them """
+        all_ids = self.search(cr, uid, [('state', '=', 'awaiting_updates')], context=context)
+        return self.execute_updates(cr, uid, all_ids, context=context)
     
     def check_still_waiting(self, cr, uid, ids, context=None):
-        """ If all update_node_ids are in state executed, mark update.file state as done """
-        for update_file in self.browse(cr, uid, ids, context=context):
+        """ If all update_ids are in state executed, mark update.file state as done """
+        for file_received in self.browse(cr, uid, ids, context=context):
             
-            if update_file.state != 'awaiting_update_nodes':
+            if file_received.state != 'awaiting_updates':
                 continue
                 
-            if all([node.state == 'executed' for node in update_file.update_node_ids]):
-                update_file.write({'state': 'done'})
+            if all([update.state == 'executed' for update in file_received.update_ids]):
+                file_received.write({'state': 'done'})
 
     def unlink(self, cr, uid, ids, context=None):
         raise osv.except_osv(_('Cannot Delete'), _('Deletion has been disabled for file records because it is important to maintain a complete audit trail'))

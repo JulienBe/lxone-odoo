@@ -12,13 +12,13 @@ class lx_sync(osv.osv):
     
     def _get_file_count(self, cr, uid, ids, field_name, arg, context):
         res = dict.fromkeys(ids)
-        for node in self.browse(cr, uid, ids, context=context):
-            res[node.id] = len(node.update_file_ids)
+        for update in self.browse(cr, uid, ids, context=context):
+            res[update.id] = len(update.file_received_ids)
         return res
     
     _columns = {        
         'date': fields.datetime('Sync Date', readonly=True, help="The date and time that the synchronization took place"),
-        'update_file_ids': fields.one2many('lx.update.file', 'sync_id', 'Files', readonly=True, help="The updates that were created by the files"),
+        'file_received_ids': fields.one2many('lx.file.received', 'sync_id', 'Files', readonly=True, help="The updates that were created by the files"),
         'log': fields.text('Sync Log', readonly=True, help="Any error messages that occurred during the sync process"),
         'file_count': fields.function(_get_file_count, type='char', method=True, string="Files Found", help="The number of files that were imported"),
     }

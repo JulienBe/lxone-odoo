@@ -1,6 +1,7 @@
-from openerp.osv import osv
+from openerp.osv import osv,fields
+import oe_lx
 
-class res_partner(osv.osv):
+class res_partner(oe_lx.oe_lx, osv.osv):
     """ 
     fields_view_get_address is used to hide the state field depending on chosen country
     but it breaks other functionality like adding required="1" to city and zip fields.
@@ -12,3 +13,6 @@ class res_partner(osv.osv):
     
     def fields_view_get_address(self, cr, uid, arch, context={}):
         return arch
+    
+    def __init__(self, pool, cr):
+        return super(res_partner, self).__init__(pool, cr)

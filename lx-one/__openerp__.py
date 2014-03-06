@@ -92,8 +92,9 @@ http://www.picklingtools.com/
         'data/config.xml',
         'data/cron.xml',
         
-        'views/lx_update_file.xml',
-        'views/lx_update_node.xml',
+        'views/lx_file_received.xml',
+        'views/lx_file_sent.xml',
+        'views/lx_update.xml',
         'views/lx_sync.xml',
         
         'views/stock_picking_in_form.xml',

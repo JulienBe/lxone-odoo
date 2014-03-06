@@ -3,25 +3,25 @@
     <data noupdate="1">
 
 	    <!-- date file -->
-		<record id="lx-one.sequence_update_file_type" model="ir.sequence.type"> 
+		<record id="lx-one.sequence_file_received_type" model="ir.sequence.type"> 
 			<field name="name">LX1 Update File</field> 
-			<field name="code">lx.update.file</field> 
+			<field name="code">lx.file.received</field> 
 		</record> 
 			
-		<record id="lx-one.sequence_update_file" model="ir.sequence"> 
+		<record id="lx-one.sequence_file_received" model="ir.sequence"> 
 			<field name="name">LX1 Update File</field> 
-			<field name="code">lx.update.file</field> 
+			<field name="code">lx.file.received</field> 
 		</record>
 
-		<!-- update nodes -->
-		<record id="lx-one.sequence_update_node_type" model="ir.sequence.type"> 
-			<field name="name">LX1 Update Node</field> 
-			<field name="code">lx.update.node</field> 
+		<!-- updates -->
+		<record id="lx-one.sequence_update_type" model="ir.sequence.type"> 
+			<field name="name">LX1 Update</field> 
+			<field name="code">lx.update</field> 
 		</record> 
 			
-		<record id="lx-one.sequence_update_node" model="ir.sequence"> 
-			<field name="name">LX1 Update Node</field> 
-			<field name="code">lx.update.node</field> 
+		<record id="lx-one.sequence_update" model="ir.sequence"> 
+			<field name="name">LX1 Update</field> 
+			<field name="code">lx.update</field> 
 		</record>
 		
     </data>

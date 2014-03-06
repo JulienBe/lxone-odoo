@@ -2,9 +2,9 @@
 <openerp>
     <data>
 
-        <record id="lx_view_update_file_tree" model="ir.ui.view">
-            <field name="name">lx.update.file.tree</field>
-            <field name="model">lx.update.file</field>
+        <record id="lx_view_file_received_tree" model="ir.ui.view">
+            <field name="name">lx.file.received.tree</field>
+            <field name="model">lx.file.received</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Updates" colors="red:failed==True;blue:state=='done'">
@@ -15,22 +15,22 @@
                     <field name="result" />
                     <field name="failed" />
                     <button type="object" name="parse" string="Parse" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','to_parse')]}" />
-                    <button type="object" name="generate_update_nodes" string="Generate Updates" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','to_generate_update_nodes')]}" />
-                    <button type="object" name="execute_update_nodes" string="Execute Updates" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','awaiting_update_nodes')]}" />
+                    <button type="object" name="generate_updates" string="Generate Updates" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','to_generate_updates')]}" />
+                    <button type="object" name="execute_updates" string="Execute Updates" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','awaiting_updates')]}" />
                 </tree>
             </field>
         </record>
 
-    	<record id="lx_view_update_file_form" model="ir.ui.view">
-            <field name="name">lx.update.file.form</field>
-            <field name="model">lx.update.file</field>
+    	<record id="lx_view_file_received_form" model="ir.ui.view">
+            <field name="name">lx.file.received.form</field>
+            <field name="model">lx.file.received</field>
             <field name="type">form</field>
              <field name="arch" type="xml">
                 <form string="Update" version="7.0">
                     <header>
                         <button type="object" name="parse" string="Parse" class="oe_highlight" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','to_parse')]}" />
-                        <button type="object" name="generate_update_nodes" string="Generate Updates" class="oe_highlight" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','to_generate_update_nodes')]}" />
-                        <button type="object" name="execute_update_nodes" string="Execute Updates" class="oe_highlight" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','awaiting_update_nodes')]}" />
+                        <button type="object" name="generate_updates" string="Generate Updates" class="oe_highlight" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','to_generate_updates')]}" />
+                        <button type="object" name="execute_updates" string="Execute Updates" class="oe_highlight" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','!=','awaiting_updates')]}" />
                         
                         <field name="state" widget="statusbar" />
                     </header>
@@ -45,11 +45,11 @@
                             		<field name="xml" attrs="{'readonly': [('state', '!=', 'to_parse')]}" />
                         		</page>
                         		<page string="Parsed XML">
-                            		<field name="parsed_xml" attrs="{'readonly': [('state', 'in', ['to_parse', 'awaiting_update_nodes', 'done'])]}" />
+                            		<field name="parsed_xml" attrs="{'readonly': [('state', 'in', ['to_parse', 'awaiting_updates', 'done'])]}" />
                             	</page>
                             </notebook>
                             <field name="result" attrs="{'invisible': [('failed', '=', False)]}" style="color: red" />
-                            <field name="update_node_ids" />
+                            <field name="update_ids" />
                         </group>
                     </sheet>
                 </form>

@@ -3,8 +3,9 @@ _logger = logging.getLogger(__name__)
 
 from openerp.osv import osv,fields
 from lx_product import lx_product
+import oe_lx 
 
-class product_product(osv.osv):
+class product_product(oe_lx.oe_lx, osv.osv):
     """
     Add some fields to product to track synchronisation and trigger upload on write
     """

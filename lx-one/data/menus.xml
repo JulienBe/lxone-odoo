@@ -24,22 +24,22 @@
 			action="lx-one.action_sync_now" 
 			sequence="10" />
 			
-		<!-- files -->
-		<menuitem name="Files" 
+		<!-- files received -->
+		<menuitem name="Files Received" 
 			id="lx-one.menu_files" 
 			parent="lx-one.menu_main"
 			sequence="10" />
 
 		<menuitem name="All Files" 
-			id="lx-one.menu_all_update_files" 
+			id="lx-one.menu_all_files_received" 
 			parent="lx-one.menu_files" 
-			action="lx-one.action_all_update_files" 
+			action="lx-one.action_all_files_received" 
 			sequence="5" />
 
 		<menuitem name="Files To Process" 
-			id="lx-one.menu_update_files_to_process" 
+			id="lx-one.menu_files_received_to_process" 
 			parent="lx-one.menu_files" 
-			action="lx-one.action_update_files_to_process" 
+			action="lx-one.action_files_received_to_process" 
 			sequence="10" />
 
 		<!-- updates -->
@@ -49,27 +49,46 @@
 			sequence="15" />
 
 		<menuitem name="All Updates"
-			id="lx-one.menu_all_update_nodes" 
+			id="lx-one.menu_all_updates" 
 			parent="lx-one.menu_updates" 
-			action="lx-one.action_all_update_nodes" 
+			action="lx-one.action_all_updates" 
 			sequence="6" />
 
 		<menuitem name="Updates To Execute" 
-			id="lx-one.menu_update_nodes_to_parse" 
+			id="lx-one.menu_updates_to_parse" 
 			parent="lx-one.menu_updates" 
-			action="lx-one.action_update_nodes_to_execute" 
+			action="lx-one.action_updates_to_execute" 
 			sequence="11" />
+			
+		<!-- files sent -->
+		<menuitem name="Files Sent" 
+			id="lx-one.menu_files_sent" 
+			parent="lx-one.menu_main"
+			sequence="20" />
+
+		<menuitem name="All Files" 
+			id="lx-one.menu_all_files_sent" 
+			parent="lx-one.menu_files_sent" 
+			action="lx-one.action_all_files_sent" 
+			sequence="5" />
+
+		<menuitem name="Files To Upload" 
+			id="lx-one.menu_files_sent_to_upload" 
+			parent="lx-one.menu_files_sent" 
+			action="lx-one.action_files_sent_to_upload" 
+			sequence="10" />
+		
 
 		<!-- config -->
 		<menuitem name="Configuration" 
 			id="lx-one.config" 
 			parent="lx-one.menu_main" 
-			sequence="20" />
+			sequence="25" />
 
 		<menuitem name="LX1 Configuration Settings" 
 			id="lx-one.config_config" 
 			parent="lx-one.config"
 			action="lx-one.action_config" 
-			sequence="16" />
+			sequence="10" />
 	</data>
 </openerp>

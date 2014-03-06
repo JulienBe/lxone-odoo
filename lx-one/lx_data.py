@@ -151,7 +151,7 @@ class lx_data(object):
         """
         This method is called by the poll function to give each object type the opportunity
         to reorganise the data received from LX1, after it is parsed from the XML file and
-        before it is used to generate update nodes.
+        before it is used to generate updates.
         
         @param AutoVivification data: The parsed XML from LX1
         @return data 

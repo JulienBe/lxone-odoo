@@ -2,9 +2,9 @@
 <openerp>
     <data>
 
-        <record id="lx_view_update_node_tree" model="ir.ui.view">
-            <field name="name">lx.update.node.tree</field>
-            <field name="model">lx.update.node</field>
+        <record id="lx_view_update_tree" model="ir.ui.view">
+            <field name="name">lx.update.tree</field>
+            <field name="model">lx.update</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Updates" colors="red:state=='failed';blue:state=='executed'">
@@ -19,9 +19,9 @@
             </field>
         </record>
 
-    	<record id="lx_view_update_node_form" model="ir.ui.view">
-            <field name="name">lx.update.node.form</field>
-            <field name="model">lx.update.node</field>
+    	<record id="lx_view_update_form" model="ir.ui.view">
+            <field name="name">lx.update.form</field>
+            <field name="model">lx.update</field>
             <field name="type">form</field>
              <field name="arch" type="xml">
                 <form string="Update" version="7.0">
@@ -31,7 +31,7 @@
                     </header>
                     <sheet>
                         <group>
-                        	<field name="update_file_id" />
+                        	<field name="file_received_id" />
                             <field name="create_date" />
                             <field name="sequence" />
                             <field name="object_type" />

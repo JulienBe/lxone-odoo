@@ -1,6 +1,7 @@
 from copy import copy
-from openerp.osv import osv, fields
+from openerp.osv import osv,fields
 from lx_purchase_order import lx_purchase_order
+import oe_lx
 
 def upload_po_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=None):
     """
@@ -11,7 +12,7 @@ def upload_po_picking(stock_picking_obj, cr, uid, picking_id, vals={}, context=N
     data = lx_purchase_order(picking)
     data.upload(cr, stock_picking_obj.pool.get('lx.manager'))
 
-class stock_picking(osv.osv):
+class stock_picking(oe_lx.oe_lx, osv.osv):
     """
     Inherit the stock.picking object to trigger upload of PO pickings
     """
