@@ -22,7 +22,7 @@ class oe_lx(object):
         return res
     
     _lx_columns = {
-       'lx_file_sent_id': fields.function(_get_files_sent, type="one2many", obj="lx.file.sent", method=True, string="Files Sent", 
+       'lx_file_sent_ids': fields.function(_get_files_sent, type="one2many", obj="lx.file.sent", method=True, string="Files Sent", 
                                           help="The files sent to LX1 for this record")
     }
 

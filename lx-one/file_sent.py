@@ -27,6 +27,7 @@ class lx_file_sent(osv.osv):
 
     _name = 'lx.file.sent'
     _rec_name = 'file_name'
+    _order = 'create_date DESC'
 
     _columns = {
         'create_date': fields.datetime('Create Date', readonly=True),

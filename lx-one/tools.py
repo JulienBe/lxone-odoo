@@ -1,4 +1,5 @@
 from datetime import datetime
+from dateutil.parser import parse
 
 lx_date_format = '%Y%m%d'
 openerp_date_format = '%Y-%m-%d %H:%M:%S'
@@ -14,15 +15,7 @@ def convert_date(d):
 
 def parse_date(d):
 	""" Gets a datetime object from various string date formats """
-	if not d:
-		return None
-	d = str(d)
-	if len(d) > 19:
-		return datetime.strptime(d, '%Y-%m-%d %H:%M:%S.%f')
-	elif len(d) > 8:
-		return datetime.strptime(d, '%Y-%m-%d %H:%M:%S')
-	else:
-		return datetime.strptime(d, '%Y%m%d')
+	return parse(d, dayfirst=True)
 
 def get_config(pool, cr, config_name, value_type=str):
     """

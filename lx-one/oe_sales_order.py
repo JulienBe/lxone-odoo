@@ -41,43 +41,9 @@ class stock_picking(oe_lx, osv.osv):
 
         for picking_id in ids:
             picking = self.browse(cr, uid, picking_id, context=context)
-            picking_to_upload = False
 
-            if picking.type.lower() == 'out' and not picking.lx_sent:
-
-                # find other delivery orders for this SO in assigned state
-                partial_ids = self.search(cr, 1, [('sale_id','=',picking.sale_id.id),
-                                                ('type','=','out'),
-                                                ('state','in',['assigned','confirmed'])])
-
-                if picking_id in partial_ids:
-                    partial_ids.remove(picking_id)
-
-                # Picking is a return, so simply upload it regardless of partials
-                if 'ret' in picking.name:
-                    picking_to_upload = picking_id
-
-                # It's a normal non-partial picking, so upload it
-                elif not partial_ids:
-                    picking_to_upload = picking_id
-
-                # It's a partial, so it's the other picking that we are interested in.
-                # Set lx_sent to False and upload if state is assigned. Otherwise wait for scheduler
-                else:
-                    partial_id = sorted(partial_ids)[0]
-                    self.write(cr, uid, partial_id, {'lx_sent': False})
-                    picking = self.browse(cr, 1, partial_id)
-
-                    if picking.state == 'assigned':
-                        picking_to_upload = partial_id
-
-                # Finally, upload the picking if applicable
-                if picking_to_upload:
-                    all_pickings_for_so = self.search(cr, 1, [('sale_id', '=', picking.sale_id.id)])
-                    send_number = sorted([p.lx_send_number for p in self.browse(cr, 1, all_pickings_for_so)], reverse=True)[0] + 1
-
-                    self.write(cr, 1, picking_to_upload, {'lx_send_number': send_number})
-                    upload_so_picking(self, cr, uid, picking_to_upload, context=context)
+            if picking.type.lower() == 'out':
+                self.upload(cr, uid, picking, lx_sales_order)
 
             super(stock_picking, self).action_assign_wkf(cr, uid, picking_id, context=context)
         return True
@@ -87,4 +53,3 @@ class stock_picking(oe_lx, osv.osv):
         res = super(stock_picking, self).copy(cr, uid, id, default=default, context=context)
         self.write(cr, uid, res, {'lx_sent': False, 'lx_file_name': ''})
         return res
-

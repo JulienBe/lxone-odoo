@@ -7,7 +7,8 @@ from openerp.osv import osv
 from openerp.tools.translate import _
 
 from lx_data import lx_data
-from tools import convert_date
+from tools import convert_date, parse_date
+from auto_vivification import AutoVivification
 
 class lx_sales_order(lx_data):
     """
@@ -16,6 +17,12 @@ class lx_sales_order(lx_data):
 
     file_name_prefix = ['CMDE', 'CREX']
     xml_root = 'orders'
+    
+    required_fields = {
+        'sale_id',
+        'min_date',
+        'date',
+    }
 
     def extract(self, picking_out):
         """
@@ -47,95 +54,103 @@ class lx_sales_order(lx_data):
                     carrier = carrier_obj.browse(picking_out._cr, 1, carrier_map[move.product_id.id][0])
                     carrier_name = carrier.lx_ref or ''
 
-        so_data = {
-            # general
-            'NUM_CMDE': picking.lx_send_number and picking_out.sale_id.name + '-' + str(picking.lx_send_number) or picking_out.sale_id.name,
-            'NUM_FACTURE_BL': picking_out.name,
-            'DATE_EDITION': convert_date(picking_out.date),
-            'MONTANT_TOTAL_TTC': picking_out.sale_id.amount_total,
-            'DATE_ECHEANCE': convert_date(picking_out.min_date),
-            'TYPE_ENVOI': carrier_name,
+        # assert required relational fields
+        assert shipping_partner.street, _('Please provide a street for the partner "%s"') % shipping_partner.name
+        assert shipping_partner.city, _('Please provide a city for the partner "%s"') % shipping_partner.name
+        assert shipping_partner.zip, _('Please provide a zip for the partner "%s"') % shipping_partner.name
+        assert shipping_partner.country_id, _('Please provide a country for the partner "%s"') % shipping_partner.name
+        
+        assert invoice_partner.street, _('Please provide a street for the partner "%s"') % invoice_partner.name
+        assert invoice_partner.city, _('Please provide a city for the partner "%s"') % invoice_partner.name
+        assert invoice_partner.zip, _('Please provide a zip for the partner "%s"') % invoice_partner.name
+        assert invoice_partner.country_id, _('Please provide a country for the partner "%s"') % invoice_partner.name
+        
+        self.data = AutoVivification({
+            'DeliveryOrderCreate':
+            {
+                'DeliveryOrderHeader': {
+                    'ClientOfOrder': shipping_partner.name,
+                    'OrderReference': picking_out.sale_id.name,
+                    'CustomerId': invoice_partner.id,
+                    'Warehouse': '', # TODO
+                    'ShippingType': carrier_name, 
+                    'ExpectedShippingDate': parse_date(picking_out.min_date).isoformat(),
+                    'ExpectedDeliveryDate': '', # TODO
+                    'RegistrationTime': picking_out.date, 
+                    'Remark': picking_out.id,
+                    'DocumentFileNumber': picking_out.name,
+                    'Addresses': {
+                        'Address': [
+                            {
+                                'Type': 'ShipTo',
+                                'PartnerId': shipping_partner.id,
+                                'Name': shipping_partner.name,
+                                'Street': shipping_partner.street or '',
+                                'City': shipping_partner.city or '',
+                                'CityZip': shipping_partner.zip,
+                                'CountryCode': shipping_partner.country_id.code,
+                            },
+                            {
+                                'Type': 'BillTo',
+                                'PartnerId': invoice_partner.id,
+                                'Name': invoice_partner.name,
+                                'Street': invoice_partner.street or '',
+                                'City': invoice_partner.city or '',
+                                'CityZip': invoice_partner.zip,
+                                'CountryCode': invoice_partner.country_id.code,
+                            }
+                        ]              
+                    }, # close addresses
+                    'Attributes': {
+                        'Attribute': [
+                            {
+                                'AttributeType': 'InvoiceDoc',
+                                'AttributeValue': 'SOxxxxx_Invoice.pdf',
+                            },
+                            {
+                                'AttributeType': 'DeliveryNoteDoc',
+                                'AttributeValue': 'SOxxxxx_DeliveryNote.pdf',
+                            },
+                        ]
+                    }# close attributes
+                }, # close DeliveryOrderHeader
+                'DeliveryOrderLines': {
+                    'DeliveryOrderLine': []                       
+                }
+            }, # close DeliveryOrderCreate
+         })
 
-            # invoice_partner address and contact
-            'SOCIETE_FAC': invoice_partner.is_company and invoice_partner.name or '',
-            'NOM_CLIENT_FAC': invoice_partner.name or '',
-            'ADR1_FAC': invoice_partner.street or '',
-            'ADR2_FAC': invoice_partner.street2 or '',
-            'CP_FAC': invoice_partner.zip or '',
-            'VILLE_FAC': invoice_partner.city or '',
-            'ETAT_FAC': invoice_partner.state_id and invoice_partner.state_id.name or '',
-            'PAYS_FAC': invoice_partner.country_id and invoice_partner.country_id.name or '',
-            'CODE_ISO_FAC': invoice_partner.country_id and invoice_partner.country_id.code or '',
-
-            # delivery address and contact
-            'SOCIETE_LIV': shipping_partner.is_company and shipping_partner.name or '',
-            'NOM_CLIENT_LIV': shipping_partner.name or '',
-            'ADR1_LIV': shipping_partner.street or '',
-            'ADR2_LIV': shipping_partner.street2 or '',
-            'CP_LIV': shipping_partner.zip or '',
-            'VILLE_LIV': shipping_partner.city or '',
-            'ETAT_LIV': shipping_partner.state_id and shipping_partner.state_id.name or '',
-            'PAYS_LIV': shipping_partner.country_id and shipping_partner.country_id.name or '',
-            'CODE_ISO_LIV': shipping_partner.country_id and shipping_partner.country_id.code or '',
-            'TELEPHONE_LIV': shipping_partner.phone or 'no_phone',
-            'EMAIL_LIV': shipping_partner.email or 'noemail@incontinence-protection.com',
-        }
-
-        # asserts for required data
-        required_data = {
-            'NUM_CMDE': 'The picking was not created by a sales order',
-            'NUM_FACTURE_BL': 'This should never happen - please contact OpenERP',
-            'NOM_CLIENT_FAC': 'Invoice partner name',
-            'ADR1_FAC': 'Invoice partner address line 1',
-            'CP_FAC': 'Invoice partner zip',
-            'VILLE_FAC': 'Invoice partner city',
-            'CODE_ISO_FAC': 'Invoice partner country',
-            'NOM_CLIENT_LIV': 'Shipping partner name',
-            'ADR1_LIV': 'Shipping partner address line 1',
-            'CP_LIV': 'Shipping partner zip',
-            'VILLE_LIV': 'Shipping partner city',
-            'CODE_ISO_LIV': 'Shipping partner country',
-            'TELEPHONE_LIV': 'Shipping partner phone',
-            'MONTANT_TOTAL_TTC': 'This should never happen - please contact OpenERP',
-        }
-
-        missing_data = {}
-        for field in required_data:
-            if not so_data[field]:
-                missing_data[field] = required_data[field]
-
-        if missing_data:
-            message = _('While processing sales order %s and picking_out %s there was some data missing for the following required fields:' \
-                        % (so_data['NUM_CMDE'], so_data['NUM_FACTURE_BL'])) + '\n\n' \
-                      + "\n".join(sorted(['- ' + _(missing_data[data]) for data in missing_data]))\
-                      + '\n\n' + _('These fields must be filled before we can continue')
-            raise osv.except_osv(_('Missing Required Data'), message)
-
-        self.insert_data('order', so_data)
-
-        line_seq = 1
+        line_counter = 1
         for move in picking_out.move_lines:
 
-            # skip lines that are cancelled, or don't have a product, delivery method or service product
+            # skip lines that are cancelled, missing product, or product is delivery method or service
             if move.state == 'cancel' \
             or not move.product_id \
             or move.id in carrier_move_ids \
             or move.product_id.type == 'service':
                 continue
+            
+            # assert required product information
+            assert move.product_id.ean13, _('Please enter an EAN13 code for the product "%s"') % move.product_id.name
 
-            # Raise error if missing x_new_ref
-            if not move.product_id.x_new_ref:
-                raise osv.except_osv(_('Missing Reference'), _('Product "%s" on picking_out "%s" is missing an IP Reference. One must be entered before we can continue.') % (move.product_id.name, picking_out.name) )
-
+            # prepare line information
             line = {
-                'NUM_FACTURE_BL': picking_out.name,
-                'CODE_ART': move.product_id.x_new_ref,
-                'LIBELLE_ART': move.product_id.name or '',
-                'QTE': move.product_qty,
-                'OBLIGATOIRE': '1',
+                'LineReference': line_counter,
+                'Item': {
+                     'ItemAttributes': {
+                         'Client': shipping_partner.name,
+                         'Item': move.product_id.ean13,
+                     },
+                     'SerialCaptureFlag': 'No',
+                     'QuantityRoundUpRule': 'EXACT',
+                     'InventorizedItemFlag': 'No',
+                 },
+                'OrderQty': move.product_qty,
             }
-            self.insert_data('order.articles.line', line)
-            line_seq += 1
+            
+            # add line into list of lines and increment line counter
+            self.insert_data('DeliveryOrderCreate.DeliveryOrderLines.DeliveryOrderLine', line)
+            line_counter += 1
 
         return self
 
