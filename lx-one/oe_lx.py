@@ -24,7 +24,7 @@ class oe_lx(object):
     _lx_columns = {
        'lx_file_sent_id': fields.function(_get_files_sent, type="one2many", obj="lx.file.sent", method=True, string="Files Sent", 
                                           help="The files sent to LX1 for this record")
-   }
+    }
 
     def __init__(self, pool, cr):
         """ OE will only merge _columns dicts for classes inheriting from osv.osv, so do it here manually """
@@ -36,10 +36,13 @@ class oe_lx(object):
         assert issubclass(lx_data_subclass, lx_data), _("lx_data_subclass parameter should be a subclass of lx_data")
         file_sent_obj = self.pool.get('lx.file.sent')
         
-        data = lx_data_subclass(browse_record)
-        xml_io = data.generate_xml()
-        xml = xml_io.getvalue()
-        xml_io.close()
+        try:
+            data = lx_data_subclass(browse_record)
+            xml_io = data.generate_xml()
+            xml = xml_io.getvalue()
+            xml_io.close()
+        except AssertionError as assertion_error:
+            raise osv.except_osv(_("Error While Uploading:"), _(', '.join(assertion_error.args)))
         
         vals = {
            'xml': xml, 

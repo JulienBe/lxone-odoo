@@ -202,48 +202,8 @@ class lx_connection(object):
         return unicode(contents)
 
     @ensure_connection
-    def upload_data(self, data, copy_to_archive=True):
-        """
-        Generates an XML file from an lx_data subclass, then generates a name for the file
-        and checks if it exists on the server. If it does, wait .1 second and generate again.
-        It will then upload the file to the server and if copy_to_archive is true, it will
-        upload the same file to the archive directory.
-        @param lx_data data: Contains data to be written to the file
-        @param bool copy_to_archive: If true, the same file will also be uploaded to the archive directory
-        """
-        assert isinstance(data, lx_data), 'data parameter must extend lx_data class'
-        
-        self.cd(self._vers_lx)
-
-        try:
-            xml_buffer = data.generate_xml()
-
-            while True:
-                name = data.name()
-                files = self.ls()
-                
-                if name not in files:
-                    self.mkf(name, xml_buffer)
-                    
-                    # upload a copy to archive directory
-                    if copy_to_archive:
-                        if 'archives' not in files:
-                            self.mkd('archives')
-                        xml_buffer.seek(0)
-                        self.mkf(name, xml_buffer, 'archives')
-                        
-                    break
-                else:
-                    time.sleep(0.1)
-
-        finally:
-            self.try_cd('..')
-            
-        return name
-    
-    @ensure_connection
     def upload_file_sent(self, cr, uid, file_sent):
-        """ Takes a browse record on a lx.file.sent object and uploads it to the server """
+        """ Takes a browse record on an lx.file.sent object and uploads it to the server """
         assert isinstance(file_sent, browse_record), _('data parameter must extend lx_data class')
         assert file_sent._name == 'lx.file.sent', _("file_sent must have _name 'lx.file.sent'")
         

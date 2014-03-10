@@ -38,6 +38,16 @@ class lx_data(object):
 
         if data and isinstance(data, browse_record):
             self.browse_record = data
+            
+            fields_missing = self.missing_fields()
+            if fields_missing:
+                except_args = (
+                    self.browse_record._description,
+                    self.browse_record[self.browse_record._rec_name],
+                    '\n'.join(fields_missing)
+                )
+                raise except_osv(_("Required Fields Missing"), _('The following required fields were missing for %s "%s": \n\n %s') % except_args)
+            
             self.extract(data)
         elif data and isinstance(data, (dict, list, tuple)):
             self.data = AutoVivification.dict_to_auto_vivification(data)
@@ -57,11 +67,24 @@ class lx_data(object):
     # over will be uploaded to the errors/ directory of the server
     _auto_remove = True
     
+    # Use the generic xml template defined in generate_xml. Self.data will be nested inside the ServiceDefinition node
+    _use_xml_template = True
+    
     # file name generated and set by the upload function
     file_name = ''
     
     # When instantialising from a browse_record, save a reference to it  
     browse_record = None
+    
+    # used by the missing_fields function
+    required_fields = []
+    
+    def missing_fields(self):
+        """ Return a list of fields in fields_provided that were not in the required_fields list """
+        if not self.browse_record:
+            raise ValueError('Missing self.browse_record')
+        
+        return [field for field in self.required_fields if not self.browse_record[field]]
 
     def safe_get(self, dictionary, key):
         """ Returns self.data[key] or None if it does not exist """
@@ -121,31 +144,38 @@ class lx_data(object):
         return '%s-%s.xml' % (self.file_name_prefix[0], datetime.today().strftime('%Y%m%d-%H%M%S-%f'))
 
     def generate_xml(self):
-        """ Returns a StringIO containing an XML representation of self.data nested dict """
+        """ 
+        If _use_xml_template is true, puts self.data inside the appropriate node in the XML header and then 
+        Returns a StringIO containing an XML representation of self.data nested dict 
+        """
         assert self.xml_root != None, 'The self.xml_root variable must be set in your inheriting class'
+        
+        # add xml template if self._use_xml_template is truthy 
+        if self._use_xml_template:
+            content = self.data
+            self.data = AutoVivification({
+                '__attrs__': { # add xmlns etc to root element (ServiceRequest)
+                    'xmlns': 'http://www.aqcon.com/lxone/inboundService',
+                    'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                    'xsi:schemaLocation': 'http://www.aqcon.com/lxone/inboundService C:/projects/pvszmd/server/java/edi/xml/v1/schemas/src/main/xsd/InboundService.xsd',
+                },
+                'ServiceRequestHeader': {
+                    'ServiceRequestor': 'LX One',
+                    'ServiceProvider': 'LX One',
+                    'ServiceIdentifier': 'OpenERP',
+                    'MessageIdentifier': 'OpenErpItemCreate',
+                    'RequestDateTime': datetime.now().isoformat(),
+                    'ResponseRequest': 'Never',
+                },
+                'ServiceDefinition': content,            
+            })
+        
         output = StringIO.StringIO()
         xd = XMLDumper(output, XML_DUMP_PRETTY | XML_STRICT_HDR)
-        xd.XMLDumpKeyValue(self.xml_root, self.data.to_dict())
+        xd.XMLDumpKeyValue('ServiceRequest', self.data.to_dict())
         output.seek(0)
         return output
 
-    def upload(self, cr, lx_manager):
-        """
-        Upload this object to LX1
-        @param lx_manager lx_manager: the lx.manager object from the OpenERP pool
-        """
-        try:
-            with lx_manager.connection(cr) as conn:
-                self.file_name = conn.upload_data(self)
-        except lx_manager.ftp_exceptions as e:
-            raise except_osv(_("Upload Problem"), \
-                    _("".join(["There was a problem uploading the data to the LX1 servers.\n\n",
-                               "Please check your connection settings in ",
-                               "Setings > Parameters > System Parameters and make sure ",
-                               "your IP is in the LX1 FTP whitelist.\n\n",
-                               "%s""" % unicode(e)])))
-        return True
-    
     @staticmethod
     def reorganise_data(data):
         """
