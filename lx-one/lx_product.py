@@ -21,12 +21,14 @@ class lx_product(lx_data):
 
 		@param browse_record(product.product) product: the product browse record object
 		"""
+		assert product.uom_id.lx_ref, _("Unit of Measure '%s' is missing an LX Reference") % product.uom_id.name
+		
 		product_node = {
 			'Client': 'pvszmd',
 			'Item': product.ean13,
 			'Description': product.name,
 			'QuantityProperties': {
-				'StandardUOM': product.uom_id.name
+				'StandardUOM': product.uom_id.lx_ref,
 			},
 		}
 

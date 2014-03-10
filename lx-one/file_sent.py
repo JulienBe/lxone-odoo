@@ -40,7 +40,7 @@ class lx_file_sent(osv.osv):
         'result': fields.text('Failure Message', help="Any errors encountered during file upload will be listed here", readonly=True),
         'object_type': fields.char('Object Type', size=12, required=True, help="The type of data contained in this file", readonly=True),
         'file_name': fields.char('File Name', size=64, required=True, help="The name of the file that contained the XML", readonly=True),
-        'record_id': fields.reference('Record To Upload', list({(filter_inherit(model._inherit), friendly_name(model._inherit)) for model in oe_lx.oe_lx.__subclasses__()}), 128, required=True),
+        'record_id': fields.reference('Record To Upload', list({(filter_inherit(model._inherit), friendly_name(model._inherit)) for model in oe_lx.oe_lx.__subclasses__()}), 128, required=True, readonly=True),
     }
 
     _defaults = { 

@@ -37,7 +37,7 @@
                         	<field name="upload_date" attrs="{'invisible': [('state', '!=', 'uploaded')]}" />
                             <field name="record_id" />
                             <field name="object_type" />
-                            <field name="xml" />
+                            <field name="xml" attrs="{'readonly': [('state','=','uploaded')]}" />
                             <field name="result" attrs="{'invisible': [('failed', '=', False)]}" style="color: red" />
                             <field name="file_name" attrs="{'invisible': [('state', '!=', 'uploaded')]}" />
                         </group>

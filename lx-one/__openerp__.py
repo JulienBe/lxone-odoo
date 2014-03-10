@@ -101,6 +101,7 @@ http://www.picklingtools.com/
         'views/res_partner_form.xml',
         'views/stock_picking_out_form.xml',
         'views/delivery_carrier_form.xml',
+        'views/product_uom_form.xml',
     ],
     'installable': True,
 }

@@ -38,16 +38,7 @@ class lx_data(object):
 
         if data and isinstance(data, browse_record):
             self.browse_record = data
-            
-            fields_missing = self.missing_fields()
-            if fields_missing:
-                except_args = (
-                    self.browse_record._description,
-                    self.browse_record[self.browse_record._rec_name],
-                    '\n'.join(fields_missing)
-                )
-                raise except_osv(_("Required Fields Missing"), _('The following required fields were missing for %s "%s": \n\n %s') % except_args)
-            
+            self._missing_fields()
             self.extract(data)
         elif data and isinstance(data, (dict, list, tuple)):
             self.data = AutoVivification.dict_to_auto_vivification(data)
@@ -79,12 +70,25 @@ class lx_data(object):
     # used by the missing_fields function
     required_fields = []
     
-    def missing_fields(self):
-        """ Return a list of fields in fields_provided that were not in the required_fields list """
+    def _missing_fields(self):
+        """ 
+        Check that all required_fields are truthy in the browse_record, otherwise
+        raise an osv exception with a description of the browse record and fields affected
+        """
         if not self.browse_record:
             raise ValueError('Missing self.browse_record')
         
-        return [field for field in self.required_fields if not self.browse_record[field]]
+        fields_missing = [field for field in self.required_fields if not self.browse_record[field]]
+        
+        if fields_missing:
+            except_args = (
+                           self.browse_record._description,
+                           self.browse_record[self.browse_record._rec_name],
+                           '\n'.join(fields_missing)
+                           )
+            raise except_osv(_("Required Fields Missing"), _('The following required fields were missing for %s "%s": \n\n %s') % except_args)
+        else:
+            return None
 
     def safe_get(self, dictionary, key):
         """ Returns self.data[key] or None if it does not exist """
