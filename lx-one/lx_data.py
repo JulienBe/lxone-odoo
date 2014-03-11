@@ -38,7 +38,7 @@ class lx_data(object):
 
         if data and isinstance(data, browse_record):
             self.browse_record = data
-            self._missing_fields()
+            self._validate_required_fields()
             self.extract(data)
         elif data and isinstance(data, (dict, list, tuple)):
             self.data = AutoVivification.dict_to_auto_vivification(data)
@@ -67,26 +67,79 @@ class lx_data(object):
     # When instantialising from a browse_record, save a reference to it  
     browse_record = None
     
-    # used by the missing_fields function
+    # List of fields that should be truthy on the browse record. See _validate_required_fields
     required_fields = []
     
-    def _missing_fields(self):
+    def _validate_required_fields(self):
         """ 
-        Check that all required_fields are truthy in the browse_record, otherwise
-        raise an osv exception with a description of the browse record and fields affected
+        Check that all required_fields are satisfied, otherwise
+        raise an osv exception with a description of the browse record and fields affected.
+        
+        Works on many2one relational fields using dot notation
+        And one2many relational field if the o2m field is the first field in the chain.
+        o2m fields should be written like [field_name].
+        
+        Examples:
+        
+        date
+        product_id.name
+        [move_lines].name  
         """
         if not self.browse_record:
             raise ValueError('Missing self.browse_record')
         
-        fields_missing = [field for field in self.required_fields if not self.browse_record[field]]
+        invalid_fields = []
         
-        if fields_missing:
+        # Iterate over required_fields checking if they have been satisfied
+        for required_field in self.required_fields:
+            if '.' not in required_field:
+                # simple field check
+                if not self.browse_record[required_field]:
+                    invalid_fields.append(required_field)
+            else:
+                # relational field check
+                def check(self, target, fields):
+                    """ Convert fields into a dot notation query and execute it on target """
+                    query = '%s.%s' % (target, '.'.join(fields))
+                    try:
+                        res = eval(query)
+                        if isinstance(res, (unicode, str)):
+                            res = res.strip()
+                        if not res:
+                            invalid_fields.append(required_field)
+                    except Exception as e:
+                        invalid_fields.append(required_field)
+                
+                fields = required_field.split('.')
+                
+                # check for one2many type field
+                if fields[0][0:1] == '[' and fields[0][-1:] == ']':
+                    one2many_field = fields[0][1:-1]
+                    if not self.browse_record[one2many_field]:
+                        invalid_fields.append(one2many_field)
+                    else:
+                        for record_index in xrange(0, len(self.browse_record[one2many_field])):
+                            target = 'self.browse_record.%s[%d]' % (one2many_field, record_index)
+                            check(self, target, fields[1:])
+                else:
+                    check(self, 'self.browse_record', fields)
+        
+        # raise exception if necessary
+        if invalid_fields:
+            invalid_fields_str = ''
+            for field in invalid_fields:
+                if '.' in field:
+                    field_parts = map(lambda p: '_' in p and p.split('_')[0] or p, field.split('.'))
+                    invalid_fields_str += '\n%s' % ' -> '.join(map(lambda p: p.title().replace('[',''), field_parts))
+                else:
+                    invalid_fields_str += '\n%s' % field
+            
             except_args = (
                            self.browse_record._description,
                            self.browse_record[self.browse_record._rec_name],
-                           '\n'.join(fields_missing)
+                           invalid_fields_str
                            )
-            raise except_osv(_("Required Fields Missing"), _('The following required fields were missing for %s "%s": \n\n %s') % except_args)
+            raise except_osv(_("Required Fields Invalid"), _('The following required fields were invalid for %s "%s": \n\n %s') % except_args)
         else:
             return None
 

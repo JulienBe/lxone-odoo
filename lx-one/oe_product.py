@@ -16,13 +16,13 @@ class product_product(oe_lx, osv.osv):
         """ Call lx_upload if we edit an uploaded field """
         res = super(product_product, self).write(cr, uid, ids, values, context=context)
         if any([field for field in lx_product.required_fields if field in values.keys()]):
-            self.lx_upload(cr, uid, ids, context=context)
+            self.lx_upload(cr, 1, ids, context=context)
         return res
     
     def create(self, cr, uid, values, context=None):
         """ Call lx_upload """
         res = super(product_product, self).create(cr, uid, values, context=context)
-        self.lx_upload(cr, uid, res, context=context)
+        self.lx_upload(cr, 1, res, context=context)
         return res
     
     def lx_upload(self, cr, uid, ids, log=False, context=None):
@@ -54,7 +54,7 @@ class product_product(oe_lx, osv.osv):
         carrier_obj = self.pool['delivery.carrier']
         
         for product_id in ids:
-            delivery_method_ids = carrier_obj.search(cr, uid, [('product_id','=',product_id)])
+            delivery_method_ids = carrier_obj.search(cr, 1, [('product_id','=',product_id)])
             
             if delivery_method_ids:
                 is_delivery_map[product_id] = delivery_method_ids

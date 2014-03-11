@@ -22,6 +22,19 @@ class lx_sales_order(lx_data):
         'sale_id',
         'min_date',
         'date',
+        
+        'sale_id.partner_shipping_id.street',
+        'sale_id.partner_shipping_id.city',
+        'sale_id.partner_shipping_id.zip',
+        'sale_id.partner_shipping_id.country_id',
+        'sale_id.partner_invoice_id.street',
+        'sale_id.partner_invoice_id.city',
+        'sale_id.partner_invoice_id.zip',
+        'sale_id.partner_invoice_id.country_id',
+        
+        '[move_lines].product_id',
+        '[move_lines].product_id.ean13',
+        '[move_lines].product_qty',
     }
 
     def extract(self, picking_out):
@@ -53,23 +66,12 @@ class lx_sales_order(lx_data):
                 if move.id in carrier_move_ids:
                     carrier = carrier_obj.browse(picking_out._cr, 1, carrier_map[move.product_id.id][0])
                     carrier_name = carrier.lx_ref or ''
-
-        # assert required relational fields
-        assert shipping_partner.street, _('Please provide a street for the partner "%s"') % shipping_partner.name
-        assert shipping_partner.city, _('Please provide a city for the partner "%s"') % shipping_partner.name
-        assert shipping_partner.zip, _('Please provide a zip for the partner "%s"') % shipping_partner.name
-        assert shipping_partner.country_id, _('Please provide a country for the partner "%s"') % shipping_partner.name
-        
-        assert invoice_partner.street, _('Please provide a street for the partner "%s"') % invoice_partner.name
-        assert invoice_partner.city, _('Please provide a city for the partner "%s"') % invoice_partner.name
-        assert invoice_partner.zip, _('Please provide a zip for the partner "%s"') % invoice_partner.name
-        assert invoice_partner.country_id, _('Please provide a country for the partner "%s"') % invoice_partner.name
         
         self.data = AutoVivification({
             'DeliveryOrderCreate':
             {
                 'DeliveryOrderHeader': {
-                    'ClientOfOrder': shipping_partner.name,
+                    'ClientOfOrder': shipping_partner.ref or shipping_partner.name,
                     'OrderReference': picking_out.sale_id.name,
                     'CustomerId': invoice_partner.id,
                     'Warehouse': '', # TODO
@@ -83,7 +85,7 @@ class lx_sales_order(lx_data):
                         'Address': [
                             {
                                 'Type': 'ShipTo',
-                                'PartnerId': shipping_partner.id,
+                                'PartnerId': shipping_partner.ref or shipping_partner.name,
                                 'Name': shipping_partner.name,
                                 'Street': shipping_partner.street or '',
                                 'City': shipping_partner.city or '',
@@ -92,7 +94,7 @@ class lx_sales_order(lx_data):
                             },
                             {
                                 'Type': 'BillTo',
-                                'PartnerId': invoice_partner.id,
+                                'PartnerId': invoice_partner.ref or invoice_partner.name,
                                 'Name': invoice_partner.name,
                                 'Street': invoice_partner.street or '',
                                 'City': invoice_partner.city or '',
@@ -130,15 +132,12 @@ class lx_sales_order(lx_data):
             or move.product_id.type == 'service':
                 continue
             
-            # assert required product information
-            assert move.product_id.ean13, _('Please enter an EAN13 code for the product "%s"') % move.product_id.name
-
             # prepare line information
             line = {
                 'LineReference': line_counter,
                 'Item': {
                      'ItemAttributes': {
-                         'Client': shipping_partner.name,
+                         'Client': shipping_partner.ref or shipping_partner.name,
                          'Item': move.product_id.ean13,
                      },
                      'SerialCaptureFlag': 'No',
