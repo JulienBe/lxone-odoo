@@ -71,21 +71,20 @@ class lx_sales_order(lx_data):
             'DeliveryOrderCreate':
             {
                 'DeliveryOrderHeader': {
-                    'ClientOfOrder': shipping_partner.ref or shipping_partner.name,
+                    'ClientOfOrder': shipping_partner.name,
                     'OrderReference': picking_out.sale_id.name,
                     'CustomerId': invoice_partner.id,
-                    'Warehouse': '',  # TODO
+                    'Warehouse': '',
                     'ShippingType': carrier_name,
                     'ExpectedShippingDate': parse_date(picking_out.min_date).isoformat(),
-                    'ExpectedDeliveryDate': '',  # TODO
-                    'RegistrationTime': picking_out.date,
-                    'Remark': picking_out.id,
+                    'RegistrationTime': picking_out.create_date,
+                    'Remark': picking_out.note,
                     'DocumentFileNumber': picking_out.name,
                     'Addresses': {
                         'Address': [
                             {
                                 'Type': 'ShipTo',
-                                'PartnerId': shipping_partner.ref or shipping_partner.name,
+                                'PartnerId': shipping_partner.name,
                                 'Name': shipping_partner.name,
                                 'Street': shipping_partner.street or '',
                                 'City': shipping_partner.city or '',
@@ -94,7 +93,7 @@ class lx_sales_order(lx_data):
                             },
                             {
                                 'Type': 'BillTo',
-                                'PartnerId': invoice_partner.ref or invoice_partner.name,
+                                'PartnerId': invoice_partner.name,
                                 'Name': invoice_partner.name,
                                 'Street': invoice_partner.street or '',
                                 'City': invoice_partner.city or '',
@@ -137,7 +136,7 @@ class lx_sales_order(lx_data):
                 'LineReference': line_counter,
                 'Item': {
                      'ItemAttributes': {
-                         'Client': shipping_partner.ref or shipping_partner.name,
+                         'Client': shipping_partner.name,
                          'Item': move.product_id.ean13,
                      },
                      'SerialCaptureFlag': 'No',

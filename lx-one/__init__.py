@@ -7,7 +7,6 @@ import oe_test
 import oe_purchase_order
 import oe_sales_order
 import oe_product
-import oe_product_uom
 #import oe_res_partner
 import oe_delivery_carrier
 

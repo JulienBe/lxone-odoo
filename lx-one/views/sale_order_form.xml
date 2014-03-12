@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    	<record id="lx_view_sale_order_form" model="ir.ui.view">
+            <field name="name">sale.order.form.lx</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale_stock.view_order_form_inherit"/>
+            <field name="arch" type="xml">
+            	<field position="attributes" name="picking_policy">
+            		<attribute name="readonly">1</attribute>
+            	</field>
+            	<field position="attributes" name="order_policy">
+            		<attribute name="readonly">1</attribute>
+            	</field>
+            </field>
+        </record>
+    </data>
+</openerp>

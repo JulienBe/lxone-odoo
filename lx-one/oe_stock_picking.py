@@ -58,6 +58,9 @@ class stock_picking(oe_lx, osv.osv):
     """
 
     _inherit = 'stock.picking'
+    _columns = {
+        'create_date': fields.datetime('Create Date'),
+    }
 
     def action_process(self, cr, uid, ids, context=None):
         if all_assigned(self, cr, ids):

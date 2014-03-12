@@ -42,11 +42,11 @@ class lx_purchase_order(lx_data):
         self.data = AutoVivification({
             'InboundShipmentCreate': {
                 'InboundShipmentHeader': {
-                    'ClientOfOrder': picking.partner_id.ref or picking.partner_id.name,
+                    'ClientOfOrder': picking.partner_id.name,
                     'ShipmentReference': picking.name,
                     'Warehouse': '', # TODO
                     'OrderType': 'PO',
-                    'SupplierId': picking.partner_id.ref or picking.partner_id.name,
+                    'SupplierId': picking.partner_id.name,
                     'Remark': picking.id,
                     'RegistrationDate': picking.date,
                     'ExpectedArrivalTime': picking.min_date,
@@ -54,7 +54,7 @@ class lx_purchase_order(lx_data):
                         'Address': [
                             {
                                 'Type': 'ShipTo',
-                                'PartnerId': picking.partner_id.ref or picking.partner_id.name,
+                                'PartnerId': picking.partner_id.name,
                                 'Name': picking.partner_id.name,
                                 'City': picking.partner_id.city,
                                 'CityZip': picking.partner_id.zip,
@@ -82,7 +82,7 @@ class lx_purchase_order(lx_data):
                 'LineReference': picking_line_count,
                 'Item': {
                      'ItemAttributes': {
-                         'Client': picking.partner_id.ref or picking.partner_id.name,
+                         'Client': picking.partner_id.name,
                          'Item': move.product_id.ean13,                   
                      }        
                 },
