@@ -15,8 +15,7 @@ class lx_purchase_order(lx_data):
     """
 
     file_name_prefix = ['FOUR']
-    xml_root = 'COMMANDEFOURNISSEURS'
-    _auto_remove = False
+    message_identifier = 'OpenErpInboundShipmentCreate'
     
     required_fields = {
         'partner_id',

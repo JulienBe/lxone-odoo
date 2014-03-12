@@ -10,7 +10,6 @@ class lx_stock(lx_data):
     Receive physical inventories from lx in a STOC file
     """
     file_name_prefix = ['STOC']
-    xml_root = 'stock'
 
     def pre_process_hook(self, pool, cr):
         """ Create inventory parent object and save ID for later """

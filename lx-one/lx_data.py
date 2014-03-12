@@ -1,7 +1,4 @@
-import sys
 import StringIO
-from lxml import etree
-import re
 from datetime import datetime
 
 from openerp.osv.orm import browse_record
@@ -18,10 +15,10 @@ class lx_data(object):
     so you can implement your own data input and output functions that build
     the self.data AutoVivification object (See lx_sales_order class for an example).
 
-    Don't forget to set the file_name_prefix and xml_root variables to define the xml
-    file name prefix (XXXX-YYYMMDD.xml) and xml file root element name. When the poll
-    function processes a file, it chooses which lx_data subclass to hand the data to
-    based on the file_name_prefix of the class and the file.
+    Don't forget to set the file_name_prefix variable to define the xml
+    file name prefix (XXXX-YYYMMDD.xml). When the poll function processes a file, 
+    it chooses which lx_data subclass to hand the data to based on the file_name_prefix 
+    of the class and the file.
 
     After building the self.data dict, this object is passed to the upload_data function
     of the lx_connection object. It will call generate_xml to convert the self.data dict
@@ -47,28 +44,21 @@ class lx_data(object):
 
     # list of file name prefix's that this class should handle when receiving them from LX1
     file_name_prefix = []
-
-    # name of the root xml element when generating data to upload
-    xml_root = None
-
-    # list of exceptions that this class generates during the "process" method
-    process_exceptions = (Exception)
-
-    # when processing the data, if true, auto remove nodes that are successful. Nodes left
-    # over will be uploaded to the errors/ directory of the server
-    _auto_remove = True
     
-    # Use the generic xml template defined in generate_xml. Self.data will be nested inside the ServiceDefinition node
-    _use_xml_template = True
+    # List of fields that should be truthy on the browse record. See _validate_required_fields
+    required_fields = []
+    
+    # Used in the xml template if _use_xml_template is True. Should be set in child classes that are extracted
+    message_identifier = None
     
     # file name generated and set by the upload function
     file_name = ''
     
     # When instantialising from a browse_record, save a reference to it  
     browse_record = None
-    
-    # List of fields that should be truthy on the browse record. See _validate_required_fields
-    required_fields = []
+
+    # Use the generic xml template defined in generate_xml
+    _use_xml_template = True
     
     def _validate_required_fields(self):
         """ 
@@ -195,20 +185,15 @@ class lx_data(object):
 
             target.append(val)
 
-    def name(self):
-        """ Generate a name for the uploaded xml file """
-        assert self.file_name_prefix, 'The self.file_name_prefix variable must be set in your inheriting class'
-        return '%s-%s.xml' % (self.file_name_prefix[0], datetime.today().strftime('%Y%m%d-%H%M%S-%f'))
-
     def generate_xml(self):
         """ 
         If _use_xml_template is true, puts self.data inside the appropriate node in the XML header and then 
         Returns a StringIO containing an XML representation of self.data nested dict 
         """
-        assert self.xml_root != None, 'The self.xml_root variable must be set in your inheriting class'
-        
         # add xml template if self._use_xml_template is truthy 
         if self._use_xml_template:
+            assert self.message_identifier, "message_identifier variable not set!"
+            
             content = self.data
             self.data = AutoVivification({
                 '__attrs__': { # add xmlns etc to root element (ServiceRequest)
@@ -220,7 +205,7 @@ class lx_data(object):
                     'ServiceRequestor': 'LX One',
                     'ServiceProvider': 'LX One',
                     'ServiceIdentifier': 'OpenERP',
-                    'MessageIdentifier': 'OpenErpItemCreate',
+                    'MessageIdentifier': self.message_identifier,
                     'RequestDateTime': datetime.now().isoformat(),
                     'ResponseRequest': 'Never',
                 },

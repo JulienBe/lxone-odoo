@@ -22,7 +22,6 @@ class lx_return(lx_data):
     """
 
     file_name_prefix = ['CRET']
-    xml_root = 'Retour'
 
     return_code_mapping = {
         'NP': 'NPAI / Déménagé',

@@ -16,7 +16,7 @@ class lx_sales_order(lx_data):
     """
 
     file_name_prefix = ['CMDE', 'CREX']
-    xml_root = 'orders'
+    message_identifier = 'OpenErpDeliveryOrderCreate' 
     
     required_fields = {
         'sale_id',
@@ -74,11 +74,11 @@ class lx_sales_order(lx_data):
                     'ClientOfOrder': shipping_partner.ref or shipping_partner.name,
                     'OrderReference': picking_out.sale_id.name,
                     'CustomerId': invoice_partner.id,
-                    'Warehouse': '', # TODO
-                    'ShippingType': carrier_name, 
+                    'Warehouse': '',  # TODO
+                    'ShippingType': carrier_name,
                     'ExpectedShippingDate': parse_date(picking_out.min_date).isoformat(),
-                    'ExpectedDeliveryDate': '', # TODO
-                    'RegistrationTime': picking_out.date, 
+                    'ExpectedDeliveryDate': '',  # TODO
+                    'RegistrationTime': picking_out.date,
                     'Remark': picking_out.id,
                     'DocumentFileNumber': picking_out.name,
                     'Addresses': {
@@ -102,7 +102,7 @@ class lx_sales_order(lx_data):
                                 'CountryCode': invoice_partner.country_id.code,
                             }
                         ]              
-                    }, # close addresses
+                    },  # close addresses
                     'Attributes': {
                         'Attribute': [
                             {
@@ -114,12 +114,12 @@ class lx_sales_order(lx_data):
                                 'AttributeValue': 'SOxxxxx_DeliveryNote.pdf',
                             },
                         ]
-                    }# close attributes
-                }, # close DeliveryOrderHeader
+                    }  # close attributes
+                },  # close DeliveryOrderHeader
                 'DeliveryOrderLines': {
                     'DeliveryOrderLine': []                       
                 }
-            }, # close DeliveryOrderCreate
+            },  # close DeliveryOrderCreate
          })
 
         line_counter = 1

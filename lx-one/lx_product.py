@@ -6,7 +6,7 @@ from lx_data import lx_data
 class lx_product(lx_data):
 
 	file_name_prefix = ['ARTI']
-	xml_root = 'flux_art'
+	message_identifier = 'OpenErpItemCreate'
 
 	required_fields = [
 		'name',

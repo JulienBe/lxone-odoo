@@ -15,8 +15,6 @@ class lx_picking(lx_data):
     """
 
     file_name_prefix = ['MVTS']
-    xml_root = 'mvts'
-    _auto_remove = False
     pre_process_errors = []
 
     def pre_process_hook(self, pool, cr):
