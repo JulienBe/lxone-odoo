@@ -1,4 +1,6 @@
-class AutoVivification(dict):
+from collections import OrderedDict
+
+class AutoVivification(OrderedDict):
 	"""
 	Implementation of perl's autovivification feature.
 	Allows auto creation of nested dictionaries 
@@ -11,7 +13,7 @@ class AutoVivification(dict):
 	"""
 	def __getitem__(self, item):
 		try:
-			return dict.__getitem__(self, item)
+			return OrderedDict.__getitem__(self, item)
 		except KeyError:
 			value = self[item] = type(self)()
 			return value
@@ -21,8 +23,8 @@ class AutoVivification(dict):
 		for key in nested_autoviv:
 			val = nested_autoviv[key]
 			
-			if isinstance(val, (AutoVivification, dict)):
-				nested_dict[key] = self._to_dict_recursive(dict(val))
+			if isinstance(val, (AutoVivification, OrderedDict)):
+				nested_dict[key] = self._to_dict_recursive(OrderedDict(val))
 			elif isinstance(val, (list, tuple)):
 				new_list = []
 				for element in val:
@@ -42,7 +44,7 @@ class AutoVivification(dict):
 		for key in nested_dict:
 			val = nested_dict[key]
 			
-			if type(val) == dict:
+			if type(val) == OrderedDict:
 				nested_autoviv[key] = AutoVivification._dict_to_auto_viv_recursive(AutoVivification(val))
 			else:
 				nested_autoviv[key] = val

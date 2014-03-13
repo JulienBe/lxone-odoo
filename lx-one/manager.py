@@ -17,7 +17,6 @@ from lx_product import lx_product
 from lx_return import lx_return
 from lx_stock import lx_stock
 from lx_picking import lx_picking
-from lx_test import lx_test
 
 class lx_manager(osv.osv):
     """

@@ -86,7 +86,7 @@ class lx_file_received(osv.osv):
             
             # do parse
             try:
-                parsed_xml = xml2dict.ConvertFromXML(file_received.xml)
+                parsed_xml = xml2dict.ConvertFromXML(file_received.xml) # step inside to find out how to include XML_LOAD_USE_OTABS option
                 
                 # change state
                 file_received.write({'state': 'to_generate_updates', 'parsed_xml': parsed_xml})

@@ -1,5 +1,6 @@
 import StringIO
 from datetime import datetime
+from collections import OrderedDict
 
 from openerp.osv.orm import browse_record
 from openerp.osv.osv import except_osv
@@ -158,7 +159,7 @@ class lx_data(object):
             target = target[target_key]
 
         # have we already saved data to this key? If yes, convert it to a list of dicts
-        if isinstance(target, AutoVivification) and len(target) != 0:
+        if isinstance(target, (AutoVivification, OrderedDict)) and len(target) != 0:
             autoviv = False
             parent[target_key] = [target]
             target = parent[target_key]
@@ -195,28 +196,46 @@ class lx_data(object):
             assert self.message_identifier, "message_identifier variable not set!"
             
             content = self.data
-            self.data = AutoVivification({
-                '__attrs__': { # add xmlns etc to root element (ServiceRequest)
-                    'xmlns': 'http://www.aqcon.com/lxone/inboundService',
-                    'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-                    'xsi:schemaLocation': 'http://www.aqcon.com/lxone/inboundService C:/projects/pvszmd/server/java/edi/xml/v1/schemas/src/main/xsd/InboundService.xsd',
-                },
-                'ServiceRequestHeader': {
-                    'ServiceRequestor': 'LX One',
-                    'ServiceProvider': 'LX One',
-                    'ServiceIdentifier': 'OpenERP',
-                    'MessageIdentifier': self.message_identifier,
-                    'RequestDateTime': datetime.now().isoformat(),
-                    'ResponseRequest': 'Never',
-                },
-                'ServiceDefinition': content,            
-            })
+            self.data = OrderedDict([
+                ('__attrs__', OrderedDict([ # add xmlns etc to root element (ServiceRequest)
+                    ('xmlns', 'http://www.aqcon.com/lxone/inboundService'),
+                    ('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance'),
+                    ('xsi:schemaLocation', 'http://www.aqcon.com/lxone/inboundService C:/projects/pvszmd/server/java/edi/xml/v1/schemas/src/main/xsd/InboundService.xsd'),
+                ])),
+                ('ServiceRequestHeader', OrderedDict([
+                    ('ServiceRequestor', 'LX One'),
+                    ('ServiceProvider', 'LX One'),
+                    ('ServiceIdentifier', 'OpenERP'),
+                    ('MessageIdentifier', self.message_identifier),
+                    ('RequestDateTime', datetime.now().isoformat()),
+                    ('ResponseRequest', 'Never'),
+                ])),
+                ('ServiceDefinition', content),
+            ])
         
+        # validate self.data and convert autoviv to ordered dict if needed
+        self._check_ordered_dicts_only(self.data)
+        if type(self.data) == AutoVivification:
+            self.data = self.data.to_dict()
+        
+        # convert to pretty XML 
         output = StringIO.StringIO()
         xd = XMLDumper(output, XML_DUMP_PRETTY | XML_STRICT_HDR)
-        xd.XMLDumpKeyValue('ServiceRequest', self.data.to_dict())
+        xd.XMLDumpKeyValue('ServiceRequest', self.data)
         output.seek(0)
         return output
+    
+    def _check_ordered_dicts_only(self, struct):
+        """ 
+        Looks at every element recursively in struct and raises a TypeError
+        if it finds a regular dict 
+        """
+        for key in struct:
+            val = struct[key]
+            if type(val) == dict:
+                raise TypeError('Regular dict found! Should only use ordered dicts')
+            elif type(val) == OrderedDict:
+                self._check_ordered_dicts_only(val)
 
     @staticmethod
     def reorganise_data(data):

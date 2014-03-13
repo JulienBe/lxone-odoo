@@ -3,6 +3,8 @@ import logging
 _logger = logging.getLogger(__name__)
 from datetime import datetime
 import time
+from collections import OrderedDict
+
 from openerp.osv import osv
 from openerp.tools.translate import _
 
@@ -67,61 +69,57 @@ class lx_sales_order(lx_data):
                     carrier = carrier_obj.browse(picking_out._cr, 1, carrier_map[move.product_id.id][0])
                     carrier_name = carrier.lx_ref or ''
         
-        self.data = AutoVivification({
-            'DeliveryOrderCreate':
-            {
-                'DeliveryOrderHeader': {
-                    'ClientOfOrder': shipping_partner.name,
-                    'OrderReference': picking_out.sale_id.name,
-                    'CustomerId': invoice_partner.id,
-                    'Warehouse': '',
-                    'ShippingType': carrier_name,
-                    'ExpectedShippingDate': parse_date(picking_out.min_date).isoformat(),
-                    'RegistrationTime': picking_out.create_date,
-                    'Remark': picking_out.note,
-                    'DocumentFileNumber': picking_out.name,
-                    'Addresses': {
-                        'Address': [
-                            {
-                                'Type': 'ShipTo',
-                                'PartnerId': shipping_partner.name,
-                                'Name': shipping_partner.name,
-                                'Street': shipping_partner.street or '',
-                                'City': shipping_partner.city or '',
-                                'CityZip': shipping_partner.zip,
-                                'CountryCode': shipping_partner.country_id.code,
-                            },
-                            {
-                                'Type': 'BillTo',
-                                'PartnerId': invoice_partner.name,
-                                'Name': invoice_partner.name,
-                                'Street': invoice_partner.street or '',
-                                'City': invoice_partner.city or '',
-                                'CityZip': invoice_partner.zip,
-                                'CountryCode': invoice_partner.country_id.code,
-                            }
-                        ]              
-                    },  # close addresses
-                    'Attributes': {
-                        'Attribute': [
-                            {
-                                'AttributeType': 'InvoiceDoc',
-                                'AttributeValue': 'SOxxxxx_Invoice.pdf',
-                            },
-                            {
-                                'AttributeType': 'DeliveryNoteDoc',
-                                'AttributeValue': 'SOxxxxx_DeliveryNote.pdf',
-                            },
-                        ]
-                    }  # close attributes
-                },  # close DeliveryOrderHeader
-                'DeliveryOrderLines': {
-                    'DeliveryOrderLine': []                       
-                }
-            },  # close DeliveryOrderCreate
-         })
-
-        line_counter = 1
+        self.data = OrderedDict([
+            ('DeliveryOrderCreate', OrderedDict([
+                ('DeliveryOrderHeader', OrderedDict([
+                    ('ClientOfOrder', shipping_partner.name),
+                    ('OrderReference', picking_out.sale_id.name),
+                    ('Warehouse', ''),
+                    ('CustomerId', invoice_partner.id),
+                    ('ShippingType', carrier_name),
+                    ('ExpectedShippingDate', parse_date(picking_out.min_date).isoformat()),
+                    ('ExpectedDeliveryDate', ''),
+                    ('RegistrationTime', parse_date(picking_out.create_date).isoformat()),
+                    ('Remark', picking_out.note),
+                    ('DocumentFileNumber', picking_out.name),
+                    ('Addresses', OrderedDict([
+                        ('Address', [OrderedDict([
+                            ('Type', 'ShipTo'),
+                            ('PartnerId', shipping_partner.name),
+                            ('Name', shipping_partner.name),
+                            ('Street', shipping_partner.street or ''),
+                            ('City', shipping_partner.city or ''),
+                            ('CityZip', shipping_partner.zip),
+                            ('CountryCode', shipping_partner.country_id.code),
+                        ]),
+                        OrderedDict([
+                            ('Type', 'BillTo'),
+                            ('PartnerId', invoice_partner.name),
+                            ('Name', invoice_partner.name),
+                            ('Street', invoice_partner.street or ''),
+                            ('City', invoice_partner.city or ''),
+                            ('CityZip', invoice_partner.zip),
+                            ('CountryCode', invoice_partner.country_id.code),
+                        ])]),
+                    ])),
+                    ('Attributes', OrderedDict([
+                        ('Attribute', [
+                        OrderedDict([
+                            ('AttributeType', 'InvoiceDoc'),
+                            ('AttributeValue', 'SOxxxxx_Invoice.pdf'),
+                        ]),
+                        OrderedDict([
+                            ('AttributeType', 'DeliveryNoteDoc'),
+                            ('AttributeValue', 'SOxxxxx_Invoice.pdf'),
+                        ])]),
+                    ])),
+                ])),
+                ('DeliveryOrderLines', OrderedDict([
+                    ('DeliveryOrderLine', [])                                    
+                ])),
+            ])),
+        ])
+            
         for move in picking_out.move_lines:
 
             # skip lines that are cancelled, missing product, or product is delivery method or service
@@ -132,23 +130,22 @@ class lx_sales_order(lx_data):
                 continue
             
             # prepare line information
-            line = {
-                'LineReference': line_counter,
-                'Item': {
-                     'ItemAttributes': {
-                         'Client': shipping_partner.name,
-                         'Item': move.product_id.ean13,
-                     },
-                     'SerialCaptureFlag': 'No',
-                     'QuantityRoundUpRule': 'EXACT',
-                     'InventorizedItemFlag': 'No',
-                 },
-                'OrderQty': move.product_qty,
-            }
+            line = OrderedDict([
+                ('LineReference', move.id),
+                ('Item', OrderedDict([
+                     ('ItemAttributes', OrderedDict([
+                         ('Client', shipping_partner.name),
+                         ('Item', move.product_id.ean13),
+                     ])),
+                     ('SerialCaptureFlag', 'No'),
+                     ('QuantityRoundUpRule', 'EXACT'),
+                     ('InventorizedItemFlag', 'No'),
+                 ])),
+                ('OrderQty', move.product_qty),
+            ])
             
             # add line into list of lines and increment line counter
-            self.insert_data('DeliveryOrderCreate.DeliveryOrderLines.DeliveryOrderLine', line)
-            line_counter += 1
+            self.data['DeliveryOrderCreate']['DeliveryOrderLines']['DeliveryOrderLine'].append(line)
 
         return self
 
