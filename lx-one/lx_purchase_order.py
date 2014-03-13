@@ -6,11 +6,12 @@ from collections import OrderedDict
 from openerp.osv import osv
 from openerp.tools.translate import _
 
+from lx_order import lx_order
 from auto_vivification import AutoVivification
 from lx_data import lx_data
 from tools import convert_date
 
-class lx_purchase_order(lx_data):
+class lx_purchase_order(lx_order):
     """
     Handles the extraction of a purchase order's picking.
     """
@@ -34,6 +35,9 @@ class lx_purchase_order(lx_data):
         '[move_lines].product_qty',
     }
     
+    _root_node_name = 'InboundShipment'
+    _header_node_name = 'InboundShipmentHeader'
+    
     def extract(self, picking):
         """
         Takes a stock.picking.in browse_record and extracts the appropriate data into self.data
@@ -49,6 +53,7 @@ class lx_purchase_order(lx_data):
                     ('OrderType', 'PO'),
                     ('SupplierId', picking.partner_id.name),
                     ('Remark', picking.note),
+                    ('DocumentFileNumber', picking.origin)
                     ('RegistrationDate', picking.date),
                     ('ExpectedDepartureTime', picking.min_date),
                     ('Addresses', OrderedDict([

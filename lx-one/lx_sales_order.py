@@ -8,11 +8,12 @@ from collections import OrderedDict
 from openerp.osv import osv
 from openerp.tools.translate import _
 
+from lx_order import lx_order
 from lx_data import lx_data
 from tools import convert_date, parse_date
 from auto_vivification import AutoVivification
 
-class lx_sales_order(lx_data):
+class lx_sales_order(lx_order):
     """
     Handles the importation and exportation of a sales order's delivery order
     """
@@ -38,6 +39,9 @@ class lx_sales_order(lx_data):
         '[move_lines].product_id.ean13',
         '[move_lines].product_qty',
     }
+    
+    _root_node_name = 'InboundShipment'
+    _header_node_name = 'InboundShipmentHeader'
 
     def extract(self, picking_out):
         """
@@ -148,105 +152,3 @@ class lx_sales_order(lx_data):
             self.data['DeliveryOrderCreate']['DeliveryOrderLines']['DeliveryOrderLine'].append(line)
 
         return self
-
-    def upload(self, cr, lx_manager):
-        """
-        Only upload BL's with article lines. Otherwise, all articles are non-uploadable (service, delivery product), 
-	so return False  so the BL can be automatically closed at sale_order.py level.
-        
-        Save uploaded file name to lx_file_name field.
-        """
-        if self.data['order']['articles']:
-            res = super(lx_sales_order, self).upload(cr, lx_manager)
-            if self.browse_record and self.file_name:
-                self.browse_record.write({'lx_file_name': self.file_name})
-            return res
-        else:
-            return False
-        
-    def _find_picking(self, cr, picking_out_obj, picking_name):
-        """ Finds pickings by name. If name >= 30, use wildcard at end due to length limitations of LX1 """
-        if len(picking_name) < 30:
-            return picking_out_obj.search(cr, 1, [('name', '=', picking_name)])
-        else:
-            return picking_out_obj.search(cr, 1, [('name', 'ilike', picking_name)])
-
-    def process(self, pool, cr, expedition):
-        """
-        Update picking tracking numbers / cancel picking orders
-        @param pool: OpenERP object pool
-        @param cr: OpenERP database cursor
-        @param AutoVivification expedition: Data from LX1 describing the expedition of the SO
-        """
-        # extract information
-        assert 'NUM_FACTURE_BL' in expedition, 'An expedition has been skipped because it was missing a NUM_FACTURE_BL'
-
-        picking_name = expedition['NUM_FACTURE_BL']
-        status = 'STATUT' in expedition and expedition['STATUT'] or ''
-        tracking_number = 'NUM_TRACKING' in expedition and expedition['NUM_TRACKING'] or ''
-
-        # find original picking
-        picking_out_obj = pool.get('stock.picking.out')
-        picking_ids = self._find_picking(cr, picking_out_obj, picking_name)
-        
-        assert len(picking_ids) == 1, 'Found %s pickings with name %s. Should have found 1' % (len(picking_ids), picking_name)
-        picking_id, = picking_ids
-        picking_out = picking_out_obj.browse(cr, 1, picking_id)
-
-        # set / append tracking number on picking
-        if tracking_number:
-            try:
-                if picking_out.carrier_tracking_ref:
-                    existing_tracking_number = picking_out.carrier_tracking_ref.split(',')
-                    if str(tracking_number) not in existing_tracking_number:
-                        existing_tracking_number.append(tracking_number)
-                    tracking_number = ','.join(map(str, existing_tracking_number))
-            except:
-                pass
-            picking_out_obj.write(cr, 1, picking_id, {'carrier_tracking_ref': tracking_number})
-
-        # if status is R, order has been cancelled by LX1 because of lack of stock. We then need to
-        # upload the same BL with a new name and new SO name. We handle this by cancelling BL,
-        # duplicating it, confirming it then fixing the SO state from shipping_except
-        if status == 'R':
-
-            assert picking_out.state in ['assigned', 'confirmed'], \
-                _("The picking %s was not in state assigned or confirmed, and therefore cannot be cancelled") % picking_name
-
-            picking_obj = pool['stock.picking']
-            picking_out_obj = pool['stock.picking.out']
-            sale_order_obj = pool['sale.order']
-
-            # get stock.picking version of stock.picking.out for access to send number field
-            picking = picking_obj.browse(cr, 1, picking_out.id)
-            sale = picking.sale_id
-
-            # value for new picking's lx_send_number
-            send_number = picking.lx_send_number + 1 or 1
-
-            # Cancel original picking, then duplicate and confirm it
-            picking_out_obj.action_cancel(cr, 1, [picking_id])
-
-            # specify a name for the new BL otherwise stock module will delete the origin from it's values
-            defaults = {
-                'lx_send_number': send_number,
-                'name': pool['ir.sequence'].get(cr, 1, 'stock.picking.out')
-            }
-
-            picking_id = picking_obj.copy(cr, 1, picking_id, defaults)
-            picking_obj.signal_button_confirm(cr, 1, [picking_id])
-
-            # fix sale order state from shipping_except to in progress
-            sale_values = {}
-            if sale.state == 'shipping_except':
-                sale_values['state'] = 'progress'
-                sale_values['shipped'] = False
-
-                if (sale.order_policy == 'manual'):
-                    for line in sale.order_line:
-                        if (not line.invoiced) and (line.state not in ('cancel', 'draft')):
-                            sale_values['state'] = 'manual'
-                            break
-            if sale_values:
-                sale_order_obj.write(cr, 1, sale.id, sale_values)
-        return True
