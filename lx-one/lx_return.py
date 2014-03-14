@@ -21,7 +21,7 @@ class lx_return(lx_data):
     in an arbitrary number of batches, and LX1 does not know about our split picking codes.
     """
 
-    file_name_prefix = ['CRET']
+    object_type = ['CRET']
 
     return_code_mapping = {
         'NP': 'NPAI / Déménagé',

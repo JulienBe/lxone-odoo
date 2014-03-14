@@ -18,7 +18,7 @@ class lx_sales_order(lx_order):
     Handles the importation and exportation of a sales order's delivery order
     """
 
-    file_name_prefix = ['CMDE', 'CREX']
+    object_type = ['OpenErpOutboundShipment']
     message_identifier = 'OpenErpDeliveryOrderCreate' 
     
     required_fields = {
@@ -40,8 +40,8 @@ class lx_sales_order(lx_order):
         '[move_lines].product_qty',
     }
     
-    _root_node_name = 'InboundShipment'
-    _header_node_name = 'InboundShipmentHeader'
+    _header_node_name = 'OutboundShipmentHeader'
+    _statuses_to_process = ['IN_TRANSIT', 'RECEIVED', 'CONFIRMED']
 
     def extract(self, picking_out):
         """

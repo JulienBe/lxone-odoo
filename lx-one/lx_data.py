@@ -16,10 +16,9 @@ class lx_data(object):
     so you can implement your own data input and output functions that build
     the self.data AutoVivification object (See lx_sales_order class for an example).
 
-    Don't forget to set the file_name_prefix variable to define the xml
-    file name prefix (XXXX-YYYMMDD.xml). When the poll function processes a file, 
-    it chooses which lx_data subclass to hand the data to based on the file_name_prefix 
-    of the class and the file.
+    Don't forget to set the object_type variable to define the xml data type. When we 
+    execute an update, we choose which lx_data subclass to hand the data 
+    to based on the object_type of the class and the file.
 
     After building the self.data dict, this object is passed to the upload_data function
     of the lx_connection object. It will call generate_xml to convert the self.data dict
@@ -32,19 +31,18 @@ class lx_data(object):
     def __init__(self, data=None):
         """ Either parse XML from LX1, or call self.extract on a browse_record """
         super(lx_data, self).__init__()
-        self.data = AutoVivification()
 
         if data and isinstance(data, browse_record):
             self.browse_record = data
             self._validate_required_fields()
             self.extract(data)
-        elif data and isinstance(data, (dict, list, tuple)):
-            self.data = AutoVivification.dict_to_auto_vivification(data)
+        elif data and isinstance(data, (dict, OrderedDict, list)):
+            self.data = data
         elif data:
-            raise TypeError('XML must be a string, unicode or AutoVivification object')
+            raise TypeError('Data must be a browse record, dict, OrderedDict or list')
 
     # list of file name prefix's that this class should handle when receiving them from LX1
-    file_name_prefix = []
+    object_type = []
     
     # List of fields that should be truthy on the browse record. See _validate_required_fields
     required_fields = []
@@ -238,7 +236,7 @@ class lx_data(object):
                 self._check_ordered_dicts_only(val)
 
     @staticmethod
-    def reorganise_data(data):
+    def reorganise_data(data, header, namespace):
         """
         This method is called by the poll function to give each object type the opportunity
         to reorganise the data received from LX1, after it is parsed from the XML file and
@@ -247,7 +245,7 @@ class lx_data(object):
         @param AutoVivification data: The parsed XML from LX1
         @return data 
         """
-        return data
+        return data, header, namespace
 
     def extract(self, record):
         """

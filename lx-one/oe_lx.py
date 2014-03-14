@@ -46,7 +46,7 @@ class oe_lx(object):
         
         vals = {
            'xml': xml, 
-           'object_type': lx_data_subclass.file_name_prefix[0], 
+           'object_type': lx_data_subclass.object_type[0], 
            'record_id': '%s,%s' % (browse_record._name, browse_record.id),
         }
         

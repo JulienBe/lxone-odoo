@@ -14,7 +14,7 @@ class lx_picking(lx_data):
     Handles the processing of MVTS files to receive a purchase order or deliver a sales order
     """
 
-    file_name_prefix = ['MVTS']
+    object_type = ['MVTS']
     pre_process_errors = []
 
     def pre_process_hook(self, pool, cr):

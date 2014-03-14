@@ -16,7 +16,7 @@ class lx_purchase_order(lx_order):
     Handles the extraction of a purchase order's picking.
     """
 
-    file_name_prefix = ['FOUR']
+    object_type = ['OpenErpInboundShipment']
     message_identifier = 'OpenErpInboundShipmentCreate'
     
     required_fields = {
@@ -35,8 +35,8 @@ class lx_purchase_order(lx_order):
         '[move_lines].product_qty',
     }
     
-    _root_node_name = 'InboundShipment'
     _header_node_name = 'InboundShipmentHeader'
+    _statuses_to_process = ['CONFIRMED']
     
     def extract(self, picking):
         """

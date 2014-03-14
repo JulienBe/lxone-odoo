@@ -33,7 +33,7 @@ class lx_update(osv.osv):
                 ('executed', 'Executed'), 
                 ('failed', 'Failed')
             ), 'State', help="The state field indicates the progression along the process workflow of the update"),
-        'object_type': fields.char('Object Type', size=12, required=True, readonly=True, help="The type of data contained in this update"),
+        'object_type': fields.char('Object Type', size=128, required=True, readonly=True, help="The type of data contained in this update"),
         'data': fields.text('Data', required=True, help="The data in JSON format that was downloaded from LX1"),
         'result': fields.text('Execution Result', readonly=True, help="Any errors during the update execution process will be saved here"),
         'node_number': fields.integer('XML Node Number', required=True, readonly=True, help="The XML node number in the file that created this update"),
@@ -68,7 +68,7 @@ class lx_update(osv.osv):
     def execute(self, cr, uid, ids, context=None):
         """
         Sorts IDs by their sequence, then find an appropriate lx_data child class based on 
-        the update.object_type and lx_data.file_name_prefix, instantiate it and call process.
+        the update.object_type, instantiate it and call process.
         Then set state to executed, or catch errors and set as failed.
         """
         updates = self.read(cr, uid, ids, ['sequence'], context=context)

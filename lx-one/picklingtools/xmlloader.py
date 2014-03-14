@@ -908,7 +908,7 @@ class XMLLoaderA(object) :
           ii = self._peekChar()
           if (ii==EOF) : break
           c = ii
-          if (c.isalnum() or c=='_') :
+          if (c.isalnum() or c in ['_', ':']) :
               self._getChar()
               name.append(c)
           else :

@@ -8,7 +8,7 @@ from lx_data import lx_data
 
 class lx_product(lx_data):
 
-	file_name_prefix = ['ARTI']
+	object_type = ['ARTI']
 	message_identifier = 'OpenErpItemCreate'
 
 	required_fields = [

@@ -36,7 +36,7 @@ class lx_file_received(osv.osv):
         'xml': fields.text('XML Data', required=True, help="The XML that was inside the file from LX1"),
         'parsed_xml': fields.text('Parsed XML Data', help="The result of parsing the XML data from the file"),
         'result': fields.text('Failure Message', readonly=True, help="Any errors encountered during processing the file will be listed here"),
-        'object_type': fields.char('Object Type', size=12, required=True, readonly=True, help="The type of data contained in this file"),
+        'object_type': fields.char('Object Type', size=128, readonly=True, help="The type of data contained in this file"),
         'file_name': fields.char('File Name', size=64, required=True, readonly=True, help="The name of the file that contained the XML"),
     }
 
@@ -88,14 +88,21 @@ class lx_file_received(osv.osv):
             try:
                 parsed_xml = xml2dict.ConvertFromXML(file_received.xml) # step inside to find out how to include XML_LOAD_USE_OTABS option
                 
+                # work out object type so it can be written to file.received
+                object_type = self._get_object_type(cr, uid, parsed_xml)
+                
                 # change state
-                file_received.write({'state': 'to_generate_updates', 'parsed_xml': parsed_xml})
-                parse_result[file_received['id']] = True
+                file_received.write({
+                                     'state': 'to_generate_updates', 
+                                     'parsed_xml': parsed_xml,
+                                     'object_type': object_type,
+                                    })
+                parse_result[file_received.id] = True
                 
             except Exception, e:
                 result = 'Error while parsing: %s' % unicode(e)
                 file_received.write({'failed': True, 'result': result})
-                parse_result[file_received['id']] = False
+                parse_result[file_received.id] = False
                 
         return parse_result
 
@@ -104,19 +111,17 @@ class lx_file_received(osv.osv):
         all_ids = self.search(cr, uid, [('state', '=', 'to_parse')], context=context)
         return self.parse(cr, uid, all_ids, context=context)
     
-    def _interpolate_object_type(self, cr, uid, ids):
-        """ tries to work out the object type from the parsed xml. Returns dictionary mapping of ids """
-        type = 'TEST'
-        return dict.fromkeys(ids, type)
+    def _get_object_type(self, cr, uid, parsed_xml):
+        """ 
+        Works out the object type from the parsed xml 
+        @param dict parsed_xml: dictionary representing the xml received for the file
+        """
+        return parsed_xml['ServiceRequestHeader']['MessageIdentifier']
     
-    def reorganise_data(self, cr, uid, ids, context=None):
-        """ Interpolates the data type of the file, then calls reorganise_data on the appropriate lx_data subclass """
-        object_type = self._interpolate_object_type(cr, uid, ids)
-        
-        for file_received in self.browse(cr, uid, ids, context=context):
-            cls = get_lx_data_subclass(object_type[file_received.id])
-            reorganised_parsed_xml = cls.reorganise_data(file_received.parsed_xml)
-            file_received.write({'parsed_xml': reorganised_parsed_xml, 'object_type': object_type[file_received.id]})
+    def reorganise_data(self, cr, uid, data, header, namespace, object_type, context=None):
+        """ Calls reorganise_data on the appropriate lx_data subclass """
+        cls = get_lx_data_subclass(object_type)
+        return cls.reorganise_data(data, header, namespace)
     
     def generate_updates(self, cr, uid, ids, context=None):
         """
@@ -137,12 +142,18 @@ class lx_file_received(osv.osv):
                 activity = 'evalling the data'
                 data = eval(file_received.parsed_xml)
                 
+                # seperate service definition from service header
+                content_node_name = data['ServiceDefinition'].keys()[0]
+                namespace = data['__attrs__']
+                header = data['ServiceRequestHeader']
+                data = data['ServiceDefinition'][content_node_name]
+                
                 if not isinstance(data, list):
                     data = [data]
                 
                 # reorganise the data for processing
                 activity = 'reorganising the data'
-                self.reorganise_data(cr, uid, [file_received.id], context)
+                data, header, namespace = self.reorganise_data(cr, uid, data, header, namespace, file_received.object_type, context)
                 
                 activity = 'creating the updates'
                 for update_index in xrange(0, len(data)):
@@ -151,7 +162,7 @@ class lx_file_received(osv.osv):
                     update_obj = self.pool.get('lx.update')
                     vals = {
                         'file_received_id': file_received.id,
-                        'object_type': 'TEST',
+                        'object_type': file_received.object_type,
                         'data': update,
                         'node_number': update_index + 1,
                     }

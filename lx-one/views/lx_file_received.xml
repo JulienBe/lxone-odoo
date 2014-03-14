@@ -40,6 +40,7 @@
                         	<field name="create_date" />
                             <field name="file_name" />
                             <field name="sequence" />
+                            <field name="object_type" />
                             <notebook colspan="4">
                             	<page string="XML">
                             		<field name="xml" attrs="{'readonly': [('state', '!=', 'to_parse')]}" />

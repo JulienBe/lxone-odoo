@@ -1,5 +1,6 @@
 from openerp.osv import osv
 from openerp.tools.translate import _
+from openerp import pooler
 
 from ftplib import all_errors
 from StringIO import StringIO
@@ -17,6 +18,15 @@ from lx_product import lx_product
 from lx_return import lx_return
 from lx_stock import lx_stock
 from lx_picking import lx_picking
+
+lx_classes = [
+    lx_purchase_order,
+    lx_sales_order,
+    lx_product,
+    lx_return,
+    lx_stock,
+    lx_picking
+]
 
 class lx_manager(osv.osv):
     """
@@ -95,6 +105,8 @@ class lx_manager(osv.osv):
                 'log': [],
             }
             sync_id = sync_obj.create(cr, uid, sync_vals)
+            cr.commit()
+            new_cursor = False
 
             # Process files within try catch block and append errors to sync_vals
             try:
@@ -122,12 +134,20 @@ class lx_manager(osv.osv):
                     except Exception as e:
                         sync_vals['log'].append('Error while %s for %s: %s' % (activity, file_name, unicode(e)))
                         files_processed -= 1
+                        cr = pooler.get_db(cr.dbname).cursor()
+                        new_cursor = True
                         
                     finally:
                         # commit the OpenERP cursor inbetween files
-                        cr and cr.commit()
+                        cr.commit()
                         
             finally:
+                # update the sync log
+                sync_obj.write(cr, uid, [sync_id], sync_vals)
+                cr.commit()
+                if new_cursor:
+                    cr.close()
+                
                 # check we are still connected, then navigate back a directory for any further operations
                 if conn._connected:
                     conn.cd('..')
@@ -157,8 +177,8 @@ class lx_manager(osv.osv):
 
         return sync_id
 
-def get_lx_data_subclass(file_name_prefix):
-    """ Finds a subclass of lx_data whose file_name_prefix matches @param file_name_prefix """
-    class_for_data_type = [cls for cls in lx_data.__subclasses__() if file_name_prefix in cls.file_name_prefix]
-    assert len(class_for_data_type) == 1, _('Should have found 1 class for data type %s' % file_name_prefix)
+def get_lx_data_subclass(object_type):
+    """ Finds a subclass of lx_data whose object_type matches @param object_type """
+    class_for_data_type = [cls for cls in lx_classes if object_type in cls.object_type]
+    assert len(class_for_data_type) == 1, _('Should have found 1 class for data type %s' % object_type)
     return class_for_data_type[0]
