@@ -463,10 +463,6 @@ class XMLDumper(object) :
                                  (ii==0 and len(l)==1))
             continue
 
-        # If list of 1, preserve listness by adding type field
-        if (ii==0 and len(l)==1) :
-            attrs["type__"]="list"
-
         primitive_type = not self._IsComposite(value_ptr)
         self._XMLDumpStartTag(tag, attrs, indent, primitive_type, False,
                               was_array_typecode)

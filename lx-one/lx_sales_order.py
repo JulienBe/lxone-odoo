@@ -76,15 +76,13 @@ class lx_sales_order(lx_order):
         self.data = OrderedDict([
             ('DeliveryOrderCreate', OrderedDict([
                 ('DeliveryOrderHeader', OrderedDict([
-                    ('ClientOfOrder', shipping_partner.name),
+                    ('ClientOfOrder', 'FW9'),
                     ('OrderReference', picking_out.sale_id.name),
-                    ('Warehouse', ''),
+                    ('Warehouse', 'GAR'),
                     ('CustomerId', invoice_partner.id),
                     ('ShippingType', carrier_name),
-                    ('ExpectedShippingDate', parse_date(picking_out.min_date).isoformat()),
-                    ('ExpectedDeliveryDate', ''),
-                    ('RegistrationTime', parse_date(picking_out.create_date).isoformat()),
-                    ('Remark', picking_out.note),
+                    ('ExpectedDeliveryDate', parse_date(picking_out.min_date).isoformat()),
+                    ('Remark', picking_out.note or ''),
                     ('DocumentFileNumber', picking_out.name),
                     ('Addresses', OrderedDict([
                         ('Address', [OrderedDict([
@@ -138,7 +136,7 @@ class lx_sales_order(lx_order):
                 ('LineReference', move.id),
                 ('Item', OrderedDict([
                      ('ItemAttributes', OrderedDict([
-                         ('Client', shipping_partner.name),
+                         ('Client', 'FW9'),
                          ('Item', move.product_id.ean13),
                      ])),
                      ('SerialCaptureFlag', 'No'),

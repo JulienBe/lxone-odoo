@@ -1,4 +1,6 @@
 from copy import deepcopy
+import HTMLParser
+
 from openerp.osv import osv, fields
 from openerp.tools.translate import _
 
@@ -9,6 +11,7 @@ class oe_lx(object):
     """
     Define sync fields that all uploadable oe objects should have
     """
+    html_parser = HTMLParser.HTMLParser()
     
     def _get_files_sent(self, cr, uid, ids, field_name, arg, context=None):
         """
@@ -40,6 +43,7 @@ class oe_lx(object):
             data = lx_data_subclass(browse_record)
             xml_io = data.generate_xml()
             xml = xml_io.getvalue()
+            xml = self.html_parser.unescape(xml)
             xml_io.close()
         except AssertionError as assertion_error:
             raise osv.except_osv(_("Error While Uploading:"), _(', '.join(assertion_error.args)))

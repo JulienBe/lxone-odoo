@@ -1,5 +1,6 @@
 from datetime import datetime
 from dateutil.parser import parse
+import pytz
 
 lx_date_format = '%Y%m%d'
 openerp_date_format = '%Y-%m-%d %H:%M:%S'
@@ -15,7 +16,9 @@ def convert_date(d):
 
 def parse_date(d):
 	""" Gets a datetime object from various string date formats """
-	return parse(d, dayfirst=True)
+	d = parse(d, dayfirst=True)
+	d = pytz.utc.localize(d)
+	return d
 
 def get_config(pool, cr, config_name, value_type=str):
     """

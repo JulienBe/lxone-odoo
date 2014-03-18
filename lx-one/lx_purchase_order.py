@@ -9,7 +9,7 @@ from openerp.tools.translate import _
 from lx_order import lx_order
 from auto_vivification import AutoVivification
 from lx_data import lx_data
-from tools import convert_date
+from tools import convert_date, parse_date
 
 class lx_purchase_order(lx_order):
     """
@@ -47,19 +47,19 @@ class lx_purchase_order(lx_order):
         self.data = OrderedDict([
             ('InboundShipmentCreate', OrderedDict([
                 ('InboundShipmentHeader', OrderedDict([
-                    ('ClientOfOrder', picking.partner_id.name),
+                    ('ClientOfOrder', 'FW9'),
                     ('ShipmentReference', picking.name),
-                    ('Warehouse', ''),
+                    ('Warehouse', 'GAR'),
                     ('OrderType', 'PO'),
                     ('SupplierId', picking.partner_id.name),
                     ('Remark', picking.note),
-                    ('DocumentFileNumber', picking.origin)
-                    ('RegistrationDate', picking.date),
-                    ('ExpectedDepartureTime', picking.min_date),
+                    ('DocumentFileNumber', picking.origin),
+                    ('RegistrationDate', parse_date(picking.date).isoformat()),
+                    ('ExpectedArrivalTime', parse_date(picking.min_date).isoformat()),
                     ('Addresses', OrderedDict([
                         ('Address', [
                         OrderedDict([
-                            ('Type', 'ShipTo'),
+                            ('Type', 'ShipFrom'),
                             ('PartnerId', picking.partner_id.name),
                             ('Name', picking.partner_id.name),
                             ('City', picking.partner_id.city),
@@ -82,7 +82,7 @@ class lx_purchase_order(lx_order):
                 ('LineReference', move.id),
                 ('Item', OrderedDict([
                      ('ItemAttributes', OrderedDict([
-                         ('Client', picking.partner_id.name),
+                         ('Client', 'FW9'),
                          ('Item', move.product_id.ean13),                   
                      ])),
                 ])),
