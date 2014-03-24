@@ -26,7 +26,7 @@ class lx_file_sent(osv.osv):
     """
 
     _name = 'lx.file.sent'
-    _rec_name = 'file_name'
+    _rec_name = 'xml_file_name'
     _order = 'create_date DESC'
 
     _columns = {
@@ -37,16 +37,21 @@ class lx_file_sent(osv.osv):
                 ('uploaded', 'Uploaded'), 
             ), 'State', help="The state represents this record's stage in the upload process", required=True),
         'failed': fields.boolean('Failed', help="Indicates there was a problem while uploading the file", readonly=True),
-        'xml': fields.text('XML Data', required=True, help="The XML that should be uploaded to LX1"),
+        'xml': fields.text('XML', required=True, help="The XML that should be uploaded to LX1"),
+        'content_type': fields.selection((('xml', 'XML'), ('pdf', 'PDF')), 'Content Type', readonly=True),
         'result': fields.text('Failure Message', help="Any errors encountered during file upload will be listed here", readonly=True),
         'object_type': fields.char('Object Type', size=12, required=True, help="The type of data contained in this file", readonly=True),
-        'file_name': fields.char('File Name', size=64, required=True, help="The name of the file that contained the XML", readonly=True),
-        'record_id': fields.reference('Record To Upload', list({(filter_inherit(model._inherit), friendly_name(model._inherit)) for model in oe_lx.oe_lx.__subclasses__()}), 128, required=True, readonly=True),
+        'xml_file_name': fields.char('File Name', size=64, required=True, help="The name of the file that contained the XML", readonly=True),
+        'upload_file_name': fields.char('Uploaded File Name', size=64, help="The name of the file to be uploaded", readonly=True),
+        'parent_file_id': fields.many2one('lx.file.sent', 'Parent File', help="This file is an attachment, so the parent file is the file referencing this attachment", readonly=True),
+        'attachment_file_ids': fields.one2many('lx.file.sent', 'parent_file_id', 'Attachments', help="List of attachments uploaded with this file", readonly=True),
+        'record_id': fields.reference('Record To Upload', list({(filter_inherit(model._inherit), friendly_name(model._inherit)) for model in oe_lx.oe_lx.__subclasses__()}), 128, readonly=True),
     }
 
-    _defaults = { 
+    _defaults = {
+        'content_type': 'xml',
         'state': 'to_upload',
-        'file_name': lambda obj, cr, uid, context: '%s_%s.xml' % (get_config(obj.pool, cr, 'lx_company_name'), obj.pool.get('ir.sequence').get(cr, uid, 'lx.file.sent')),
+        'upload_file_name': lambda obj, cr, uid, context: '%s_%s.xml' % (get_config(obj.pool, cr, 'lx_company_name'), obj.pool.get('ir.sequence').get(cr, uid, 'lx.file.sent')),
     } 
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -65,7 +70,7 @@ class lx_file_sent(osv.osv):
         for file_sent in self.browse(cr, uid, ids):
             try:
                 with lx_manager.connection(cr) as conn:
-                    self.file_name = conn.upload_file_sent(cr, uid, file_sent)
+                    conn.upload_file_sent(cr, uid, file_sent)
                     file_sent.write({'state': 'uploaded'})
             except lx_manager.ftp_exceptions as e:
                 raise except_osv(_("Upload Problem"), \

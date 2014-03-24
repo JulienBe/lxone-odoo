@@ -54,7 +54,7 @@ class lx_sales_order(lx_order):
         shipping_partner = picking_out.sale_id.partner_shipping_id
         invoice_partner = picking_out.sale_id.partner_invoice_id
         carrier_name = picking_out.sale_id.carrier_id and picking_out.sale_id.carrier_id.lx_ref or ''
-
+    
         # Delivery method can also be added as a move line, so find all move lines whose products
         # are the delivery products of a delivery method and save IDS and lx ref for later
         carrier_move_ids = []
@@ -72,6 +72,17 @@ class lx_sales_order(lx_order):
                 if move.id in carrier_move_ids:
                     carrier = carrier_obj.browse(picking_out._cr, 1, carrier_map[move.product_id.id][0])
                     carrier_name = carrier.lx_ref or ''
+        
+        # generate invoice reports and attach to self._attachments
+        report_obj = picking.pool.get('ir.actions.report.xml')
+        for invoice in picking.sale_id.invoice_ids:
+            if not invoice.state in ['open', 'paid']:
+                raise osv.except_osv(_('Invoice is Draft'), _('Picking "%s" has an invoice in draft state. All invoices belonging to this picking must be validated before processing.') % picking.name)
+            
+            report_data = {'report_type': u'pdf', 'model': 'account.invoice'}
+            report_name = ('%s-invoice-%d' % (picking_out.name, invoice.id)).replace('/', '-')
+            report_contents, report_extension = report_obj.render_report(picking._cr, picking._uid, [invoice.id],'account.invoice', report_data)
+            self._attachments.append((report_contents, report_name, report_extension, 'InvoiceDoc'))
         
         self.data = OrderedDict([
             ('DeliveryOrderCreate', OrderedDict([
@@ -105,15 +116,7 @@ class lx_sales_order(lx_order):
                         ])]),
                     ])),
                     ('Attributes', OrderedDict([
-                        ('Attribute', [
-                        OrderedDict([
-                            ('AttributeType', 'InvoiceDoc'),
-                            ('AttributeValue', 'SOxxxxx_Invoice.pdf'),
-                        ]),
-                        OrderedDict([
-                            ('AttributeType', 'DeliveryNoteDoc'),
-                            ('AttributeValue', 'SOxxxxx_Invoice.pdf'),
-                        ])]),
+                        ('Attribute', []),
                     ])),
                 ])),
                 ('DeliveryOrderLines', OrderedDict([
@@ -121,6 +124,14 @@ class lx_sales_order(lx_order):
                 ])),
             ])),
         ])
+        
+        # fill attachments
+        for content, name, extension, type in self._attachments:
+            attachment = OrderedDict([
+                            ('AttributeType', type),
+                            ('AttributeValue', '%s.%s' % (name, extension)),
+                         ])
+            self.data['DeliveryOrderCreate']['DeliveryOrderHeader']['Attributes']['Attribute'].append(attachment)
             
         for move in picking_out.move_lines:
 

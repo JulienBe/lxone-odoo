@@ -1,11 +1,12 @@
-from openerp.osv import osv
-from openerp.osv.orm import browse_record
-from openerp.tools.translate import _
-
 from StringIO import StringIO
 from ftplib import FTP
 from ftplib import error_reply, error_temp, error_perm, error_proto, all_errors
 import time
+from base64 import decodestring
+
+from openerp.osv import osv
+from openerp.osv.orm import browse_record
+from openerp.tools.translate import _
 
 from tools import get_config
 from lx_data import lx_data
@@ -165,7 +166,7 @@ class lx_connection(object):
         Create a file with filename and contents in the current or specified directory
         @param buffer contents: Buffer object like StringIO containing contents
         """
-        self._conn.storlines('STOR %s%s' % (directory and directory + '/' or '', filename), contents)
+        self._conn.storbinary('STOR %s%s' % (directory and directory + '/' or '', filename), contents)
 
     def rename(self, old_name, new_name, add_postfix_if_exists=True):
         """ rename / move a file """
@@ -203,24 +204,35 @@ class lx_connection(object):
 
     @ensure_connection
     def upload_file_sent(self, cr, uid, file_sent):
-        """ Takes a browse record on an lx.file.sent object and uploads it to the server """
+        """ 
+        Takes a browse record on an lx.file.sent object and uploads it to the server.
+        """
         assert isinstance(file_sent, browse_record), _('data parameter must extend lx_data class')
         assert file_sent._name == 'lx.file.sent', _("file_sent must have _name 'lx.file.sent'")
         
         self.cd(self._vers_lx)
 
         try:
-            xml_buffer = StringIO(file_sent.xml)
+            # handle different data types appropriately
+            contents = ''
+            if file_sent.content_type == 'xml':
+                contents = file_sent.xml
+            elif file_sent.content_type == 'pdf':
+                contents = decodestring(file_sent.xml)
+            
+            xml_buffer = StringIO(contents)
             files = self.ls()
             
-            if file_sent.file_name in files:
-                raise osv.except_osv(_('File Already Exists'), _("A file with name '%s' already exists on the FTP server! This should never happen as file names should contain unique sequence numbers...") % file_sent.file_name)
+            # raise exception if file already exists
+            if file_sent.upload_file_name in files:
+                raise osv.except_osv(_('File Already Exists'), _("A file with name '%s' already exists on the FTP server! This should never happen as file names should contain unique sequence numbers...") % file_sent.upload_file_name)
             
-            self.mkf(file_sent.file_name, xml_buffer)
+            # do actual upload
+            self.mkf(file_sent.upload_file_name, xml_buffer)
         finally:
             self.try_cd('..')
             
-        return file_sent.file_name
+        return file_sent.upload_file_name
 
     @ensure_connection            
     def delete_data(self, file_name):

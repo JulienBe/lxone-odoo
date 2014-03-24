@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <tree string="Updates" colors="red:failed==True;blue:state=='done'">
                 	<field name="create_date" />
-                	<field name="file_name" />
+                	<field name="xml_file_name" />
                     <field name="state"/> 
                     <field name="sequence"/>
                     <field name="result" />
@@ -38,7 +38,7 @@
                         <group>
                         	<field name="failed" invisible="1" />
                         	<field name="create_date" />
-                            <field name="file_name" />
+                            <field name="xml_file_name" />
                             <field name="sequence" />
                             <field name="object_type" />
                             <notebook colspan="4">

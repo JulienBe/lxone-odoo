@@ -1,5 +1,6 @@
 from copy import deepcopy
 import HTMLParser
+import base64
 
 from openerp.osv import osv, fields
 from openerp.tools.translate import _
@@ -35,10 +36,17 @@ class oe_lx(object):
         return super(oe_lx, self).__init__(pool, cr)
 
     def upload(self, cr, uid, browse_record, lx_data_subclass):
-        """ A convenience method for child classes to create a file.sent object and trigger upload on it """
+        """ 
+        Should be called by child classes to handle data uploads correctly.
+        This method instantiates lx_data_subclass with browse_record (thereby calling extract on it)
+        then calls generate_xml to convert the data to XML. It then uploads any _attachments, and
+        finally creates a file_sent_obj and calls upload on it.
+        @return: List of uploaded file name[s]
+        """
         assert issubclass(lx_data_subclass, lx_data), _("lx_data_subclass parameter should be a subclass of lx_data")
         file_sent_obj = self.pool.get('lx.file.sent')
         
+        # instantiate lx_data_subclass with browse_record, then call generate xml
         try:
             data = lx_data_subclass(browse_record)
             xml_io = data.generate_xml()
@@ -48,12 +56,30 @@ class oe_lx(object):
         except AssertionError as assertion_error:
             raise osv.except_osv(_("Error While Uploading:"), _(', '.join(assertion_error.args)))
         
+        file_sent_ids = []
+        
+        # create file.sent record for browse_record
         vals = {
-           'xml': xml, 
-           'object_type': lx_data_subclass.object_type[0], 
-           'record_id': '%s,%s' % (browse_record._name, browse_record.id),
+            'xml': xml, 
+            'object_type': lx_data_subclass.object_type[0], 
+            'record_id': '%s,%s' % (browse_record._name, browse_record.id),
         }
         
-        file_id = file_sent_obj.create(cr, uid, vals)
-        file_name = file_sent_obj.upload(cr, uid, [file_id])
-        return file_name
+        parent_file_id = file_sent_obj.create(cr, uid, vals)
+        file_sent_ids.append(parent_file_id)
+        
+        # create file.sent records for all attachments 
+        for contents, name, extension, type in data._attachments:
+            vals = {
+                'upload_file_name': '%s.%s' % (name, extension),
+                'xml': base64.encodestring(contents), 
+                'object_type': 'Attachment', 
+                'parent_file_id': parent_file_id,
+                'content_type': 'pdf',
+            }
+            
+            file_sent_ids.append(file_sent_obj.create(cr, uid, vals))
+        
+        # upload all created file.sent
+        for file_id in file_sent_ids:
+            file_sent_obj.upload(cr, uid, [file_id])

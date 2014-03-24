@@ -20,7 +20,7 @@ class lx_update(osv.osv):
     def _get_name(self, cr, uid, ids, field_name, arg, context):
         res = dict.fromkeys(ids)
         for update in self.browse(cr, uid, ids, context=context):
-            res[update.id] = '%s, Node %s' % (update.file_received_id.file_name, update.node_number)
+            res[update.id] = '%s, Node %s' % (update.file_received_id.xml_file_name, update.node_number)
         return res
 
     _columns = {

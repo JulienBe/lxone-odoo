@@ -19,7 +19,7 @@ class lx_file_received(osv.osv):
     """
 
     _name = 'lx.file.received'
-    _rec_name = 'file_name'
+    _rec_name = 'xml_file_name'
 
     _columns = {
         'create_date' : fields.datetime('Create Date', readonly=True),
@@ -37,7 +37,7 @@ class lx_file_received(osv.osv):
         'parsed_xml': fields.text('Parsed XML Data', help="The result of parsing the XML data from the file"),
         'result': fields.text('Failure Message', readonly=True, help="Any errors encountered during processing the file will be listed here"),
         'object_type': fields.char('Object Type', size=128, readonly=True, help="The type of data contained in this file"),
-        'file_name': fields.char('File Name', size=64, required=True, readonly=True, help="The name of the file that contained the XML"),
+        'xml_file_name': fields.char('File Name', size=64, required=True, readonly=True, help="The name of the file that contained the XML"),
     }
 
     _defaults = { 

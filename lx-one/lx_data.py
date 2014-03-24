@@ -31,6 +31,7 @@ class lx_data(object):
     def __init__(self, data=None):
         """ Either parse XML from LX1, or call self.extract on a browse_record """
         super(lx_data, self).__init__()
+        self._attachments = [] # clear attachments for each new object
 
         if data and isinstance(data, browse_record):
             self.browse_record = data
@@ -51,10 +52,13 @@ class lx_data(object):
     message_identifier = None
     
     # file name generated and set by the upload function
-    file_name = ''
+    upload_file_name = ''
     
     # When instantialising from a browse_record, save a reference to it  
     browse_record = None
+    
+    # extract function adds tuples containing attachment (contents, name, extension, type) to be uploaded along with main file 
+    _attachments = []
 
     # Use the generic xml template defined in generate_xml
     _use_xml_template = True
@@ -198,7 +202,7 @@ class lx_data(object):
                 ('__attrs__', OrderedDict([ # add xmlns etc to root element (ServiceRequest)
                     ('xmlns', 'http://www.aqcon.com/lxone/inboundService'),
                     ('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance'),
-                    ('xsi:schemaLocation', 'http://www.aqcon.com/lxone/inboundService C:/projects/pvszmd/server/java/edi/xml/v1/schemas/src/main/xsd/InboundService.xsd'),
+                    ('xsi:schemaLocation', 'http://www.aqcon.com/lxone/inboundService /home/openerp/openerp/lx-one/schemas/InboundService.xsd'),
                 ])),
                 ('ServiceRequestHeader', OrderedDict([
                     ('ServiceRequestor', 'LX One'),

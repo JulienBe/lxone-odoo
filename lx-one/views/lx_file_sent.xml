@@ -6,6 +6,7 @@
             <field name="name">lx.file.sent.tree</field>
             <field name="model">lx.file.sent</field>
             <field name="type">tree</field>
+            <field name="field_parent">attachment_file_ids</field>
             <field name="arch" type="xml">
                 <tree string="Updates" colors="red:failed==True;blue:state=='uploaded'">
                 	<field name="failed" invisible="True" />
@@ -13,7 +14,7 @@
                 	<field name="state" />
                     <field name="upload_date"/>
                     <field name="record_id"/> 
-                    <field name="file_name"/>
+                    <field name="xml_file_name"/>
                     <button type="object" name="upload" string="Upload" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','=','uploaded')]}" />
                 </tree>
             </field>
@@ -39,7 +40,8 @@
                             <field name="object_type" />
                             <field name="xml" attrs="{'readonly': [('state','=','uploaded')]}" />
                             <field name="result" attrs="{'invisible': [('failed', '=', False)]}" style="color: red" />
-                            <field name="file_name" attrs="{'invisible': [('state', '!=', 'uploaded')]}" />
+                            <field name="xml_file_name" attrs="{'invisible': [('state', '!=', 'uploaded')]}" />
+                            <field name="attachment_file_ids" />
                         </group>
                     </sheet>
                 </form>
