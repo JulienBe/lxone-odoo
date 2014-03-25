@@ -5,6 +5,7 @@ from collections import OrderedDict
 from openerp.osv.orm import browse_record
 from openerp.osv.osv import except_osv
 from openerp.tools.translate import _
+from tools import string_to_file_name
 
 from picklingtools.xmldumper import *
 from picklingtools import xml2dict
@@ -31,8 +32,13 @@ class lx_data(object):
     def __init__(self, data=None):
         """ Either parse XML from LX1, or call self.extract on a browse_record """
         super(lx_data, self).__init__()
-        self._attachments = [] # clear attachments for each new object
+        
+        # clear instance properties
+        self._attachments = []
+        self.upload_file_name = ''
+        self.browse_record = None
 
+        # handle data param
         if data and isinstance(data, browse_record):
             self.browse_record = data
             self._validate_required_fields()
@@ -58,7 +64,7 @@ class lx_data(object):
     browse_record = None
     
     # extract function adds tuples containing attachment (contents, name, extension, type) to be uploaded along with main file 
-    _attachments = []
+    _attachments = None
 
     # Use the generic xml template defined in generate_xml
     _use_xml_template = True
@@ -187,6 +193,28 @@ class lx_data(object):
                     val[param_name] = param_value
 
             target.append(val)
+            
+    def add_attachments(self, pool, cr, uid, model, ids, report_name, file_name_prefix, report_type, data_type='pdf'):
+        """ 
+        Generate attachments for ids and insert the data into self._attachments
+        @param dict pool: openerp object pool
+        @param string model: The model for which to create the report
+        @param list ids: The ids of the records for which to create the report
+        @param string report_name: The internal technical name of the report to be used
+        @param string file_name_prefix: The prefix for the file name to be added to _ObjectId
+        @param string report_type: the type string to be entered into the tuple. This will be used when uploading data to LX1
+        @param string data_type: the type of data returned by this call. Used internally by the report mechanism
+        """
+        report_obj = pool.get('ir.actions.report.xml')
+        if not hasattr(ids, '__iter__'):
+            ids = [ids]
+            
+        report_data = {'report_type': data_type, 'model': model}
+        
+        for obj_id in ids:
+            file_name = string_to_file_name('%s_%d' % (file_name_prefix, obj_id))
+            report_contents, report_extension = report_obj.render_report(cr, uid, [obj_id], report_name, report_data)
+            self._attachments.append((report_contents, file_name, report_extension, report_type))
 
     def generate_xml(self):
         """ 

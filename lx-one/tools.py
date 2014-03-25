@@ -1,6 +1,7 @@
 from datetime import datetime
 from dateutil.parser import parse
 import pytz
+import string
 
 lx_date_format = '%Y%m%d'
 openerp_date_format = '%Y-%m-%d %H:%M:%S'
@@ -34,3 +35,8 @@ def get_config(pool, cr, config_name, value_type=str):
         return value_type(value)
     else:
         return None
+
+def string_to_file_name(the_str):
+	""" sanitize a string so it is a valid file name """
+	valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+	return ''.join(c for c in the_str if c in valid_chars)

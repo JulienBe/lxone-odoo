@@ -50,7 +50,11 @@ class lx_sales_order(lx_order):
 
         @param picking_out: browse_record(stock.picking.out)
         """
-        picking = picking_out.pool['stock.picking'].browse(picking_out._cr, 1, picking_out.id)
+        pool = picking_out.pool
+        cr = picking_out._cr
+        uid = 1
+        
+        picking = pool['stock.picking'].browse(cr, 1, picking_out.id)
         shipping_partner = picking_out.sale_id.partner_shipping_id
         invoice_partner = picking_out.sale_id.partner_invoice_id
         carrier_name = picking_out.sale_id.carrier_id and picking_out.sale_id.carrier_id.lx_ref or ''
@@ -59,31 +63,31 @@ class lx_sales_order(lx_order):
         # are the delivery products of a delivery method and save IDS and lx ref for later
         carrier_move_ids = []
         if not carrier_name:
-            carrier_obj = picking_out.pool['delivery.carrier']
-            product_obj = picking_out.pool['product.product']
+            carrier_obj = pool['delivery.carrier']
+            product_obj = pool['product.product']
 
             product_ids = [move.product_id.id for move in picking_out.move_lines if move.product_id]
-            carrier_map = product_obj.is_delivery_method(picking_out._cr, 1, product_ids)
+            carrier_map = product_obj.is_delivery_method(cr, uid, product_ids)
 
             carrier_product_ids = [k for k, v in carrier_map.iteritems() if v]
             carrier_move_ids = [move.id for move in picking.move_lines if move.product_id and move.product_id.id in carrier_product_ids]
 
             for move in picking_out.move_lines:
                 if move.id in carrier_move_ids:
-                    carrier = carrier_obj.browse(picking_out._cr, 1, carrier_map[move.product_id.id][0])
+                    carrier = carrier_obj.browse(cr, uid, carrier_map[move.product_id.id][0])
                     carrier_name = carrier.lx_ref or ''
         
-        # generate invoice reports and attach to self._attachments
-        report_obj = picking.pool.get('ir.actions.report.xml')
-        for invoice in picking.sale_id.invoice_ids:
-            if not invoice.state in ['open', 'paid']:
-                raise osv.except_osv(_('Invoice is Draft'), _('Picking "%s" has an invoice in draft state. All invoices belonging to this picking must be validated before processing.') % picking.name)
-            
-            report_data = {'report_type': u'pdf', 'model': 'account.invoice'}
-            report_name = ('%s-invoice-%d' % (picking_out.name, invoice.id)).replace('/', '-')
-            report_contents, report_extension = report_obj.render_report(picking._cr, picking._uid, [invoice.id],'account.invoice', report_data)
-            self._attachments.append((report_contents, report_name, report_extension, 'InvoiceDoc'))
+        # generate invoice reports 
+        if not all([invoice.state in ['open', 'paid'] for invoice in picking.sale_id.invoice_ids]):
+            raise osv.except_osv(_('Invoice is Draft'), _('Picking "%s" has an invoice in draft state. All invoices belonging to this picking must be validated before processing.') % picking.name)
+
+        self.add_attachments(pool, cr, uid, 'account.invoice', [invoice.id for invoice in picking.sale_id.invoice_ids],\
+                              'account.invoice', picking.name + '_invoice', 'InvoiceDoc')
         
+        # generate delivery slip
+        self.add_attachments(pool, cr, uid, 'stock.picking.out', [picking.id], 'stock.picking.list.out', picking.name + '_delivery', 'DeliverySlip')
+
+        # extract browse_record into self.data        
         self.data = OrderedDict([
             ('DeliveryOrderCreate', OrderedDict([
                 ('DeliveryOrderHeader', OrderedDict([

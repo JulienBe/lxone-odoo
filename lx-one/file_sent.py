@@ -2,6 +2,7 @@
 from datetime import datetime
 
 from openerp.osv import osv, fields
+from openerp.osv.osv import except_osv
 from openerp.tools.translate import _
 
 import oe_lx
