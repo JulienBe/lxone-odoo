@@ -1,6 +1,6 @@
 .project
 .pydevproject
 .settings
-addons/
-server/
-web/
+*.pyc
+.bzr
+.bzrignore
