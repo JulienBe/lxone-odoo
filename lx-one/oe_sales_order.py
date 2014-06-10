@@ -50,15 +50,3 @@ class stock_picking(oe_lx, osv.osv):
                 self.upload(cr, 1, picking, lx_sales_order)
 
         return res
-
-class stock_pickin_out(oe_lx, osv.osv):
-    """
-    Disallow creation of pickings without a sale order
-    """
-    _inherit = 'stock.picking.out'
-    
-    def create(self, cr, uid, vals, context=None):
-        """ Don't allow manual creation of picking (without sale_id) """
-        if vals.get('type') == 'out' and not vals.get('sale_id'):
-            raise osv.except_osv(_("Missing Sale ID"), _("Delivery orders should always be created automatically by a sales order"))
-        return super(stock_pickin_out, self).create(cr, uid, vals, context=context)

@@ -10,7 +10,7 @@ from lx_data import lx_data
 
 class oe_lx(object):
     """
-    Define sync fields that all uploadable oe objects should have
+    Define fields and methods that all uploadable oe objects should have
     """
     html_parser = HTMLParser.HTMLParser()
     

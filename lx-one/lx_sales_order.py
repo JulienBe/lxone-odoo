@@ -80,7 +80,7 @@ class lx_sales_order(lx_order):
         # generate invoice reports 
         if not all([invoice.state in ['open', 'paid'] for invoice in picking.sale_id.invoice_ids]):
             raise osv.except_osv(_('Invoice is Draft'), _('Picking "%s" has an invoice in draft state. All invoices belonging to this picking must be validated before processing.') % picking.name)
-
+        
         self.add_attachments(pool, cr, uid, 'account.invoice', [invoice.id for invoice in picking.sale_id.invoice_ids],\
                               'account.invoice', picking.name + '_invoice', 'InvoiceDoc')
         

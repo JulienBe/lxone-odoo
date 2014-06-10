@@ -22,7 +22,7 @@ class product_product(oe_lx, osv.osv):
     def create(self, cr, uid, values, context=None):
         """ Call lx_upload """
         res = super(product_product, self).create(cr, uid, values, context=context)
-        self.lx_upload(cr, 1, res, context=context)
+        self.lx_upload(cr, 1, [res], context=context)
         return res
     
     def lx_upload(self, cr, uid, ids, log=False, context=None):

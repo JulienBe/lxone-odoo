@@ -16,7 +16,7 @@ def all_assigned(picking_obj, cr, ids):
 
 class stock_picking(oe_lx, osv.osv):
     """
-    Prevent manual processing.
+    Prevent manual processing
     """
 
     _inherit = 'stock.picking'
@@ -39,7 +39,7 @@ class stock_picking_in(oe_lx, osv.osv):
         """ Upload this picking to LX1 """
         for picking_id in ids:
             picking = self.browse(cr, uid, picking_id, context=context)
-            self.upload(cr, uid, picking, lx_sales_order)
+            self.upload(cr, uid, picking, picking.type == 'in' and lx_purchase_order or lx_sales_order)
         return True
 
 class stock_picking_out(oe_lx, osv.osv):
