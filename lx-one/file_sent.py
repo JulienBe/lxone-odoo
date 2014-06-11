@@ -41,7 +41,7 @@ class lx_file_sent(osv.osv):
         'xml': fields.text('XML', required=True, help="The XML that should be uploaded to LX1"),
         'content_type': fields.selection((('xml', 'XML'), ('pdf', 'PDF')), 'Content Type', readonly=True),
         'result': fields.text('Failure Message', help="Any errors encountered during file upload will be listed here", readonly=True),
-        'object_type': fields.char('Object Type', size=12, required=True, help="The type of data contained in this file", readonly=True),
+        'object_type': fields.char('Object Type', size=64, required=True, help="The type of data contained in this file", readonly=True),
         'upload_file_name': fields.char('Uploaded File Name', size=64, help="The name of the file to be uploaded", readonly=True),
         'parent_file_id': fields.many2one('lx.file.sent', 'Parent File', help="This file is an attachment, so the parent file is the file referencing this attachment", readonly=True),
         'attachment_file_ids': fields.one2many('lx.file.sent', 'parent_file_id', 'Attachments', help="List of attachments uploaded with this file", readonly=True),
