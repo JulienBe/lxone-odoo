@@ -97,9 +97,8 @@ http://www.picklingtools.com/
         'views/lx_update.xml',
         'views/lx_sync.xml',
         
-        'views/stock_picking_in_form.xml',
+        'views/stock_picking_form.xml',
         'views/res_partner_form.xml',
-        'views/stock_picking_out_form.xml',
         'views/delivery_carrier_form.xml',
         'views/sale_order_form.xml',
     ],

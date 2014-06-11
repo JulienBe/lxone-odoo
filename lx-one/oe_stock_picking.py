@@ -33,23 +33,11 @@ class stock_picking(oe_lx, osv.osv):
 class stock_picking_in(oe_lx, osv.osv):
     """ Inherit the stock.picking.in to prevent manual processing and cancellation after lx upload """
 
-    _inherit = 'stock.picking.in'
+    _inherit = 'stock.picking'
 
     def lx_manuel_upload(self, cr, uid, ids, context=None):
         """ Upload this picking to LX1 """
         for picking_id in ids:
             picking = self.browse(cr, uid, picking_id, context=context)
             self.upload(cr, uid, picking, picking.type == 'in' and lx_purchase_order or lx_sales_order)
-        return True
-
-class stock_picking_out(oe_lx, osv.osv):
-    """ Inherit the stock.picking.in to prevent manual processing and cancellation after LX1 upload """
-
-    _inherit = 'stock.picking.out'
-    
-    def lx_manuel_upload(self, cr, uid, ids, context=None):
-        """ Upload this picking to LX1 """
-        for picking_id in ids:
-            picking = self.browse(cr, uid, picking_id, context=context)
-            self.upload(cr, uid, picking, lx_sales_order)
         return True

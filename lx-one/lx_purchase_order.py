@@ -40,8 +40,8 @@ class lx_purchase_order(lx_order):
     
     def extract(self, picking):
         """
-        Takes a stock.picking.in browse_record and extracts the appropriate data into self.data
-        @param browse_record(stock.picking.in) picking: the stock picking browse record object
+        Takes a stock.picking browse_record and extracts the appropriate data into self.data
+        @param browse_record(stock.picking) picking: the stock picking browse record object
         """
         
         self.data = OrderedDict([

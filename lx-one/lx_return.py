@@ -164,11 +164,11 @@ class lx_return(lx_data):
             
             # write return reason to additional info box  
             return_id, = eval(return_details['domain'])[0][2]
-            pool.get('stock.picking.in').write(cr, 1, return_id, {'note': ret['return_reason']})
+            pool.get('stock.picking').write(cr, 1, return_id, {'note': ret['return_reason']})
             
             # mark return as received
             context = {
-                'active_model': 'stock.picking.in',
+                'active_model': 'stock.picking',
                 'active_ids': [return_id],
                 'active_id': return_id,
             }
@@ -182,7 +182,7 @@ class lx_return(lx_data):
             # the returned products to the customer
             if ret['return_code'] in self.resend_codes:
                 context = {
-                    'active_model': 'stock.picking.in',
+                    'active_model': 'stock.picking',
                     'active_ids': [return_id],
                     'active_id': return_id,
                 }

@@ -35,14 +35,15 @@ class stock_picking(oe_lx, osv.osv):
     """
     _inherit = 'stock.picking'
     
-    def action_assign_wkf(self, cr, uid, ids, context=None):
+    def action_assign(self, cr, uid, ids, context=None):
         """ Upload picking to LX1 """
-        res = super(stock_picking, self).action_assign_wkf(cr, uid, ids, context=context)
-
+        res = super(stock_picking, self).action_assign(cr, uid, ids, context=context)
+        
         for picking_id in ids:
             picking = self.browse(cr, 1, picking_id, context=context)
             
-            if picking.type.lower() == 'out':
+            if picking.picking_type_id.code == 'outgoing' and picking.state == 'assigned':
+                
                 # ensure picking's sales_order has had an invoice created
                 if picking.sale_id.state != 'progress':
                     raise osv.except_osv(_("Sale Order Not Invoiced"), _("The sale order '%s' must be fully invoiced before the picking can be sent to LX1") % picking.sale_id.name)
