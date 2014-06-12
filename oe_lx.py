@@ -43,6 +43,7 @@ class oe_lx(object):
         finally creates a file_sent_obj and calls upload on it.
         @return: List of uploaded file name[s]
         """
+        
         assert issubclass(lx_data_subclass, lx_data), _("lx_data_subclass parameter should be a subclass of lx_data")
         file_sent_obj = self.pool.get('lx.file.sent')
         
@@ -81,5 +82,9 @@ class oe_lx(object):
             file_sent_ids.append(file_sent_obj.create(cr, uid, vals))
         
         # upload all created file.sent
-        for file_id in file_sent_ids:
-            file_sent_obj.upload(cr, uid, [file_id])
+        try:
+            for file_id in file_sent_ids:
+                file_name = file_sent_obj.upload(cr, uid, [file_id])
+        except:
+            file_sent_obj.delete_upload(cr, uid, file_sent_ids)
+            raise

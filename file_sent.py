@@ -70,8 +70,9 @@ class lx_file_sent(osv.osv):
         for file_sent in self.browse(cr, uid, ids):
             try:
                 with lx_manager.connection(cr) as conn:
-                    conn.upload_file_sent(cr, uid, file_sent)
+                    file_name = conn.upload_file_sent(cr, uid, file_sent)
                     file_sent.write({'state': 'uploaded'})
+                    return file_name
             except lx_manager.ftp_exceptions as e:
                 raise except_osv(_("Upload Problem"), \
                         _("".join(["There was a problem uploading the data to the LX1 servers.\n\n",
@@ -79,3 +80,15 @@ class lx_file_sent(osv.osv):
                                    "Setings > Parameters > System Parameters and make sure ",
                                    "your IP is in the LX1 FTP whitelist.\n\n",
                                    "%s""" % unicode(e)])))
+                                   
+    def delete_upload(self, cr, uid, ids, context=None):
+        """ Deletes a file that has been uploaded """
+        lx_manager = self.pool.get('lx.manager')
+        
+        for file_sent in self.browse(cr, uid, ids):
+            if not file_sent.upload_file_name:
+                continue
+            
+            with lx_manager.connection(cr) as conn:
+                conn.delete_file_sent(cr, uid, file_sent)
+                file_sent.write({'state': 'to_upload'})

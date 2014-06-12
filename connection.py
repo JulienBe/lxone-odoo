@@ -12,7 +12,7 @@ from tools import get_config
 from lx_data import lx_data
 
 def ensure_connection(function):
-    """ Check we are connected before calling a function, and connect if necessary """
+    """ Check we are connected before calling a function, and connect if not """
     def inner(self, *args, **kwargs):
         if not self._connected:
             self._connect()
@@ -233,6 +233,24 @@ class lx_connection(object):
             self.try_cd('..')
             
         return file_sent.upload_file_name
+    
+    @ensure_connection
+    def delete_file_sent(self, cr, uid, file_sent):
+        """ 
+        If it exists, delete the file_sent.upload_file_name from the ftp server
+        """
+        assert isinstance(file_sent, browse_record), _('data parameter must extend lx_data class')
+        assert file_sent._name == 'lx.file.sent', _("file_sent must have _name 'lx.file.sent'")
+        
+        self.cd(self._vers_lx)
+
+        try:
+            # delete file if it exists
+            if file_sent.upload_file_name in self.ls():
+                self.rm(file_sent.upload_file_name)
+            
+        finally:
+            self.try_cd('..')
 
     @ensure_connection            
     def delete_data(self, file_name):

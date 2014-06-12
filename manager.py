@@ -53,7 +53,7 @@ class lx_manager(osv.osv):
         
         def inner(self, *args, **kwargs):
             if not self._lock.acquire(False):
-                raise osv.except_osv(_('Already Syncing'), _('We are already synchronizing with LX1. Please wait a while before trying again...'))
+                raise osv.except_osv(_('Already Syncing'), _('We are already synchronizing with LX1. Please wait a moment before trying again...'))
             
             try:
                 res = function(self, *args, **kwargs)
