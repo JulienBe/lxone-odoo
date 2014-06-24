@@ -8,7 +8,7 @@ from oe_lx import oe_lx
 class product_super(object):
     """ Defines some methods common to product.template and product.product """
 
-    def lx_upload(self, cr, uid, ids, context=None):
+    def product_upload(self, cr, uid, ids, context=None):
         """ Upload products with ids """
         if not hasattr(ids, '__iter__'):
             ids = [ids]
@@ -16,15 +16,6 @@ class product_super(object):
         products = self.browse(cr, uid, ids)
         self.upload(cr, uid, products, lx_product)
         return True
-    
-    def lx_upload_all(self, cr, uid, context=None):
-        """ Upload ALL products. Will write a log for each product """
-        ids = self.search(cr, uid, [])
-        _logger.info("Starting upload of %d products" % len(ids))
-        return self.lx_upload_one(cr, uid, self.browse(cr, uid, ids, context=context), log=True, context=context)
-    
-    def lx_upload_all_bulk(self, cr, uid, context=None):
-        pass
     
     def is_delivery_method(self, cr, uid, ids, context=None):
         """
@@ -55,15 +46,15 @@ class product_template(oe_lx, product_super, osv.osv):
     _inherit = 'product.template'
     
     def write(self, cr, uid, ids, values, context=None):
-        """ Call lx_upload if we edit an uploaded field """
+        """ Call product_upload if we edit an uploaded field """
         _logger.info("%s written" % self._name)
         res = super(product_template, self).write(cr, uid, ids, values, context=context)
         if any([field for field in lx_product.required_fields if field in values.keys()]):
-            self.lx_upload(cr, 1, ids, context=context)
+            self.product_upload(cr, 1, ids, context=context)
         return res
     
     def create(self, cr, uid, values, context=None):
-        """ Call lx_upload """
+        """ Call product_upload """
         res = super(product_template, self).create(cr, uid, values, context=context)
         lx_upload(self, cr, 1, [res], context=context)
         return res
@@ -75,16 +66,21 @@ class product_product(oe_lx, product_super, osv.osv):
     """
     _inherit = 'product.product'
     
+    def lx_upload_all(self, cr, uid, context=None):
+        """ Upload ALL products. Will write a log for each product """
+        ids = self.search(cr, uid, [('type','=','product')])
+        return self.product_upload(cr, uid, ids)
+    
     def write(self, cr, uid, ids, values, context=None):
-        """ Call lx_upload if we edit an uploaded field """
+        """ Call product_upload if we edit an uploaded field """
         _logger.info("%s written" % self._name)
         res = super(product_product, self).write(cr, uid, ids, values, context=context)
         if any([field for field in lx_product.required_fields if field in values.keys()]):
-            self.lx_upload(cr, 1, ids, context=context)
+            self.product_upload(cr, 1, ids, context=context)
         return res
     
     def create(self, cr, uid, values, context=None):
-        """ Call lx_upload """
+        """ Call product_upload """
         res = super(product_product, self).create(cr, uid, values, context=context)
         lx_upload(self, cr, 1, [res], context=context)
         return res
