@@ -38,14 +38,23 @@ class lx_data(object):
         self.upload_file_name = ''
         self.browse_record = None
 
-        # handle data param
-        if data and isinstance(data, browse_record):
+        # process the data to be uploaded
+        if data and type(data) is browse_record:
+            # single browse record
             self.browse_record = data
             self._validate_required_fields()
             self.extract(data)
+        elif isinstance(data, list) and all([elem for elem in data if isinstance(elem, browse_record)]):
+            # list of browse records
+            self.browse_record = data
+            assert len(set([rec._name for rec in data])) == 1, 'Cannot mix browse record object types'
+            map(self._validate_required_fields, data)
+            self.extract(data)
         elif data and isinstance(data, (dict, OrderedDict, list)):
+            # already extracted object?
             self.data = data
         elif data:
+            # invalid type
             raise TypeError('Data must be a browse record, dict, OrderedDict or list')
 
     # list of file name prefix's that this class should handle when receiving them from LX1
@@ -69,7 +78,7 @@ class lx_data(object):
     # Use the generic xml template defined in generate_xml
     _use_xml_template = True
     
-    def _validate_required_fields(self):
+    def _validate_required_fields(self, record=None):
         """ 
         Check that all required_fields are satisfied, otherwise
         raise an osv exception with a description of the browse record and fields affected.
@@ -84,8 +93,11 @@ class lx_data(object):
         product_id.name
         [move_lines].name  
         """
-        if not self.browse_record:
-            raise ValueError('Missing self.browse_record')
+        if not record:
+            record = self.browse_record
+        
+        if not record:
+            raise ValueError('Missing record or self.browse_record')
         
         invalid_fields = []
         
@@ -93,7 +105,7 @@ class lx_data(object):
         for required_field in self.required_fields:
             if '.' not in required_field:
                 # simple field check
-                if not self.browse_record[required_field]:
+                if not record[required_field]:
                     invalid_fields.append(required_field)
             else:
                 # relational field check
@@ -114,14 +126,14 @@ class lx_data(object):
                 # check for one2many type field
                 if fields[0][0:1] == '[' and fields[0][-1:] == ']':
                     one2many_field = fields[0][1:-1]
-                    if not self.browse_record[one2many_field]:
+                    if not record[one2many_field]:
                         invalid_fields.append(one2many_field)
                     else:
-                        for record_index in xrange(0, len(self.browse_record[one2many_field])):
-                            target = 'self.browse_record.%s[%d]' % (one2many_field, record_index)
+                        for record_index in xrange(0, len(record[one2many_field])):
+                            target = 'record.%s[%d]' % (one2many_field, record_index)
                             check(self, target, fields[1:])
                 else:
-                    check(self, 'self.browse_record', fields)
+                    check(self, 'record', fields)
         
         # raise exception if necessary
         if invalid_fields:
@@ -134,9 +146,9 @@ class lx_data(object):
                     invalid_fields_str += '\n%s' % field
             
             except_args = (
-                           self.browse_record._description,
-                           self.browse_record[self.browse_record._rec_name],
-                           invalid_fields_str
+                               record._description,
+                               record[record._rec_name],
+                               invalid_fields_str
                            )
             raise except_osv(_("Required Fields Invalid"), _('The following required fields were invalid for %s "%s": \n\n %s') % except_args)
         else:

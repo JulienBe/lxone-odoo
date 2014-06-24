@@ -20,7 +20,11 @@ class oe_lx(object):
         """
         res = dict.fromkeys(ids, [])
         for obj_id in ids:
-            cr.execute('select id from lx_file_sent where record_id = %s', ('%s,%s' % (self._name, obj_id),))
+            cr.execute("""
+                SELECT id FROM lx_file_sent 
+                WHERE record_id = %(record_name)s
+                OR %(record_name)s IN record_names 
+            """, {'record_name': '%s,%s' % (self._name, obj_id)})
             file_ids = cr.fetchall()            
             res[obj_id] = file_ids and list(file_ids[0]);
         return res
@@ -34,11 +38,21 @@ class oe_lx(object):
         """ OE will only merge _columns dicts for classes inheriting from osv.osv, so do it here manually """
         self._columns = dict(self._lx_columns.items() + self._columns.items())
         return super(oe_lx, self).__init__(pool, cr)
+    
+    def _get_names(self, cr, uid, records):
+        """ Returns a human readable string of names for records """
+        names = []
+        for record in records:
+            name_get = record.name_get()
+            if name_get:
+                name_get = name_get[0][1]
+            names.append("%s:%s - %s" % (record._name, record.id, name_get))
+        return '\n'.join(names)
 
-    def upload(self, cr, uid, browse_record, lx_data_subclass):
+    def upload(self, cr, uid, records, lx_data_subclass):
         """ 
         Should be called by child classes to handle data uploads correctly.
-        This method instantiates lx_data_subclass with browse_record (thereby calling extract on it)
+        This method instantiates lx_data_subclass with records (thereby calling extract on it)
         then calls generate_xml to convert the data to XML. It then uploads any _attachments, and
         finally creates a file_sent_obj and calls upload on it.
         @return: List of uploaded file name[s]
@@ -47,9 +61,9 @@ class oe_lx(object):
         assert issubclass(lx_data_subclass, lx_data), _("lx_data_subclass parameter should be a subclass of lx_data")
         file_sent_obj = self.pool.get('lx.file.sent')
         
-        # instantiate lx_data_subclass with browse_record, then call generate xml
+        # instantiate lx_data_subclass with records, then call generate xml
         try:
-            data = lx_data_subclass(browse_record)
+            data = lx_data_subclass(records)
             xml_io = data.generate_xml()
             xml = xml_io.getvalue()
             xml = self.html_parser.unescape(xml)
@@ -58,13 +72,18 @@ class oe_lx(object):
             raise osv.except_osv(_("Error While Uploading:"), _(', '.join(assertion_error.args)))
         
         file_sent_ids = []
+        records_multi = isinstance(records, list)
         
-        # create file.sent record for browse_record
+        # create file.sent for records
         vals = {
             'xml': xml, 
             'object_type': lx_data_subclass.object_type[0], 
-            'record_id': '%s,%s' % (browse_record._name, browse_record.id),
         }
+        
+        if records_multi:
+            vals['record_names'] = self._get_names(cr, uid, records) 
+        else:
+            vals['record_id'] = '%s,%s' % (records_multi and records[0]._name or records._name, records.id)
         
         parent_file_id = file_sent_obj.create(cr, uid, vals)
         file_sent_ids.append(parent_file_id)

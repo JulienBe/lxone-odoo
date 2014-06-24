@@ -17,21 +17,27 @@ class lx_product(lx_data):
 		'uom_id',
 	]
 
-	def extract(self, product):
+	def extract(self, products):
 		"""
-		Takes a product browse_record and extracts the
-		appropriate data into self.data
+		Takes a product browse_record or list of product browse_record's
+		and extracts the appropriate data into self.data
 
 		@param browse_record(product.product) product: the product browse record object
 		"""
+		if not isinstance(products, list):
+			products = [products]
 		
-		self.data = OrderedDict([
-		('ItemMasterCreate', OrderedDict([
-				('Client', 'pvszmd'),
-				('Item', product.ean13),
-				('Description', product.name),
-				('QuantityProperties', OrderedDict([
-					('StandardUOM', 'STCK'),
-				])),
-			])
-		)])
+		self.data = OrderedDict([('ItemMasterCreate',[])])
+		
+		for product in products:
+			product_dict = OrderedDict([
+							('Client', 'pvszmd'),
+							('Item', product.ean13),
+							('Description', product.name),
+							('QuantityProperties', OrderedDict([
+								('StandardUOM', 'STCK'),
+							])),
+						])
+			self.data['ItemMasterCreate'].append(product_dict)
+		
+		return True

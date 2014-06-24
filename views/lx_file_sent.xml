@@ -13,7 +13,7 @@
                 	<field name="create_date" />
                 	<field name="state" />
                     <field name="upload_date"/>
-                    <field name="record_id"/> 
+                    <field name="record_id"/>
                     <field name="upload_file_name"/>
                     <button type="object" name="upload" string="Upload" icon="STOCK_EXECUTE" attrs="{'invisible': [('state','=','uploaded')]}" />
                 </tree>
@@ -37,6 +37,7 @@
                         	<field name="create_date" />
                         	<field name="upload_date" attrs="{'invisible': [('state', '!=', 'uploaded')]}" />
                             <field name="record_id" />
+                    		<field name="record_names"/>  
                             <field name="object_type" />
                             <field name="xml" attrs="{'readonly': [('state','=','uploaded')]}" />
                             <field name="result" attrs="{'invisible': [('failed', '=', False)]}" style="color: red" />

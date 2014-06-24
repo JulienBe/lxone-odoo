@@ -46,6 +46,7 @@ class lx_file_sent(osv.osv):
         'parent_file_id': fields.many2one('lx.file.sent', 'Parent File', help="This file is an attachment, so the parent file is the file referencing this attachment", readonly=True),
         'attachment_file_ids': fields.one2many('lx.file.sent', 'parent_file_id', 'Attachments', help="List of attachments uploaded with this file", readonly=True),
         'record_id': fields.reference('Record To Upload', list({(filter_inherit(model._inherit), friendly_name(model._inherit)) for model in oe_lx.oe_lx.__subclasses__()}), 128, readonly=True),
+        'record_names': fields.text('Records To Upload', help="A list of all records that are contained in this file if more than one", readonly=True),
     }
 
     _defaults = {
