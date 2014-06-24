@@ -14,7 +14,6 @@ class lx_product(lx_data):
 	required_fields = [
 		'name',
 		'ean13',
-		'uom_id',
 	]
 
 	def extract(self, products):
