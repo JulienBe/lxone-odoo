@@ -109,7 +109,7 @@ class lx_data(object):
                     invalid_fields.append(required_field)
             else:
                 # relational field check
-                def check(self, target, fields):
+                def check(self, target, record, fields):
                     """ Convert fields into a dot notation query and execute it on target """
                     query = '%s.%s' % (target, '.'.join(fields))
                     try:
@@ -131,9 +131,9 @@ class lx_data(object):
                     else:
                         for record_index in xrange(0, len(record[one2many_field])):
                             target = 'record.%s[%d]' % (one2many_field, record_index)
-                            check(self, target, fields[1:])
+                            check(self, target, record, fields[1:])
                 else:
-                    check(self, 'record', fields)
+                    check(self, 'record', record, fields)
         
         # raise exception if necessary
         if invalid_fields:
