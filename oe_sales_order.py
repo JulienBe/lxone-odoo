@@ -31,6 +31,7 @@ class sale_order(osv.osv):
 
 class stock_picking(oe_lx, osv.osv):
     """
+    Define do_upload_so method to be called by stock move confirmation
     """
     _inherit = 'stock.picking'
     
