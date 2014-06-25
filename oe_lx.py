@@ -20,11 +20,12 @@ class oe_lx(object):
         """
         res = dict.fromkeys(ids, [])
         for obj_id in ids:
+            record_reference = '%s,%s' % (self._name, obj_id)
             cr.execute("""
                 SELECT id FROM lx_file_sent 
-                WHERE record_id = %(record_name)s
-                OR %(record_name)s IN record_names 
-            """, {'record_name': '%s,%s' % (self._name, obj_id)})
+                WHERE record_id = %s
+                OR record_names ilike %s
+            """, [record_reference, '%' + record_reference + '%'])
             file_ids = cr.fetchall()            
             res[obj_id] = file_ids and list(file_ids[0]);
         return res
@@ -46,7 +47,7 @@ class oe_lx(object):
             name_get = record.name_get()
             if name_get:
                 name_get = name_get[0][1]
-            names.append("%s:%s - %s" % (record._name, record.id, name_get))
+            names.append("%s,%s - %s" % (record._name, record.id, name_get))
         return '\n'.join(names)
 
     def upload(self, cr, uid, records, lx_data_subclass):
