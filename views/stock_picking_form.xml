@@ -36,6 +36,11 @@
             			<button name="action_process" states="assigned" string="Receive" type="object" class="oe_highlight" confirm="Are you sure you want to process this picking manually? You should normally wait for it to be automatically marked as received by LX1. This button should only be used in exceptional circumstances."/>
             		</page>
             	</page>
+            	
+            	<!-- Make min_date required if state is waiting -->
+            	<field name="min_date" position="replace">
+            		<field name="min_date" attrs="{'required': [('state', '=', 'confirmed')]}" />
+            	</field>
             </field>
         </record>
     </data>
