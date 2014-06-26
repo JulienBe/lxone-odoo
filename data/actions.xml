@@ -4,41 +4,41 @@
 	
 		<act_window name="Synchronizations" 
 			res_model="lx.sync" 
-			id="lx-one.action_all_sync" />
+			id="lx_one.action_all_sync" />
 	
 		<act_window name="All Files" 
 			res_model="lx.file.received" 
-			id="lx-one.action_all_files_received" />
+			id="lx_one.action_all_files_received" />
 
 		<act_window name="Files to Process" 
 			res_model="lx.file.received" 
-			id="lx-one.action_files_received_to_process"
+			id="lx_one.action_files_received_to_process"
 			domain="[('state', '!=', 'done')]" />
 
 		<act_window name="All Updates" 
 			res_model="lx.update" 
-			id="lx-one.action_all_updates" />
+			id="lx_one.action_all_updates" />
 
 		<act_window name="Updates to Execute" 
 			res_model="lx.update" 
-			id="lx-one.action_updates_to_execute"
+			id="lx_one.action_updates_to_execute"
 			domain="[('state', '!=', 'executed')]" />
 			
 		<act_window name="All Files Sent" 
 			res_model="lx.file.sent" 
-			id="lx-one.action_all_files_sent" />
+			id="lx_one.action_all_files_sent" />
 
 		<act_window name="Files to Upload" 
 			res_model="lx.file.sent" 
-			id="lx-one.action_files_sent_to_upload"
+			id="lx_one.action_files_sent_to_upload"
 			domain="[('state', '!=', 'uploaded')]" />
 
 		<act_window name="Configure LX1 Connection" 
 			res_model="ir.config_parameter" 
-			id="lx-one.action_config" 
+			id="lx_one.action_config" 
 			domain="[('key', 'like', 'lx_%')]" />
 			
-		<record id="lx-one.action_sync_now" model="ir.actions.server">
+		<record id="lx_one.action_sync_now" model="ir.actions.server">
             <field name="sequence" eval="5"/>
             <field name="state">code</field>
             <field name="type">ir.actions.server</field>

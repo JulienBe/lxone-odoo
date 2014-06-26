@@ -10,8 +10,7 @@ from openerp.tools.translate import _
 
 from lx_order import lx_order
 from lx_data import lx_data
-from tools import convert_date, parse_date
-from auto_vivification import AutoVivification
+from openerp.addons.lx_one.tools import convert_date, parse_date
 
 class lx_sales_order(lx_order):
     """

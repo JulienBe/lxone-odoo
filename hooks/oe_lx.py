@@ -5,7 +5,7 @@ import base64
 from openerp.osv import osv, fields
 from openerp.tools.translate import _
 
-from tools import get_config
+from openerp.addons.lx_one.tools import get_config
 from lx_data import lx_data
 
 class oe_lx(object):
@@ -84,7 +84,7 @@ class oe_lx(object):
         if records_multi:
             vals['record_names'] = self._get_names(cr, uid, records) 
         else:
-            vals['record_id'] = '%s,%s' % (records_multi and records[0]._name or records._name, records.id)
+            vals['record_id'] = '%s,%s' % (records._name, records.id)
         
         parent_file_id = file_sent_obj.create(cr, uid, vals)
         file_sent_ids.append(parent_file_id)

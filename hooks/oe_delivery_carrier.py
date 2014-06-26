@@ -2,7 +2,8 @@ from openerp.osv import osv, fields
 
 class delivery_carrier(osv.osv):
     """
-    Inherit the stock.picking object to trigger upload of PO pickings
+    Add an lx reference field to delivery carriers to hold the reference to this 
+    delivery option that resides in the LX One system
     """
     _inherit = 'delivery.carrier'
     

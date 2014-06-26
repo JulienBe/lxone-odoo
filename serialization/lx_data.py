@@ -5,11 +5,10 @@ from collections import OrderedDict
 from openerp.osv.orm import browse_record
 from openerp.osv.osv import except_osv
 from openerp.tools.translate import _
-from tools import string_to_file_name
 
-from picklingtools.xmldumper import *
-from picklingtools import xml2dict
-from auto_vivification import AutoVivification
+from openerp.addons.lx_one.tools import string_to_file_name
+from openerp.addons.lx_one.picklingtools.xmldumper import *
+from openerp.addons.lx_one.picklingtools import xml2dict
 
 class lx_data(object):
     """
@@ -257,8 +256,6 @@ class lx_data(object):
         
         # validate self.data and convert autoviv to ordered dict if needed
         self._check_ordered_dicts_only(self.data)
-        if type(self.data) == AutoVivification:
-            self.data = self.data.to_dict()
         
         # convert to pretty XML 
         output = StringIO.StringIO()

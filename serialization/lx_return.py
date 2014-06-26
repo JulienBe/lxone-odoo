@@ -5,7 +5,7 @@ from openerp.tools.translate import _
 from openerp.osv import osv
 
 from lx_data import lx_data
-from tools import parse_date
+from openerp.addons.lx_one.tools import parse_date
 
 class lx_return(lx_data):
     """

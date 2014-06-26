@@ -3,92 +3,92 @@
 	<data>
 		<!-- main -->
 		<menuitem name="LX1 Sync" 
-			id="lx-one.menu_main" 
+			id="lx_one.menu_main" 
 			sequence="100" />
 			
 		<!-- sync -->
 		<menuitem name="Synchronizations" 
-			id="lx-one.menu_sync_all" 
-			parent="lx-one.menu_main"
+			id="lx_one.menu_sync_all" 
+			parent="lx_one.menu_main"
 			sequence="5" />
 
 		<menuitem name="Synchronizations" 
-			id="lx-one.menu_all_sync" 
-			parent="lx-one.menu_sync_all" 
-			action="lx-one.action_all_sync" 
+			id="lx_one.menu_all_sync" 
+			parent="lx_one.menu_sync_all" 
+			action="lx_one.action_all_sync" 
 			sequence="5" />
 			
 		<menuitem name="Sync Now" 
-			id="lx-one.menu_sync_now" 
-			parent="lx-one.menu_sync_all" 
-			action="lx-one.action_sync_now" 
+			id="lx_one.menu_sync_now" 
+			parent="lx_one.menu_sync_all" 
+			action="lx_one.action_sync_now" 
 			sequence="10" />
 			
 		<!-- files received -->
 		<menuitem name="Files Received" 
-			id="lx-one.menu_files" 
-			parent="lx-one.menu_main"
+			id="lx_one.menu_files" 
+			parent="lx_one.menu_main"
 			sequence="10" />
 
 		<menuitem name="All Files" 
-			id="lx-one.menu_all_files_received" 
-			parent="lx-one.menu_files" 
-			action="lx-one.action_all_files_received" 
+			id="lx_one.menu_all_files_received" 
+			parent="lx_one.menu_files" 
+			action="lx_one.action_all_files_received" 
 			sequence="5" />
 
 		<menuitem name="Files To Process" 
-			id="lx-one.menu_files_received_to_process" 
-			parent="lx-one.menu_files" 
-			action="lx-one.action_files_received_to_process" 
+			id="lx_one.menu_files_received_to_process" 
+			parent="lx_one.menu_files" 
+			action="lx_one.action_files_received_to_process" 
 			sequence="10" />
 
 		<!-- updates -->
 		<menuitem name="Updates" 
-			id="lx-one.menu_updates" 
-			parent="lx-one.menu_main"
+			id="lx_one.menu_updates" 
+			parent="lx_one.menu_main"
 			sequence="15" />
 
 		<menuitem name="All Updates"
-			id="lx-one.menu_all_updates" 
-			parent="lx-one.menu_updates" 
-			action="lx-one.action_all_updates" 
+			id="lx_one.menu_all_updates" 
+			parent="lx_one.menu_updates" 
+			action="lx_one.action_all_updates" 
 			sequence="6" />
 
 		<menuitem name="Updates To Execute" 
-			id="lx-one.menu_updates_to_parse" 
-			parent="lx-one.menu_updates" 
-			action="lx-one.action_updates_to_execute" 
+			id="lx_one.menu_updates_to_parse" 
+			parent="lx_one.menu_updates" 
+			action="lx_one.action_updates_to_execute" 
 			sequence="11" />
 			
 		<!-- files sent -->
 		<menuitem name="Files Sent" 
-			id="lx-one.menu_files_sent" 
-			parent="lx-one.menu_main"
+			id="lx_one.menu_files_sent" 
+			parent="lx_one.menu_main"
 			sequence="20" />
 
 		<menuitem name="All Files" 
-			id="lx-one.menu_all_files_sent" 
-			parent="lx-one.menu_files_sent" 
-			action="lx-one.action_all_files_sent" 
+			id="lx_one.menu_all_files_sent" 
+			parent="lx_one.menu_files_sent" 
+			action="lx_one.action_all_files_sent" 
 			sequence="5" />
 
 		<menuitem name="Files To Upload" 
-			id="lx-one.menu_files_sent_to_upload" 
-			parent="lx-one.menu_files_sent" 
-			action="lx-one.action_files_sent_to_upload" 
+			id="lx_one.menu_files_sent_to_upload" 
+			parent="lx_one.menu_files_sent" 
+			action="lx_one.action_files_sent_to_upload" 
 			sequence="10" />
 		
 
 		<!-- config -->
 		<menuitem name="Configuration" 
-			id="lx-one.config" 
-			parent="lx-one.menu_main" 
+			id="lx_one.config" 
+			parent="lx_one.menu_main" 
 			sequence="25" />
 
 		<menuitem name="LX1 Configuration Settings" 
-			id="lx-one.config_config" 
-			parent="lx-one.config"
-			action="lx-one.action_config" 
+			id="lx_one.config_config" 
+			parent="lx_one.config"
+			action="lx_one.action_config" 
 			sequence="10" />
 	</data>
 </openerp>

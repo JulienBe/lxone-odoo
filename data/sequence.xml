@@ -3,34 +3,34 @@
     <data noupdate="1">
 
 	    <!-- date file -->
-		<record id="lx-one.sequence_file_received_type" model="ir.sequence.type"> 
+		<record id="lx_one.sequence_file_received_type" model="ir.sequence.type"> 
 			<field name="name">LX1 Update File</field> 
 			<field name="code">lx.file.received</field> 
 		</record> 
 			
-		<record id="lx-one.sequence_file_received" model="ir.sequence"> 
+		<record id="lx_one.sequence_file_received" model="ir.sequence"> 
 			<field name="name">LX1 Update File</field> 
 			<field name="code">lx.file.received</field> 
 		</record>
 
 		<!-- updates -->
-		<record id="lx-one.sequence_update_type" model="ir.sequence.type"> 
+		<record id="lx_one.sequence_update_type" model="ir.sequence.type"> 
 			<field name="name">LX1 Update</field> 
 			<field name="code">lx.update</field> 
 		</record> 
 			
-		<record id="lx-one.sequence_update" model="ir.sequence"> 
+		<record id="lx_one.sequence_update" model="ir.sequence"> 
 			<field name="name">LX1 Update</field> 
 			<field name="code">lx.update</field> 
 		</record>
 
 		<!-- file sent -->
-		<record id="lx-one.sequence_file_sent_type" model="ir.sequence.type"> 
+		<record id="lx_one.sequence_file_sent_type" model="ir.sequence.type"> 
 			<field name="name">LX1 File Sent</field> 
 			<field name="code">lx.file.sent</field> 
 		</record> 
 			
-		<record id="lx-one.sequence_file_sent" model="ir.sequence"> 
+		<record id="lx_one.sequence_file_sent" model="ir.sequence"> 
 			<field name="name">LX1 File Sent</field> 
 			<field name="code">lx.file.sent</field> 
 		</record>

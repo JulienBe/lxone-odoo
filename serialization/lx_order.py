@@ -6,9 +6,8 @@ from collections import OrderedDict
 from openerp.osv import osv
 from openerp.tools.translate import _
 
-from auto_vivification import AutoVivification
 from lx_data import lx_data
-from tools import convert_date
+from openerp.addons.lx_one.tools import convert_date
 
 class lx_order(lx_data):
     """

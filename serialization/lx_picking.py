@@ -5,9 +5,8 @@ from datetime import datetime
 
 from openerp.tools.translate import _
 
-from auto_vivification import AutoVivification
 from lx_data import lx_data
-from tools import parse_date
+from openerp.addons.lx_one.tools import parse_date
 
 class lx_picking(lx_data):
     """

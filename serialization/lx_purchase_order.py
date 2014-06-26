@@ -7,9 +7,8 @@ from openerp.osv import osv
 from openerp.tools.translate import _
 
 from lx_order import lx_order
-from auto_vivification import AutoVivification
 from lx_data import lx_data
-from tools import convert_date, parse_date
+from openerp.addons.lx_one.tools import convert_date, parse_date
 
 class lx_purchase_order(lx_order):
     """
