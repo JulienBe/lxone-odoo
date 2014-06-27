@@ -23,7 +23,7 @@ def ensure_connection(function):
 class lx_connection(object):
     """
     Wraps an FTP connection to the LX1 server and provides some helper methods.
-    Use it with the python using construct, and by passing in a pool and cr to the
+    Use it with the python 'using' construct, and by passing in a pool and cr to the
     constructor.
     """
 
@@ -37,10 +37,7 @@ class lx_connection(object):
 
         self._pool = pool
         self._cr = cr
-
         self._conn = None
-        self._vers_lx = 'VersLX1'
-        self._vers_client = None
 
     def __enter__(self):
         """ Allows python 'using' construct"""
@@ -98,39 +95,9 @@ class lx_connection(object):
         if not self._passive:
             self._conn.set_pasv(self._passive)
 
-        # change directory to self._mode, then save "VersClient" dir name
+        # change directory to self._mode
         self.cd(self._mode)
         
-        # get name of VersClient directory
-        directories = self.ls()
-        vers_client_dir = filter(lambda direc: direc[0:4] == 'Vers' and direc != self._vers_lx, directories)
-
-        if len(vers_client_dir) == 1:
-            self._vers_client = vers_client_dir[0]
-        elif 'Vers%s' % self._user in directories:
-            self._vers_client = 'Vers%s' % self._user
-        else:
-            raise IOError('Could not find appropriate directories in %s folder.'\
-                        + 'Normally there are VersLX1 and Vers*ClientName* directories' % self._mode)
-            
-        # safety check for production mode. If VersClient dir contains file "misc/database_name.txt", require
-        # the database name inside to be the same as this database name. This helps to prevent 
-        # the situation where somebody backs up and restores a db locally and forgets to change to mode test
-        if self._mode == 'PROD':
-            self.cd(self._vers_client)
-            directories = self.ls()
-            if 'security' in directories:
-                self.cd('security')
-                files = self.ls()
-                if 'database_name.txt' in files:
-                    database_name = self.download_data('database_name.txt').strip()
-                    if not database_name == self._cr.dbname:
-                        self.cd('../../')
-                        self._disconnect()
-                        raise osv.except_osv(_("Production Warning"), "The LX1 module is still in production mode and your database name (%s) does not match the database name in the file 'security/database_name.txt' (%s).\n\nPlease either change your lx_mode or the database name in the text file." % (self._cr.dbname, database_name))
-                self.cd('..')
-            self.cd('..')
-
     def _disconnect(self):
         """ Closes a previously opened connection to the LX1 FTP server """
         if self._connected:
@@ -210,27 +177,22 @@ class lx_connection(object):
         assert isinstance(file_outgoing, browse_record), _('data parameter must extend lx_data class')
         assert file_outgoing._name == 'lx.file.outgoing', _("file_outgoing must have _name 'lx.file.outgoing'")
         
-        self.cd(self._vers_lx)
-
-        try:
-            # handle different data types appropriately
-            contents = ''
-            if file_outgoing.content_type == 'xml':
-                contents = file_outgoing.xml
-            elif file_outgoing.content_type == 'pdf':
-                contents = decodestring(file_outgoing.xml)
-            
-            xml_buffer = StringIO(contents)
-            files = self.ls()
-            
-            # raise exception if file already exists
-            if file_outgoing.upload_file_name in files:
-                raise osv.except_osv(_('File Already Exists'), _("A file with name '%s' already exists on the FTP server! This should never happen as file names should contain unique sequence numbers...") % file_outgoing.upload_file_name)
-            
-            # do actual upload
-            self.mkf(file_outgoing.upload_file_name, xml_buffer)
-        finally:
-            self.try_cd('..')
+        # handle different data types appropriately
+        contents = ''
+        if file_outgoing.content_type == 'xml':
+            contents = file_outgoing.xml
+        elif file_outgoing.content_type == 'pdf':
+            contents = decodestring(file_outgoing.xml)
+        
+        xml_buffer = StringIO(contents)
+        files = self.ls()
+        
+        # raise exception if file already exists
+        if file_outgoing.upload_file_name in files:
+            raise osv.except_osv(_('File Already Exists'), _("A file with name '%s' already exists on the FTP server! This should never happen as file names should contain unique sequence numbers...") % file_outgoing.upload_file_name)
+        
+        # do actual upload
+        self.mkf(file_outgoing.upload_file_name, xml_buffer)
             
         return file_outgoing.upload_file_name
     
@@ -242,15 +204,9 @@ class lx_connection(object):
         assert isinstance(file_outgoing, browse_record), _('data parameter must extend lx_data class')
         assert file_outgoing._name == 'lx.file.outgoing', _("file_outgoing must have _name 'lx.file.outgoing'")
         
-        self.cd(self._vers_lx)
-
-        try:
-            # delete file if it exists
-            if file_outgoing.upload_file_name in self.ls():
-                self.rm(file_outgoing.upload_file_name)
-            
-        finally:
-            self.try_cd('..')
+        # delete file if it exists
+        if file_outgoing.upload_file_name in self.ls():
+            self.rm(file_outgoing.upload_file_name)
 
     @ensure_connection            
     def delete_data(self, file_name):
@@ -258,20 +214,14 @@ class lx_connection(object):
         Deletes the file (and archive) with name file_name. Throws ftplib.error_perm(500) if not found
         @param string file_name: The name of the file to try to delete
         """
-        self.cd(self._vers_lx)
-
-        try:
-            # delete original file
+        # delete original file
+        self.rm(file_name)
+        
+        # no exception, so go on to delete archive
+        self.cd('archives')
+        files = self.ls()
+        if file_name in files:
             self.rm(file_name)
-            
-            # no exception, so go on to delete archive
-            self.cd('archives')
-            files = self.ls()
-            if file_name in files:
-                self.rm(file_name)
-            self.cd('..')
-            
-        finally:
-            self.try_cd('..')
+        self.cd('..')
             
         return True

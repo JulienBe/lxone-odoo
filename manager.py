@@ -85,7 +85,6 @@ class lx_manager(osv.osv):
         # get connection to FTP server
         with self.connection(cr) as conn:
 
-            conn.cd(conn._vers_client)
 
             # get list of files and directories and remove any files that cannot be processed
             # then order files by file_sequence so they are processed in the correct order
@@ -148,12 +147,6 @@ class lx_manager(osv.osv):
                 if new_cursor:
                     cr.close()
                 
-                # check we are still connected, then navigate back a directory for any further operations
-                if conn._connected:
-                    conn.cd('..')
-                else:
-                    conn._connect()
-
         # * end with conn * #
         
         try:
