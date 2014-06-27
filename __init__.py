@@ -14,5 +14,5 @@ import serialization
 
 import sync
 import update
-import file_received
-import file_sent
+import file_incoming
+import file_outgoing

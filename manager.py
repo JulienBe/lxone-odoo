@@ -73,13 +73,13 @@ class lx_manager(osv.osv):
     def poll(self, cr, uid=1):
         """
         Poll the LX1 FTP server, download a file list and iterate over them by oldest first by 
-        file sequence number. For each file, download the contents and create a lx.file.received 
+        file sequence number. For each file, download the contents and create a lx.file.incoming 
         record, committing cursor in between files.
         """
         
         files_processed = 0
         sync_id = False
-        file_received_obj = self.pool.get('lx.file.received')
+        file_incoming_obj = self.pool.get('lx.file.incoming')
         sync_obj = self.pool.get('lx.sync')
         
         # get connection to FTP server
@@ -116,16 +116,16 @@ class lx_manager(osv.osv):
                     file_name = file_to_process.file_name
                     activity = 'processing file'
 
-                    # download file contents and create lx.file.received from it, then save ID in sync_vals                    
+                    # download file contents and create lx.file.incoming from it, then save ID in sync_vals                    
                     try:
-                        activity = 'creating lx.file.received'
+                        activity = 'creating lx.file.incoming'
                         file_contents = conn.download_data(file_name)
                         vals = {
                             'xml': file_contents,
                             'file_name': file_name,
                             'sync_id': sync_id,
                         }
-                        file_received_id = file_received_obj.create(cr, uid, vals)
+                        file_incoming_id = file_incoming_obj.create(cr, uid, vals)
                         
                         # delete the file we successfully processed
                         activity = 'deleting file from ftp server'
@@ -159,15 +159,15 @@ class lx_manager(osv.osv):
         try:
             # trigger parse all files
             activity = 'parsing all files'
-            file_received_obj.parse_all(cr, uid)
+            file_incoming_obj.parse_all(cr, uid)
             
             # trigger creation of all lx.updates for files
             activity = 'generating all updates'
-            file_received_obj.generate_all_updates(cr, uid)
+            file_incoming_obj.generate_all_updates(cr, uid)
             
             # trigger execution of all lx.updates for files
             activity = 'executing all updates'
-            file_received_obj.execute_all_updates(cr, uid)
+            file_incoming_obj.execute_all_updates(cr, uid)
             
         except Exception as e:
             sync_vals['log'].append('Error while %s: %s' % (activity, unicode(e)))

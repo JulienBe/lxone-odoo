@@ -24,22 +24,22 @@
 			action="lx_one.action_sync_now" 
 			sequence="10" />
 			
-		<!-- files received -->
-		<menuitem name="Files Received" 
+		<!-- files incoming -->
+		<menuitem name="Files Incoming" 
 			id="lx_one.menu_files" 
 			parent="lx_one.menu_main"
 			sequence="10" />
 
 		<menuitem name="All Files" 
-			id="lx_one.menu_all_files_received" 
+			id="lx_one.menu_all_files_incoming" 
 			parent="lx_one.menu_files" 
-			action="lx_one.action_all_files_received" 
+			action="lx_one.action_all_files_incoming" 
 			sequence="5" />
 
 		<menuitem name="Files To Process" 
-			id="lx_one.menu_files_received_to_process" 
+			id="lx_one.menu_files_incoming_to_process" 
 			parent="lx_one.menu_files" 
-			action="lx_one.action_files_received_to_process" 
+			action="lx_one.action_files_incoming_to_process" 
 			sequence="10" />
 
 		<!-- updates -->
@@ -60,22 +60,22 @@
 			action="lx_one.action_updates_to_execute" 
 			sequence="11" />
 			
-		<!-- files sent -->
-		<menuitem name="Files Sent" 
-			id="lx_one.menu_files_sent" 
+		<!-- files outgoing -->
+		<menuitem name="Files Outgoing" 
+			id="lx_one.menu_files_outgoing" 
 			parent="lx_one.menu_main"
 			sequence="20" />
 
 		<menuitem name="All Files" 
-			id="lx_one.menu_all_files_sent" 
-			parent="lx_one.menu_files_sent" 
-			action="lx_one.action_all_files_sent" 
+			id="lx_one.menu_all_files_outgoing" 
+			parent="lx_one.menu_files_outgoing" 
+			action="lx_one.action_all_files_outgoing" 
 			sequence="5" />
 
 		<menuitem name="Files To Upload" 
-			id="lx_one.menu_files_sent_to_upload" 
-			parent="lx_one.menu_files_sent" 
-			action="lx_one.action_files_sent_to_upload" 
+			id="lx_one.menu_files_outgoing_to_upload" 
+			parent="lx_one.menu_files_outgoing" 
+			action="lx_one.action_files_outgoing_to_upload" 
 			sequence="10" />
 		
 

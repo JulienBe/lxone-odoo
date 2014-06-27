@@ -2,9 +2,9 @@
 <openerp>
     <data>
 
-        <record id="lx_view_file_received_tree" model="ir.ui.view">
-            <field name="name">lx.file.received.tree</field>
-            <field name="model">lx.file.received</field>
+        <record id="lx_view_file_incoming_tree" model="ir.ui.view">
+            <field name="name">lx.file.incoming.tree</field>
+            <field name="model">lx.file.incoming</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Updates" colors="red:failed==True;blue:state=='done'">
@@ -21,9 +21,9 @@
             </field>
         </record>
 
-    	<record id="lx_view_file_received_form" model="ir.ui.view">
-            <field name="name">lx.file.received.form</field>
-            <field name="model">lx.file.received</field>
+    	<record id="lx_view_file_incoming_form" model="ir.ui.view">
+            <field name="name">lx.file.incoming.form</field>
+            <field name="model">lx.file.incoming</field>
             <field name="type">form</field>
              <field name="arch" type="xml">
                 <form string="Update" version="7.0">

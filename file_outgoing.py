@@ -8,13 +8,13 @@ from openerp.tools.translate import _
 import oe_lx
 from tools import get_config
 
-class lx_file_sent(osv.osv):
+class lx_file_outgoing(osv.osv):
     """
     A record is created each time a file is to be uploaded to LX1. It includes the XML of the uploaded file,
     a reference field pointing to the uploaded object and some time details 
     """
 
-    _name = 'lx.file.sent'
+    _name = 'lx.file.outgoing'
     _rec_name = 'upload_file_name'
     _order = 'create_date DESC'
     
@@ -39,8 +39,8 @@ class lx_file_sent(osv.osv):
         'result': fields.text('Failure Message', help="Any errors encountered during file upload will be listed here", readonly=True),
         'object_type': fields.char('Object Type', size=64, required=True, help="The type of data contained in this file", readonly=True),
         'upload_file_name': fields.char('Uploaded File Name', size=64, help="The name of the file to be uploaded", readonly=True),
-        'parent_file_id': fields.many2one('lx.file.sent', 'Parent File', help="This file is an attachment, so the parent file is the file referencing this attachment", readonly=True),
-        'attachment_file_ids': fields.one2many('lx.file.sent', 'parent_file_id', 'Attachments', help="List of attachments uploaded with this file", readonly=True),
+        'parent_file_id': fields.many2one('lx.file.outgoing', 'Parent File', help="This file is an attachment, so the parent file is the file referencing this attachment", readonly=True),
+        'attachment_file_ids': fields.one2many('lx.file.outgoing', 'parent_file_id', 'Attachments', help="List of attachments uploaded with this file", readonly=True),
         'record_id': fields.reference('Record To Upload', _uploadable_models, 128, readonly=True),
         'record_names': fields.text('Records To Upload', help="A list of all records that are contained in this file if more than one", readonly=True),
     }
@@ -48,27 +48,27 @@ class lx_file_sent(osv.osv):
     _defaults = {
         'content_type': 'xml',
         'state': 'to_upload',
-        'upload_file_name': lambda obj, cr, uid, context: '%s_%s.xml' % (get_config(obj.pool, cr, 'lx_company_name'), obj.pool.get('ir.sequence').get(cr, uid, 'lx.file.sent')),
+        'upload_file_name': lambda obj, cr, uid, context: '%s_%s.xml' % (get_config(obj.pool, cr, 'lx_company_name'), obj.pool.get('ir.sequence').get(cr, uid, 'lx.file.outgoing')),
     } 
     
     def write(self, cr, uid, ids, vals, context=None):
         """ add update_date to vals automatically """
         if vals.get('state') == 'uploaded' and 'upload_date' not in vals:
             vals['upload_date'] = datetime.now()
-        return super(lx_file_sent, self).write(cr, uid, ids, vals, context=context)
+        return super(lx_file_outgoing, self).write(cr, uid, ids, vals, context=context)
         
     def unlink(self, cr, uid, ids, context=None):
-        raise osv.except_osv(_('Cannot Delete'), _('Deletion has been disabled for file sent records because it is important to maintain a complete audit trail'))
+        raise osv.except_osv(_('Cannot Delete'), _('Deletion has been disabled for file outgoing records because it is important to maintain a complete audit trail'))
 
     def upload(self, cr, uid, ids, context=None):
         """ Uploads file to ftp server then sets state to uploaded """
         lx_manager = self.pool.get('lx.manager')
         
-        for file_sent in self.browse(cr, uid, ids):
+        for file_outgoing in self.browse(cr, uid, ids):
             try:
                 with lx_manager.connection(cr) as conn:
-                    file_name = conn.upload_file_sent(cr, uid, file_sent)
-                    file_sent.write({'state': 'uploaded'})
+                    file_name = conn.upload_file_outgoing(cr, uid, file_outgoing)
+                    file_outgoing.write({'state': 'uploaded'})
                     return file_name
             except lx_manager.ftp_exceptions as e:
                 raise except_osv(_("Upload Problem"), \
@@ -82,10 +82,10 @@ class lx_file_sent(osv.osv):
         """ Deletes a file that has been uploaded """
         lx_manager = self.pool.get('lx.manager')
         
-        for file_sent in self.browse(cr, uid, ids):
-            if not file_sent.upload_file_name:
+        for file_outgoing in self.browse(cr, uid, ids):
+            if not file_outgoing.upload_file_name:
                 continue
             
             with lx_manager.connection(cr) as conn:
-                conn.delete_file_sent(cr, uid, file_sent)
-                file_sent.write({'state': 'to_upload'})
+                conn.delete_file_outgoing(cr, uid, file_outgoing)
+                file_outgoing.write({'state': 'to_upload'})

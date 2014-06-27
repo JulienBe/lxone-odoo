@@ -1,7 +1,10 @@
 from tools import parse_date
 
 class lx_file(object):
-	""" Represents a file received from LX1. Used for sorting processing priority """
+	""" 
+	Represents an xml file on the ftp server of LX1. 
+	Used for sorting processing priority 
+	"""
 
 	def __init__(self, file_name):
 		""" Extracts file date and extension """

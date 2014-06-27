@@ -25,8 +25,8 @@ class stock_move(osv.osv):
         if not hasn't yet been uploaded
         """
         for move in self.browse(cr, uid, ids, context=context):
-            move.picking_id.refresh() # refresh picking because it is cached in the orm, causing lx_file_sent_ids to be empty after upload
-            if move.picking_id and move.picking_id.state == 'assigned' and not move.picking_id.lx_file_sent_ids:
+            move.picking_id.refresh() # refresh picking because it is cached in the orm, causing lx_file_outgoing_ids to be empty after upload
+            if move.picking_id and move.picking_id.state == 'assigned' and not move.picking_id.lx_file_outgoing_ids:
                 if move.picking_id.picking_type_id.code == 'outgoing':
                     self.pool['stock.picking'].do_upload_so(cr, uid, move.picking_id, context=context)
                 if move.picking_id.picking_type_id.code == 'incoming':

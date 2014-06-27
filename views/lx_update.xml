@@ -31,7 +31,7 @@
                     </header>
                     <sheet>
                         <group>
-                        	<field name="file_received_id" />
+                        	<field name="file_incoming_id" />
                             <field name="create_date" />
                             <field name="sequence" />
                             <field name="object_type" />

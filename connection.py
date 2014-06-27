@@ -203,51 +203,51 @@ class lx_connection(object):
         return unicode(contents)
 
     @ensure_connection
-    def upload_file_sent(self, cr, uid, file_sent):
+    def upload_file_outgoing(self, cr, uid, file_outgoing):
         """ 
-        Takes a browse record on an lx.file.sent object and uploads it to the server.
+        Takes a browse record on an lx.file.outgoing object and uploads it to the server.
         """
-        assert isinstance(file_sent, browse_record), _('data parameter must extend lx_data class')
-        assert file_sent._name == 'lx.file.sent', _("file_sent must have _name 'lx.file.sent'")
+        assert isinstance(file_outgoing, browse_record), _('data parameter must extend lx_data class')
+        assert file_outgoing._name == 'lx.file.outgoing', _("file_outgoing must have _name 'lx.file.outgoing'")
         
         self.cd(self._vers_lx)
 
         try:
             # handle different data types appropriately
             contents = ''
-            if file_sent.content_type == 'xml':
-                contents = file_sent.xml
-            elif file_sent.content_type == 'pdf':
-                contents = decodestring(file_sent.xml)
+            if file_outgoing.content_type == 'xml':
+                contents = file_outgoing.xml
+            elif file_outgoing.content_type == 'pdf':
+                contents = decodestring(file_outgoing.xml)
             
             xml_buffer = StringIO(contents)
             files = self.ls()
             
             # raise exception if file already exists
-            if file_sent.upload_file_name in files:
-                raise osv.except_osv(_('File Already Exists'), _("A file with name '%s' already exists on the FTP server! This should never happen as file names should contain unique sequence numbers...") % file_sent.upload_file_name)
+            if file_outgoing.upload_file_name in files:
+                raise osv.except_osv(_('File Already Exists'), _("A file with name '%s' already exists on the FTP server! This should never happen as file names should contain unique sequence numbers...") % file_outgoing.upload_file_name)
             
             # do actual upload
-            self.mkf(file_sent.upload_file_name, xml_buffer)
+            self.mkf(file_outgoing.upload_file_name, xml_buffer)
         finally:
             self.try_cd('..')
             
-        return file_sent.upload_file_name
+        return file_outgoing.upload_file_name
     
     @ensure_connection
-    def delete_file_sent(self, cr, uid, file_sent):
+    def delete_file_outgoing(self, cr, uid, file_outgoing):
         """ 
-        If it exists, delete the file_sent.upload_file_name from the ftp server
+        If it exists, delete the file_outgoing.upload_file_name from the ftp server
         """
-        assert isinstance(file_sent, browse_record), _('data parameter must extend lx_data class')
-        assert file_sent._name == 'lx.file.sent', _("file_sent must have _name 'lx.file.sent'")
+        assert isinstance(file_outgoing, browse_record), _('data parameter must extend lx_data class')
+        assert file_outgoing._name == 'lx.file.outgoing', _("file_outgoing must have _name 'lx.file.outgoing'")
         
         self.cd(self._vers_lx)
 
         try:
             # delete file if it exists
-            if file_sent.upload_file_name in self.ls():
-                self.rm(file_sent.upload_file_name)
+            if file_outgoing.upload_file_name in self.ls():
+                self.rm(file_outgoing.upload_file_name)
             
         finally:
             self.try_cd('..')

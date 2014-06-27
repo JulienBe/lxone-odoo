@@ -92,8 +92,8 @@ http://www.picklingtools.com/
         'data/config.xml',
         'data/cron.xml',
         
-        'views/lx_file_received.xml',
-        'views/lx_file_sent.xml',
+        'views/lx_file_incoming.xml',
+        'views/lx_file_outgoing.xml',
         'views/lx_update.xml',
         'views/lx_sync.xml',
         

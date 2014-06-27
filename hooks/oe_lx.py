@@ -14,15 +14,15 @@ class oe_lx(object):
     """
     html_parser = HTMLParser.HTMLParser()
     
-    def _get_files_sent(self, cr, uid, ids, field_name, arg, context=None):
+    def _get_files_outgoing(self, cr, uid, ids, field_name, arg, context=None):
         """
-        Get ids for lx.file.sent records that link to ids
+        Get ids for lx.file.outgoing records that link to ids
         """
         res = dict.fromkeys(ids, [])
         for obj_id in ids:
             record_reference = '%s,%s' % (self._name, obj_id)
             cr.execute("""
-                SELECT id FROM lx_file_sent 
+                SELECT id FROM lx_file_outgoing 
                 WHERE record_id = %s
                 OR record_names ilike %s
             """, [record_reference, '%' + record_reference + '%'])
@@ -31,8 +31,8 @@ class oe_lx(object):
         return res
     
     _lx_columns = {
-       'lx_file_sent_ids': fields.function(_get_files_sent, type="one2many", obj="lx.file.sent", method=True, string="Files Sent", 
-                                          help="The files sent to LX1 for this record")
+       'lx_file_outgoing_ids': fields.function(_get_files_outgoing, type="one2many", obj="lx.file.outgoing", method=True, string="Files Outgoing", 
+                                          help="The files outgoing to LX1 for this record")
     }
 
     def __init__(self, pool, cr):
@@ -55,12 +55,12 @@ class oe_lx(object):
         Should be called by child classes to handle data uploads correctly.
         This method instantiates lx_data_subclass with records (thereby calling extract on it)
         then calls generate_xml to convert the data to XML. It then uploads any _attachments, and
-        finally creates a file_sent_obj and calls upload on it.
+        finally creates a file_outgoing_obj and calls upload on it.
         @return: List of uploaded file name[s]
         """
         
         assert issubclass(lx_data_subclass, lx_data), _("lx_data_subclass parameter should be a subclass of lx_data")
-        file_sent_obj = self.pool.get('lx.file.sent')
+        file_outgoing_obj = self.pool.get('lx.file.outgoing')
         
         # instantiate lx_data_subclass with records, then call generate xml
         try:
@@ -72,10 +72,10 @@ class oe_lx(object):
         except AssertionError as assertion_error:
             raise osv.except_osv(_("Error While Uploading:"), _(', '.join(assertion_error.args)))
         
-        file_sent_ids = []
+        file_outgoing_ids = []
         records_multi = isinstance(records, list)
         
-        # create file.sent for records
+        # create file.outgoing for records
         vals = {
             'xml': xml, 
             'object_type': lx_data_subclass.object_type[0], 
@@ -86,10 +86,10 @@ class oe_lx(object):
         else:
             vals['record_id'] = '%s,%s' % (records._name, records.id)
         
-        parent_file_id = file_sent_obj.create(cr, uid, vals)
-        file_sent_ids.append(parent_file_id)
+        parent_file_id = file_outgoing_obj.create(cr, uid, vals)
+        file_outgoing_ids.append(parent_file_id)
         
-        # create file.sent records for all attachments 
+        # create file.outgoing records for all attachments 
         for contents, name, extension, type in data._attachments:
             vals = {
                 'upload_file_name': '%s.%s' % (name, extension),
@@ -99,12 +99,12 @@ class oe_lx(object):
                 'content_type': 'pdf',
             }
             
-            file_sent_ids.append(file_sent_obj.create(cr, uid, vals))
+            file_outgoing_ids.append(file_outgoing_obj.create(cr, uid, vals))
         
-        # upload all created file.sent
+        # upload all created file.outgoing
         try:
-            for file_id in file_sent_ids:
-                file_name = file_sent_obj.upload(cr, uid, [file_id])
+            for file_id in file_outgoing_ids:
+                file_name = file_outgoing_obj.upload(cr, uid, [file_id])
         except:
-            file_sent_obj.delete_upload(cr, uid, file_sent_ids)
+            file_outgoing_obj.delete_upload(cr, uid, file_outgoing_ids)
             raise

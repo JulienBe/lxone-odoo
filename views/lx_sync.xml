@@ -26,7 +26,7 @@
                         	<field name="date" />
                         	<field name="file_count" />
                 			<field name="log" />
-                			<field name="file_received_ids" />
+                			<field name="file_incoming_ids" />
                         </group>
                     </sheet>
                 </form>
