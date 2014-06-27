@@ -68,7 +68,12 @@ class product_product(oe_lx, product_super, osv.osv):
             ids = [ids]
             
         products = self.browse(cr, uid, ids)
-        self.upload(cr, uid, products, lx_product)
+        real_products = []
+        for product in products:
+            if product.type == 'product':
+                real_products.append(product)
+        
+        self.upload(cr, uid, real_products, lx_product)
         return True
     
     def product_upload_all(self, cr, uid, context=None):

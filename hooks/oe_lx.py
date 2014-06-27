@@ -58,6 +58,8 @@ class oe_lx(object):
         finally creates a file_outgoing_obj and calls upload on it.
         @return: List of uploaded file name[s]
         """
+        if not records:
+            return
         
         assert issubclass(lx_data_subclass, lx_data), _("lx_data_subclass parameter should be a subclass of lx_data")
         file_outgoing_obj = self.pool.get('lx.file.outgoing')
