@@ -1,4 +1,8 @@
 from tools import parse_date
+import logging
+import traceback
+
+_logger = logging.getLogger(__name__)
 
 class lx_file(object):
 	""" 
@@ -7,24 +11,32 @@ class lx_file(object):
 	"""
 
 	def __init__(self, file_name):
-		""" Extracts file date and extension """
+		""" Saves the file name and calls _extract_file_name """
 		super(lx_file, self).__init__()
-
 		self.file_name = file_name
+		self.customer = self.extension = self.file_sequence = None
+		self._extract_file_name()
 
-		if file_name.count('.') == 1:
-			
+	def _extract_file_name(self):
+		""" 
+		Gets the extension, customer, file_sequence information out of a filename 
+		and saves it to the self. 
+		"""
+		if self.file_name.count('.') == 1 and self.file_name.count('_') > 0:
 			try:
-				customer, file_sequence, extension = file_name.replace('.', '_').split('_')
-
+				customer, file_sequence, extension = self.file_name.replace('.', '_').split('_')
 				self.extension = extension.lower()
 				self.customer = customer
 				self.file_sequence = file_sequence
-				self.valid = True
-			except ValueError:
-				self.valid = False
+			except ValueError as ex:
+				_logger.warn('File ignored from FTP server while polling because of an exception: %s' % self.file_name)
+				_logger.warn(traceback.format_exc())
 		else:
-			self.valid = False
+			_logger.warn('File ignored from FTP server because of unconventional name: %s' % self.file_name)
 
+	@property
+	def valid(self):
+		return self.customer is not None and self.extension is not None and self.file_sequence is not None
+	
 	def to_process(self):
-		return (self.extension == 'xml')
+		return self.customer.lower() != 'openerp' and self.extension == 'xml'
