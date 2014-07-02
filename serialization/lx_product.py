@@ -30,7 +30,7 @@ class lx_product(lx_data):
 		
 		for product in products:
 			product_dict = OrderedDict([
-							('Client', 'pvszmd'),
+							('Client', 'FW9'),
 							('Item', product.ean13),
 							('Description', product.name),
 							('QuantityProperties', OrderedDict([
