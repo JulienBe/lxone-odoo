@@ -10,7 +10,9 @@ This section concerns the uploading of data from Odoo to LX1, for example sendin
 
 ### Hooks
 
-The hooks are the main entry point of this module. They are used to define events in Odoo that should trigger the synchronisation of a related object. For example, when a user writes some new values to a product, that product should be uploaded. This is acheived by the oe_product.py file in the hooks directory overriding the write field and calling self.upload (Note that this method is provided by having the product.product class inherit from oe_lx). 
+The hooks are the main entry point of this module. They are used to define events in Odoo that should trigger the synchronisation of a related object. For example, when a user writes some new values to a product, that product should be uploaded. 
+
+This is acheived by the oe_product.py file in the hooks directory overriding the write field and calling self.upload (Note that this method is provided by having the product.product class subclass oe_lx). 
 
 The upload method takes a cursor, uid, single or a list of browse records, and finally a subclass of the lx_data class defined in the serialization folder.
 
@@ -51,7 +53,7 @@ Next, an lx.sync record is created to register the date and time of this synchro
 
 ### Importing
 
-The next action the poll function takes (continuing from where I left off at the end of the abvoe polling section) is parsing each file. An attempt is made to parse each unparsed lx.file.incoming record, with any failures being written in that records "result" field. 
+The next action the poll function takes (continuing from where I left off at the end of the above polling section) is parsing each file. An attempt is made to parse each unparsed lx.file.incoming record, with any failures being written in that records "result" field. 
 
 Next each parsed lx.file.incoming file needs to be converted into one or many lx.updates. Since a single XML file on the FTP server can contain multiple updates (i.e. marking many Delivery Orders as delivered), a single lx.file.incoming record can be linked to many lx.update records. The standard XML header is removed and the remaining elements are saved to an lx.update each.
 
@@ -88,7 +90,7 @@ That is all that is required. Now when the hook is triggered by Odoo, the browse
 ### Defining the importation
 
 1. Create a new file in the serialization folder and write a new class inside it
-2. Have the class inherit from lx_data
+2. Have the class subclass lx_data
 3. Define an object_type to be the same as the MessageIdentifier in the standard XML header of the file you will receive from LX1
 4. Override the process method taking a pool, cr and the dict containing deserialized XML file contents as it's 3 parameters
 5. Use the data in the dict to update your Odoo instance
