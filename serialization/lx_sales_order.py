@@ -78,7 +78,7 @@ class lx_sales_order(lx_order):
 
         carrier_product_ids = [product_id for product_id, carrier_ids in carrier_map.iteritems() if carrier_ids] # IDS of products used in delivery orders
         carrier_move_ids = [move.id for move in picking.move_lines if move.product_id and move.product_id.id in carrier_product_ids] # IDS of moves for delivery order products
-
+        
         # Set carrier and carrier_name if not already set
         carrier_move_ids_temp = copy(carrier_move_ids)
         while not carrier_name and len(carrier_move_ids_temp) > 0:
@@ -103,7 +103,7 @@ class lx_sales_order(lx_order):
         
         # generate delivery slip
         self.add_attachments(pool, cr, uid, 'stock.picking.out', [picking.id], 
-                             'stock.report_picking', picking.name + '_delivery', 'DeliverySlip')
+                             'stock.report_picking', picking.name + '_delivery', 'ShptDoc')
 
         # extract browse_record into self.data        
         self.data = OrderedDict([
@@ -174,7 +174,7 @@ class lx_sales_order(lx_order):
                      ])),
                      ('SerialCaptureFlag', 'No'),
                      ('QuantityRoundUpRule', 'EXACT'),
-                     ('InventorizedItemFlag', 'No'),
+                     ('InventorizedItemFlag', 'Yes'),
                  ])),
                 ('OrderQty', move.product_qty),
             ])
