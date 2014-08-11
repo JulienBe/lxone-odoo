@@ -4,6 +4,7 @@ _logger = logging.getLogger(__name__)
 from datetime import datetime
 import time
 from collections import OrderedDict
+from copy import copy
 
 from openerp.osv import osv
 from openerp.tools.translate import _
@@ -53,28 +54,45 @@ class lx_sales_order(lx_order):
         cr = picking_out._cr
         uid = 1
         
-        picking = pool['stock.picking'].browse(cr, 1, picking_out.id)
+        carrier_obj = pool['delivery.carrier']
+        product_obj = pool['product.product']
+        picking_obj = pool['stock.picking']
+        
+        picking = picking_obj.browse(cr, 1, picking_out.id)
         shipping_partner = picking_out.sale_id.partner_shipping_id
         invoice_partner = picking_out.sale_id.partner_invoice_id
-        carrier_name = picking_out.sale_id.carrier_id and picking_out.sale_id.carrier_id.lx_ref or ''
-    
-        # Delivery method can also be added as a move line, so find all move lines whose products
-        # are the delivery products of a delivery method and save IDS and lx ref for later
+        
+        carrier = None
+        carrier_name = None
         carrier_move_ids = []
-        if not carrier_name:
-            carrier_obj = pool['delivery.carrier']
-            product_obj = pool['product.product']
+        
+        # Get carrier information from the sale_id
+        if picking_out.sale_id.carrier_id:
+            carrier = picking_out.sale_id.carrier_id
+            carrier_name = carrier.lx_ref
+        
+        # Delivery methods can be added as move lines, so find all move lines whose products
+        # are the delivery products of a delivery method and save IDS and lx ref for later
+        product_ids = [move.product_id.id for move in picking_out.move_lines if move.product_id] # all products on SO
+        carrier_map = product_obj.is_delivery_method(cr, uid, product_ids) # dict of product ids with delivery method ids as values
 
-            product_ids = [move.product_id.id for move in picking_out.move_lines if move.product_id]
-            carrier_map = product_obj.is_delivery_method(cr, uid, product_ids)
+        carrier_product_ids = [product_id for product_id, carrier_ids in carrier_map.iteritems() if carrier_ids] # IDS of products used in delivery orders
+        carrier_move_ids = [move.id for move in picking.move_lines if move.product_id and move.product_id.id in carrier_product_ids] # IDS of moves for delivery order products
 
-            carrier_product_ids = [k for k, v in carrier_map.iteritems() if v]
-            carrier_move_ids = [move.id for move in picking.move_lines if move.product_id and move.product_id.id in carrier_product_ids]
-
+        # Set carrier and carrier_name if not already set
+        carrier_move_ids_temp = copy(carrier_move_ids)
+        while not carrier_name and len(carrier_move_ids_temp) > 0:
+            carrier_move_id = carrier_move_ids_temp.pop()
             for move in picking_out.move_lines:
                 if move.id in carrier_move_ids:
                     carrier = carrier_obj.browse(cr, uid, carrier_map[move.product_id.id][0])
                     carrier_name = carrier.lx_ref or ''
+                    
+        # Carrier LX Ref is required
+        if carrier and not carrier_name:
+            raise osv.except_osv(_("Missing Carrier LX Ref"), _("The delivery carrier '%s' does not have an LX Reference. Please provide one by going to Warehouse > Delivery Methods") % carrier.name)
+        if not carrier and not carrier_name:
+            carrier_name = 'DHL_FW9'
         
         # generate invoice reports 
         if not all([invoice.state in ['open', 'paid'] for invoice in picking.sale_id.invoice_ids]):
@@ -139,7 +157,7 @@ class lx_sales_order(lx_order):
             
         for move in picking_out.move_lines:
 
-            # skip lines that are cancelled, missing product, or product is delivery method or service
+            # skip lines that are cancelled, missing product_id, or product_id is delivery method or service
             if move.state == 'cancel' \
             or not move.product_id \
             or move.id in carrier_move_ids \
