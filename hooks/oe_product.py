@@ -51,9 +51,11 @@ class product_template(oe_lx, product_super, osv.osv):
     
     def create(self, cr, uid, values, context=None):
         """ Call product_upload """
-        res = super(product_template, self).create(cr, uid, values, context=context)
-        lx_upload(self, cr, 1, [res], context=context)
-        return res
+        product_id = super(product_template, self).create(cr, uid, values, context=context)
+        product = self.browse(cr, 1, product_id)
+        if product.ean13 and product.name:
+            self.pool['product.product'].product_upload(cr, 1, product_id, context=context)
+        return product_id
     
 class product_product(oe_lx, product_super, osv.osv):
     """
@@ -92,6 +94,7 @@ class product_product(oe_lx, product_super, osv.osv):
     
     def create(self, cr, uid, values, context=None):
         """ Call product_upload """
-        res = super(product_product, self).create(cr, uid, values, context=context)
-        lx_upload(self, cr, 1, [res], context=context)
-        return res
+        product_id = super(product_product, self).create(cr, uid, values, context=context)
+        if 'ean13' in values and 'name' in values:
+            self.product_upload(cr, 1, product_id, context=context)
+        return product_id

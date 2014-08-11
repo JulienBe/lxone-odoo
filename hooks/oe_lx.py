@@ -107,6 +107,6 @@ class oe_lx(object):
         try:
             for file_id in file_outgoing_ids:
                 file_name = file_outgoing_obj.upload(cr, uid, [file_id])
-        except:
+        except Exception, ex:
             file_outgoing_obj.delete_upload(cr, uid, file_outgoing_ids)
-            raise
+            raise ex

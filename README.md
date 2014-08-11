@@ -87,7 +87,7 @@ That is all that is required. Now when the hook is triggered by Odoo, the browse
 
 ## Downloading Data
 
-### Defining the importation
+### Defining the Importation
 
 1. Create a new file in the serialization folder and write a new class inside it
 2. Have the class subclass lx_data
