@@ -34,7 +34,7 @@ class oe_lx(object):
        'lx_file_outgoing_ids': fields.function(_get_files_outgoing, type="one2many", obj="lx.file.outgoing", method=True, string="Files Outgoing", 
                                           help="The files outgoing to LX1 for this record")
     }
-
+    
     def __init__(self, pool, cr):
         """ OE will only merge _columns dicts for classes inheriting from osv.osv, so do it here manually """
         self._columns = dict(self._lx_columns.items() + self._columns.items())

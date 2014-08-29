@@ -28,9 +28,13 @@ class lx_data(object):
     dict by passing the XML into the constructor.
     """
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, header=None):
         """ Either parse XML from LX1, or call self.extract on a browse_record """
         super(lx_data, self).__init__()
+        
+        # save input
+        if header is not None:
+            self.header = header
         
         # clear instance properties
         self._attachments = []
@@ -277,16 +281,19 @@ class lx_data(object):
                 self._check_ordered_dicts_only(val)
 
     @staticmethod
-    def reorganise_data(data, header, namespace):
+    def get_data_for_updates(data, header, namespace):
         """
         This method is called by the poll function to give each object type the opportunity
         to reorganise the data received from LX1, after it is parsed from the XML file and
         before it is used to generate updates.
         
-        @param AutoVivification data: The parsed XML from LX1
+        Override this method to extract a list of data nodes. Each node will be used
+        to create an lx.update.
+        
+        @param data: The parsed XML from LX1
         @return data 
         """
-        return data, header, namespace
+        return data
 
     def extract(self, record):
         """

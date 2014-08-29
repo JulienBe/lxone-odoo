@@ -167,7 +167,7 @@ class lx_connection(object):
         self._conn.retrbinary('RETR %s' % file_name, data.write)
         contents = data.getvalue()
         data.close()
-        return unicode(contents)
+        return contents
 
     @ensure_connection
     def upload_file_outgoing(self, cr, uid, file_outgoing):

@@ -116,12 +116,18 @@ class lx_file_incoming(osv.osv):
         Works out the object type from the parsed xml 
         @param dict parsed_xml: dictionary representing the xml incoming for the file
         """
-        return parsed_xml['ServiceRequestHeader']['MessageIdentifier']
+        if 'ServiceRequestHeader' in parsed_xml:
+            return parsed_xml['ServiceRequestHeader']['MessageIdentifier']
+        elif 'out:ServiceDefinition' in parsed_xml:
+            if parsed_xml['__attrs__']['xmlns:out'] == 'http://www.aqcon.com/lxone/outboundService':
+                return 'OutboundService'
+        else:
+            raise ValueError('Could not determine an appropriate object type for this file')
     
-    def reorganise_data(self, cr, uid, data, header, namespace, object_type, context=None):
-        """ Calls reorganise_data on the appropriate lx_data subclass """
+    def get_data_for_updates(self, cr, uid, data, header, namespace, object_type, context=None):
+        """ Calls get_data_for_updates on the appropriate lx_data subclass """
         cls = get_lx_data_subclass(object_type)
-        return cls.reorganise_data(data, header, namespace)
+        return cls.get_data_for_updates(data, header, namespace)
     
     def generate_updates(self, cr, uid, ids, context=None):
         """
@@ -141,23 +147,32 @@ class lx_file_incoming(osv.osv):
             try:
                 activity = 'evalling the data'
                 data = eval(file_incoming.parsed_xml)
+                prefix = ''
                 
                 # seperate service definition from service header
-                content_node_name = data['ServiceDefinition'].keys()[0]
+                if ':' in data.keys()[0]:
+                    prefix = data.keys()[0].split(':')[0] + ':'
+                    
+                content_node_name = data[prefix + 'ServiceDefinition'].keys()[0]
                 namespace = data['__attrs__']
-                header = data['ServiceRequestHeader']
-                data = data['ServiceDefinition'][content_node_name]
+                header = data[prefix + 'ServiceHeader']
+                data = data[prefix + 'ServiceDefinition'][content_node_name]
                 
                 if not isinstance(data, list):
                     data = [data]
                 
-                # reorganise the data for processing
+                # extract the data and data header from the data
                 activity = 'reorganising the data'
-                data, header, namespace = self.reorganise_data(cr, uid, data, header, namespace, file_incoming.object_type, context)
+                data_for_updates = self.get_data_for_updates(cr, uid, data, header, namespace, file_incoming.object_type, context)
                 
+                if not isinstance(data_for_updates, list):
+                    data_for_updates = [data_for_updates]
+                
+                # create updates for each data_for_updates element in the list, 
+                # and (optionally) save the header_for_updates on each update for future reference
                 activity = 'creating the updates'
-                for update_index in xrange(0, len(data)):
-                    update = data[update_index]
+                for update_index in xrange(0, len(data_for_updates)):
+                    update = data_for_updates[update_index]
                     
                     update_obj = self.pool.get('lx.update')
                     vals = {
@@ -188,7 +203,7 @@ class lx_file_incoming(osv.osv):
             
             for update in file_incoming.update_ids:
                 update.execute()
-    
+                
     def execute_all_updates(self, cr, uid, ids=[], context=None):
         """ Gets ids for all files whose state is awaiting_updates and calls execute_updates on them """
         all_ids = self.search(cr, uid, [('state', '=', 'awaiting_updates')], context=context)

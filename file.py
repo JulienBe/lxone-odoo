@@ -24,10 +24,10 @@ class lx_file(object):
 		"""
 		if self.file_name.count('.') == 1 and self.file_name.count('_') > 0:
 			try:
-				customer, file_sequence, extension = self.file_name.replace('.', '_').split('_')
-				self.extension = extension.lower()
-				self.customer = customer
-				self.file_sequence = file_sequence
+				values = self.file_name.replace('.', '_').split('_')
+				self.extension = values.pop().lower()
+				self.file_sequence = values.pop()
+				self.customer = "_".join(values)
 			except ValueError as ex:
 				_logger.warn('File ignored from FTP server while polling because of an exception: %s' % self.file_name)
 				_logger.warn(traceback.format_exc())

@@ -4,8 +4,8 @@ import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "hooks")))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "serialization")))
 
-from . import tools
-from . import picklingtools
+import tools
+import picklingtools
 import manager
 import connection
 

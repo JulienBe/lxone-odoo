@@ -7,13 +7,13 @@
             <field name="inherit_id" ref="stock.view_picking_form"/>
             <field name="arch" type="xml">
             
-                <!-- Hide process buttons -->
+                <!-- Hide process buttons 
             	<button name="do_transfer" position="attributes">
             		<attribute name="invisible">1</attribute>
             	</button>
             	<button name="do_partial_open_barcode" position="attributes">
             		<attribute name="invisible">1</attribute>
-            	</button>
+            	</button>-->
 
             	<!-- Replace cancel transfer button with custom manual cancel button -->
             	<button name="action_cancel" position="replace">

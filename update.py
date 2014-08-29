@@ -82,9 +82,10 @@ class lx_update(osv.osv):
             # do execution
             try:
                 # find appropriate lx_data class, instantiate it, and trigger process
-                cls = get_lx_data_subclass(update.object_type)
-                data = cls(json.loads(update.data))
-                data.process(self.pool, cr)
+                data = json.loads(update.data)
+                lx_cls = get_lx_data_subclass(update.object_type)
+                cls = lx_cls(data)
+                cls.process(self.pool, cr, data)
             
                 # change state
                 update.write({'state': 'executed'})

@@ -228,9 +228,9 @@ class XMLLoaderA(object) :
           if "version" in xml_decl_attrs and xml_decl_attrs["version"]!="1.0" :
               self._syntaxError("Can't handle any XML other than version 1.0")
       
-          if ("encoding" in xml_decl_attrs and
-              xml_decl_attrs["encoding"]!="UTF-8") :
-              self._syntaxError("Can't handle any XML encodings other than UTF-8")
+          #if ("encoding" in xml_decl_attrs and
+          #    xml_decl_attrs["encoding"]!="UTF-8") :
+          #    self._syntaxError("Can't handle any XML encodings other than UTF-8")
       
           self._expectString("Error during XML declaration", "?>")
           self._consumeWS()

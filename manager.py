@@ -88,6 +88,7 @@ class lx_manager(osv.osv):
             # get list of files and directories and remove any files that cannot be processed
             # then order files by file_sequence so they are processed in the correct order
             files_and_directories = conn.ls()
+            files_and_directories = filter(lambda f: '.' in f, files_and_directories)
             files_to_process = map(lambda f: lx_file(f), files_and_directories)
             files_to_process = filter(lambda f: f.valid, files_to_process)
             files_to_process = filter(lambda f: f.to_process(), files_to_process)
@@ -118,9 +119,13 @@ class lx_manager(osv.osv):
                     try:
                         activity = 'creating lx.file.incoming'
                         file_contents = conn.download_data(file_name)
+                        
+                        # Convert latin encoding to utf
+                        file_contents = file_contents.decode('ISO-8859-1')
+                        
                         vals = {
+							'xml_file_name': file_name,
                             'xml': file_contents,
-                            'file_name': file_name,
                             'sync_id': sync_id,
                         }
                         file_incoming_id = file_incoming_obj.create(cr, uid, vals)
